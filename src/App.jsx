@@ -287,6 +287,7 @@ export default function FocusOS() {
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
+  const [focusedTaskId, setFocusedTaskId] = useState(null);
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -604,6 +605,10 @@ export default function FocusOS() {
     const now = formatNow();
     playBeep();
     patchTask(taskId, (task) => ({ ...task, start: task.start || now, end: now, status: '완료' }));
+    if (focusedTaskId === taskId) {
+      setFocusMode(false);
+      setFocusedTaskId(null);
+    }
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
     setShowCelebrate(true);
@@ -731,32 +736,50 @@ export default function FocusOS() {
   };
 
   const quickStartFive = () => {
+    playBeep();
     setFocusMinutes(5);
     setTimerSeconds(5 * 60);
-    const target = focusTask || todayTasks[0] || null;
-    if (target) {
-      recordStart(target.id);
-      if (!focusMode) setFocusMode(true);
+    setTimerRunning(true);
+
+    if (focusMode && focusTask) {
+      recordStart(focusTask.id);
     } else {
-      showToastMessage('먼저 오늘 할 일을 하나 추가해 주세요.');
+      showToastMessage('5분 타이머를 시작했어요.');
     }
   };
 
-  const toggleFocusMode = () => {
-    setFocusMode((prev) => !prev);
+  const openFocusMode = (taskId) => {
+    setFocusedTaskId(taskId);
+    setFocusMode(true);
+    const target = tasks.find((task) => task.id === taskId);
+    if (target && target.status !== '진행 중') {
+      recordStart(taskId);
+    } else if (target) {
+      if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
+      setTimerRunning(true);
+    }
+  };
+
+  const closeFocusMode = () => {
+    setFocusMode(false);
+    setFocusedTaskId(null);
   };
 
   const toggleTimer = () => {
-    const target = focusTask || todayTasks[0] || null;
-
-    if (!target) {
-      showToastMessage('먼저 오늘 할 일을 하나 추가해 주세요.');
+    if (!focusMode || !focusTask) {
+      if (!timerRunning) {
+        playBeep();
+        if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
+        setTimerRunning(true);
+      } else {
+        setTimerRunning(false);
+      }
       return;
     }
 
     if (!timerRunning) {
-      if (target.status !== '진행 중') {
-        recordStart(target.id);
+      if (focusTask.status !== '진행 중') {
+        recordStart(focusTask.id);
       } else {
         playBeep();
         if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
@@ -765,7 +788,7 @@ export default function FocusOS() {
       return;
     }
 
-    pauseTask(target.id);
+    pauseTask(focusTask.id);
   };
 
   const resetTimer = () => {
@@ -821,20 +844,12 @@ export default function FocusOS() {
             <p className="text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={toggleFocusMode}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium shadow-sm transition ${
-                focusMode ? 'bg-violet-600 text-white' : 'bg-zinc-900 text-white'
-              }`}
-            >
-              {focusMode ? '● Focus Mode ON' : 'Focus Mode'}
-            </button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">로그아웃</button>
           </div>
         </div>
       </div>
 
-      {focusMode && (
+      {focusMode && focusTask && (
         <section className="mx-auto max-w-6xl px-4 pt-6 md:px-6">
           <div className="rounded-[32px] border border-violet-200 bg-violet-50/70 p-5 shadow-sm">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -861,12 +876,12 @@ export default function FocusOS() {
 
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]">
-                {timerRunning ? '일시정지' : focusTask ? '타이머 시작' : '첫 작업 시작'}
+                {timerRunning ? '일시정지' : '타이머 시작'}
               </button>
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 5분만 시작
               </button>
-              <button onClick={toggleFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
+              <button onClick={closeFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
                 Focus Mode 종료
               </button>
             </div>
@@ -930,13 +945,7 @@ export default function FocusOS() {
               ))}
             </div>
 
-            <div className="mt-5 rounded-[28px] border border-zinc-100 bg-zinc-50 p-4">
-              <p className="text-sm text-zinc-500">현재 작업</p>
-              <p className="mt-2 text-lg font-semibold text-zinc-900">{focusTask ? focusTask.title : '선택된 작업 없음'}</p>
-              <p className="mt-1 text-sm text-zinc-500">{focusTask ? focusTask.note || '작게 시작해도 충분해요.' : '오늘 할 일에서 시작 버튼을 눌러보세요.'}</p>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2.5">
+            <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? '일시정지' : '타이머 시작'}</button>
               <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">리셋</button>
               <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">5분만 시작</button>
@@ -986,6 +995,7 @@ export default function FocusOS() {
                 updateStep={updateStep}
                 toggleStep={toggleStep}
                 deleteStep={deleteStep}
+                startFocusMode={openFocusMode}
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
               />
@@ -1016,6 +1026,7 @@ export default function FocusOS() {
                 updateStep={updateStep}
                 toggleStep={toggleStep}
                 deleteStep={deleteStep}
+                startFocusMode={openFocusMode}
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
               />
@@ -1305,6 +1316,7 @@ function TaskCard({
   updateStep,
   toggleStep,
   deleteStep,
+  startFocusMode,
   onDragStart,
   onDropCard,
 }) {
@@ -1336,7 +1348,7 @@ function TaskCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {!task.start && <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>}
-        <button onClick={() => recordStart(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-700 transition hover:bg-violet-100">집중 시작</button}
+        <button onClick={() => startFocusMode(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:bg-violet-100">집중 시작</button>
         {task.start && !task.end && <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">종료</button>}
         {task.status === '진행 중' && <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">멈춤</button>}
         <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">초기화</button>
