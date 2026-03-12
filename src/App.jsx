@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
@@ -141,7 +141,8 @@ function createTaskId() {
 }
 
 function ensureTaskId(task) {
-  if (typeof task?.id === 'string' && task.id.length > 10) return task.id;
+  const current = task?.id;
+  if (typeof current === 'string' && current.length > 10) return current;
   return createTaskId();
 }
 
@@ -149,14 +150,14 @@ function mapTaskFromDb(row) {
   return {
     id: row.id,
     createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
-    list: row.list || row.section || 'today',
+    list: row.list || 'today',
     priority: row.priority || '중요',
     title: row.title || '',
-    note: row.note || row.memo || '',
+    note: row.note || '',
     steps: Array.isArray(row.steps) ? row.steps : [],
     status: row.status || '대기',
-    start: row.start_time || row.started_at || '',
-    end: row.end_time || row.completed_at || '',
+    start: row.start_time || '',
+    end: row.end_time || '',
   };
 }
 
@@ -166,12 +167,12 @@ function mapTaskToDb(task, userId) {
     user_id: userId,
     title: task.title || '',
     note: task.note || '',
-    list: task.list || 'today',
     priority: task.priority || '중요',
     status: task.status || '대기',
-    steps: Array.isArray(task.steps) ? task.steps : [],
+    list: task.list || 'today',
     start_time: task.start || null,
     end_time: task.end || null,
+    steps: Array.isArray(task.steps) ? task.steps : [],
     created_at: task.createdAt ? new Date(task.createdAt).toISOString() : new Date().toISOString(),
   };
 }
@@ -272,7 +273,6 @@ export default function FocusOS() {
   const [authReady, setAuthReady] = useState(false);
   const [session, setSession] = useState(null);
   const [dbReady, setDbReady] = useState(false);
-
   const [tasks, setTasks] = useState(DEFAULT_TASKS.map(normalizeTask));
   const [newTaskId, setNewTaskId] = useState(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -290,50 +290,6 @@ export default function FocusOS() {
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
   );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const initSupabase = () => {
-      if (!window.supabase?.createClient) {
-        setAuthReady(true);
-        return undefined;
-      }
-
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      setSupabaseClient(client);
-
-      client.auth.getSession().then(({ data }) => {
-        setSession(data.session ?? null);
-        setAuthReady(true);
-      });
-
-      const {
-        data: { subscription },
-      } = client.auth.onAuthStateChange((_event, nextSession) => {
-        setSession(nextSession ?? null);
-      });
-
-      return () => subscription.unsubscribe();
-    };
-
-    if (window.supabase?.createClient) {
-      return initSupabase();
-    }
-
-    const existing = document.querySelector('script[data-focus-supabase="1"]');
-    if (existing) {
-      existing.addEventListener('load', () => initSupabase(), { once: true });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-    script.setAttribute('data-focus-supabase', '1');
-    script.onload = () => initSupabase();
-    script.onerror = () => setAuthReady(true);
-    document.head.appendChild(script);
-  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -371,82 +327,115 @@ export default function FocusOS() {
     document.head.appendChild(script);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initClient = () => {
+      if (!window.supabase?.createClient) {
+        setAuthReady(true);
+        return;
+      }
+
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      setSupabaseClient(client);
+
+      client.auth.getSession().then(({ data }) => {
+        setSession(data.session ?? null);
+        setAuthReady(true);
+      });
+
+      const {
+        data: { subscription },
+      } = client.auth.onAuthStateChange((_event, nextSession) => {
+        setSession(nextSession ?? null);
+      });
+
+      return () => subscription.unsubscribe();
+    };
+
+    if (window.supabase?.createClient) {
+      return initClient();
+    }
+
+    const existing = document.querySelector('script[data-focus-supabase="1"]');
+    if (existing) {
+      existing.addEventListener('load', initClient, { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    script.setAttribute('data-focus-supabase', '1');
+    script.onload = initClient;
+    script.onerror = () => setAuthReady(true);
+    document.head.appendChild(script);
+  }, []);
+
+
 
   useEffect(() => {
-    if (!session?.user?.id) return;
     const storage = getStorage();
     if (!storage) return;
 
-    const scopedKeys = getScopedStorageKeys(session.user.id);
-    const savedTasks = storage.getItem(scopedKeys.tasks);
-    const savedFocusMinutes = storage.getItem(scopedKeys.focusMinutes);
-    const savedDayStamp = storage.getItem(scopedKeys.todayStamp);
-    const currentStamp = getDayStamp();
-
-    const hydrate = async () => {
-      let nextTasks = null;
-
-      if (supabaseClient) {
-        const { data, error } = await supabaseClient
-          .from('tasks')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: true });
-
-        if (!error && Array.isArray(data) && data.length > 0) {
-          nextTasks = data.map(mapTaskFromDb).map(normalizeTask);
-        }
+    const savedFocusMinutes = storage.getItem(STORAGE_KEYS.focusMinutes);
+    if (savedFocusMinutes) {
+      const minutes = Number(savedFocusMinutes);
+      if (FOCUS_PRESETS.includes(minutes)) {
+        setFocusMinutes(minutes);
+        setTimerSeconds(minutes * 60);
       }
+    }
+  }, []);
 
-      if (!nextTasks && savedTasks) {
-        try {
-          const parsed = JSON.parse(savedTasks);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            nextTasks = parsed.map(normalizeTask);
-          }
-        } catch {}
-      }
+  useEffect(() => {
+    const storage = getStorage();
+    if (!storage) return;
+    storage.setItem(STORAGE_KEYS.focusMinutes, String(focusMinutes));
+  }, [focusMinutes]);
 
-      if (!nextTasks) {
-        nextTasks = DEFAULT_TASKS.map(normalizeTask);
-      }
+  useEffect(() => {
+    if (!session?.user?.id) return;
 
-      if (savedDayStamp && savedDayStamp !== currentStamp) {
-        nextTasks = resetTasksForNewDay(nextTasks);
-      }
-
+    const loadTasks = async () => {
+      if (!supabaseClient) return;
       hydratingFromDbRef.current = true;
-      setTasks(nextTasks);
+      setDbReady(false);
 
-      if (savedFocusMinutes) {
-        const minutes = Number(savedFocusMinutes);
-        if (FOCUS_PRESETS.includes(minutes)) {
-          setFocusMinutes(minutes);
-          setTimerSeconds(minutes * 60);
+      const { data, error } = await supabaseClient
+        .from('tasks')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('tasks load error', error);
+        setTasks(DEFAULT_TASKS.map(normalizeTask));
+        setDbReady(true);
+        hydratingFromDbRef.current = false;
+        return;
+      }
+
+      if (Array.isArray(data) && data.length > 0) {
+        setTasks(data.map(mapTaskFromDb).map(normalizeTask));
+      } else {
+        const seeded = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
+        setTasks(seeded);
+
+        const rows = seeded.map((task) => mapTaskToDb(task, session.user.id));
+        const { error: seedError } = await supabaseClient.from('tasks').upsert(rows, { onConflict: 'id' });
+        if (seedError) {
+          console.error('tasks seed error', seedError);
         }
       }
 
-      storage.setItem(scopedKeys.todayStamp, currentStamp);
-      setDayStamp(currentStamp);
       setDbReady(true);
-
       window.setTimeout(() => {
         hydratingFromDbRef.current = false;
       }, 0);
     };
 
-    hydrate();
-  }, [session?.user?.id, supabaseClient]);
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    const storage = getStorage();
-    if (!storage) return;
-    const scopedKeys = getScopedStorageKeys(session.user.id);
-    storage.setItem(scopedKeys.tasks, JSON.stringify(tasks));
-    storage.setItem(scopedKeys.focusMinutes, String(focusMinutes));
-    storage.setItem(scopedKeys.todayStamp, dayStamp);
-  }, [session?.user?.id, tasks, focusMinutes, dayStamp]);
+    loadTasks();
+  }, [supabaseClient, session?.user?.id]);
 
   useEffect(() => {
     if (!supabaseClient || !session?.user?.id || !dbReady) return;
@@ -454,37 +443,35 @@ export default function FocusOS() {
 
     const syncTasks = async () => {
       const rows = tasks.map((task) => mapTaskToDb(task, session.user.id));
-
-      const { data: existingRows, error: fetchError } = await supabaseClient
+      const { data: existing, error: existingError } = await supabaseClient
         .from('tasks')
         .select('id')
         .eq('user_id', session.user.id);
 
-      if (fetchError) {
-        console.error('tasks fetch error', fetchError);
+      if (existingError) {
+        console.error('tasks existing fetch error', existingError);
         return;
       }
 
-      if (rows.length > 0) {
-        const { error: upsertError } = await supabaseClient
-          .from('tasks')
-          .upsert(rows, { onConflict: 'id' });
+      const { error: upsertError } = await supabaseClient
+        .from('tasks')
+        .upsert(rows, { onConflict: 'id' });
 
-        if (upsertError) {
-          console.error('tasks upsert error', upsertError);
-          return;
-        }
+      if (upsertError) {
+        console.error('tasks upsert error', upsertError);
+        return;
       }
 
-      const existingIds = new Set((existingRows || []).map((row) => row.id));
-      const currentIds = new Set(rows.map((row) => row.id));
-      const deleteIds = [...existingIds].filter((id) => !currentIds.has(id));
+      const existingIds = new Set((existing || []).map((item) => item.id));
+      const currentIds = new Set(rows.map((item) => item.id));
+      const toDelete = [...existingIds].filter((id) => !currentIds.has(id));
 
-      if (deleteIds.length > 0) {
+      if (toDelete.length > 0) {
         const { error: deleteError } = await supabaseClient
           .from('tasks')
           .delete()
-          .in('id', deleteIds);
+          .in('id', toDelete)
+          .eq('user_id', session.user.id);
 
         if (deleteError) {
           console.error('tasks delete error', deleteError);
@@ -810,7 +797,10 @@ export default function FocusOS() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
             <p className="text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
-          <div className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm">Focus Mode</div>
+          <div className="flex items-center gap-2">
+            <div className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm">Focus Mode</div>
+            <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">로그아웃</button>
+          </div>
         </div>
       </div>
 
@@ -1072,22 +1062,14 @@ function AuthScreen({ supabaseClient }) {
     setMessage('');
 
     if (mode === 'signup') {
-      const { error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-      });
-
+      const { error } = await supabaseClient.auth.signUp({ email, password });
       if (error) {
         setMessage(error.message);
       } else {
         setMessage('회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.');
       }
     } else {
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
         setMessage(error.message);
       }
@@ -1098,63 +1080,63 @@ function AuthScreen({ supabaseClient }) {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
-      <div className="mx-auto max-w-md">
-        <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm sm:p-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm sm:p-8 md:p-12">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">Focus OS</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">지금 바로 시작하기</h1>
-          <p className="mt-2 text-sm leading-6 text-zinc-500">
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">지금 바로 시작하기</h1>
+          <p className="mt-4 text-base leading-8 text-zinc-500 sm:text-lg">
             로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.
           </p>
 
-          <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1">
+          <div className="mt-8 grid grid-cols-2 gap-2 rounded-[28px] bg-zinc-100 p-2">
             <button
               onClick={() => setMode('signin')}
-              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${mode === 'signin' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+              className={`rounded-[24px] px-4 py-4 text-base font-semibold transition ${mode === 'signin' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
             >
               로그인
             </button>
             <button
               onClick={() => setMode('signup')}
-              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${mode === 'signup' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+              className={`rounded-[24px] px-4 py-4 text-base font-semibold transition ${mode === 'signup' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
             >
               회원가입
             </button>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-8 space-y-4">
             <input
               type="email"
               placeholder="이메일"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-violet-300"
+              className="w-full rounded-[24px] border border-zinc-200 px-5 py-4 text-lg outline-none transition focus:border-violet-300"
             />
             <input
               type="password"
               placeholder="비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-violet-300"
+              className="w-full rounded-[24px] border border-zinc-200 px-5 py-4 text-lg outline-none transition focus:border-violet-300"
             />
           </div>
 
           <button
             onClick={submit}
             disabled={loading}
-            className="mt-5 w-full rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-8 w-full rounded-[28px] bg-zinc-950 px-5 py-5 text-xl font-semibold text-white transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? '처리 중...' : mode === 'signup' ? '회원가입하기' : '로그인하기'}
           </button>
 
           {message ? (
-            <div className="mt-4 rounded-2xl bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+            <div className="mt-5 rounded-[24px] bg-zinc-50 px-5 py-4 text-base text-zinc-600">
               {message}
             </div>
           ) : null}
 
-          <div className="mt-6 rounded-[24px] bg-violet-50 p-4">
-            <p className="text-sm font-medium text-violet-700">7일 무료 체험</p>
-            <p className="mt-1 text-sm leading-6 text-zinc-600">
+          <div className="mt-8 rounded-[28px] bg-violet-50 p-5">
+            <p className="text-lg font-semibold text-violet-700">7일 무료 체험</p>
+            <p className="mt-3 text-lg leading-9 text-zinc-600">
               가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.
             </p>
           </div>
@@ -1163,7 +1145,6 @@ function AuthScreen({ supabaseClient }) {
     </main>
   );
 }
-
 
 function Panel({ children }) {
   return <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm">{children}</div>;
@@ -1235,8 +1216,7 @@ function InfoBox({ label, value }) {
   );
 }
 
-
-const TaskCard = React.memo(function TaskCard({
+function TaskCard({
   task,
   isNew,
   innerRef,
@@ -1256,278 +1236,80 @@ const TaskCard = React.memo(function TaskCard({
   onDragStart,
   onDropCard,
 }) {
-  const [draftTitle, setDraftTitle] = useState(task.title);
-  const [draftNote, setDraftNote] = useState(task.note);
-  const [collapsed, setCollapsed] = useState(task.status !== '진행 중');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dragReady, setDragReady] = useState(false);
-
-  useEffect(() => {
-    setDraftTitle(task.title);
-  }, [task.title]);
-
-  useEffect(() => {
-    setDraftNote(task.note);
-  }, [task.note]);
-
-  useEffect(() => {
-    if (task.status === '진행 중') setCollapsed(false);
-  }, [task.status]);
-
-  const commitTitle = () => {
-    if (draftTitle === task.title) return;
-    updateTask(task.id, { title: draftTitle });
-  };
-
-  const commitNote = () => {
-    if (draftNote === task.note) return;
-    updateTask(task.id, { note: draftNote });
-  };
-
   const doneCount = (task.steps || []).filter((step) => step.done).length;
-  const totalSteps = (task.steps || []).length;
-  const stepProgress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
-
-  const enableDrag = () => setDragReady(true);
-  const disableDrag = () => setDragReady(false);
+  const stepProgress = (task.steps || []).length ? Math.round((doneCount / task.steps.length) * 100) : 0;
 
   return (
     <article
       ref={innerRef}
-      draggable={dragReady}
-      onDragStart={() => dragReady && onDragStart(task.id)}
-      onDragEnd={disableDrag}
+      draggable
+      onDragStart={() => onDragStart(task.id)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onDropCard(task.id)}
-      className={`rounded-[30px] border p-4 transition ${
-        task.status === '진행 중'
-          ? 'border-emerald-300 bg-emerald-50/50 shadow-sm'
-          : isNew
-          ? 'border-violet-400 bg-violet-50/60 shadow-sm'
-          : 'border-zinc-100 bg-white'
-      }`}
+      className={`rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
     >
-      <div className="flex items-start gap-3">
-        <button
-          type="button"
-          onMouseDown={enableDrag}
-          onMouseUp={disableDrag}
-          onMouseLeave={disableDrag}
-          onTouchStart={enableDrag}
-          onTouchEnd={disableDrag}
-          className="mt-1 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 active:scale-95"
-          title="드래그해서 순서 정렬"
-        >
-          ☰
-        </button>
+      <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
+        <span className="rounded-full bg-zinc-100 px-2 py-1">드래그 정렬</span>
+        <span>카드를 길게 잡고 위치를 바꿀 수 있어요</span>
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="flex flex-wrap gap-2">
-              <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
-              <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
-            </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap gap-2">
+          <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
+          <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
+        </div>
+        <input value={task.title} onChange={(e) => updateTask(task.id, { title: e.target.value })} className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400" />
+        <textarea value={task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
+      </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCollapsed((prev) => !prev)}
-                className="rounded-xl border border-zinc-200 px-3 py-2 text-xs text-zinc-600 transition hover:bg-zinc-50"
-              >
-                {collapsed ? '펼치기' : '접기'}
-              </button>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {!task.start && <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>}
+        {task.start && !task.end && <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">종료</button>}
+        {task.status === '진행 중' && <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">멈춤</button>}
+        <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">초기화</button>
+        <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="rounded-xl border px-3 py-2.5 text-sm">
+          <option>가장 중요</option>
+          <option>중요</option>
+          <option>가벼운 일</option>
+        </select>
+        <button onClick={() => recommendPriority(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:bg-violet-100">우선순위 추천</button>
+        <button onClick={() => splitTask(task.id)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">AI 작업분해</button>
+        <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">{task.list === 'today' ? 'Later로' : 'Today로'}</button>
+        <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">삭제</button>
+      </div>
 
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((prev) => !prev)}
-                  className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50"
-                >
-                  ⋯
-                </button>
+      {(task.start || task.end) && (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {task.start && <InfoBox label="시작 시간" value={task.start} />}
+          {task.end && <InfoBox label="종료 시간" value={task.end} />}
+        </div>
+      )}
 
-                {menuOpen && (
-                  <div className="absolute right-0 top-12 z-20 min-w-[170px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        recommendPriority(task.id);
-                        setMenuOpen(false);
-                      }}
-                      className="block w-full border-b border-zinc-100 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                    >
-                      우선순위 추천
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        splitTask(task.id);
-                        setMenuOpen(false);
-                      }}
-                      className="block w-full border-b border-zinc-100 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                    >
-                      AI 작업분해
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        moveList(task.id, task.list === 'today' ? 'later' : 'today');
-                        setMenuOpen(false);
-                      }}
-                      className="block w-full border-b border-zinc-100 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50"
-                    >
-                      {task.list === 'today' ? 'Later로 이동' : 'Today로 이동'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        deleteTask(task.id);
-                        setMenuOpen(false);
-                      }}
-                      className="block w-full px-4 py-3 text-left text-sm text-rose-600 hover:bg-rose-50"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="mt-4 rounded-[26px] bg-zinc-50 p-4">
+        <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.</div>
+
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-zinc-700">작업 단계</p>
+            <p className="text-xs text-zinc-500">완료 {doneCount}/{(task.steps || []).length}</p>
           </div>
+          <button onClick={() => addStep(task.id)} className="rounded-xl border px-3 py-2 text-sm transition hover:bg-white">단계 추가</button>
+        </div>
 
-          <input
-            value={draftTitle}
-            onChange={(e) => setDraftTitle(e.target.value)}
-            onBlur={commitTitle}
-            className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400"
-          />
+        <div className="mb-4 h-2 overflow-hidden rounded-full bg-white">
+          <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${stepProgress}%` }} />
+        </div>
 
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100">
-            <div
-              className="h-full rounded-full bg-violet-500 transition-all"
-              style={{ width: `${stepProgress}%` }}
-            />
-          </div>
-
-          {collapsed ? (
-            <div className="mt-3">
-              <p
-                className="text-sm text-zinc-500"
-                style={{ display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-              >
-                {draftNote || '메모 없음'}
-              </p>
-              <p className="mt-2 text-xs text-zinc-400">
-                단계 {doneCount}/{totalSteps}
-                {task.start ? ` · 시작 ${task.start}` : ''}
-                {task.end ? ` · 종료 ${task.end}` : ''}
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                {!task.start && (
-                  <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
-                    시작
-                  </button>
-                )}
-                {task.start && !task.end && (
-                  <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
-                    종료
-                  </button>
-                )}
-                {task.status === '진행 중' && (
-                  <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
-                    멈춤
-                  </button>
-                )}
-                <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">
-                  초기화
-                </button>
-              </div>
+        <div className="space-y-2">
+          {(task.steps || []).map((step, idx) => (
+            <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
+              <button onClick={() => toggleStep(task.id, idx)} className={`flex h-5 w-5 items-center justify-center rounded-md border text-[10px] ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-transparent'}`}>✓</button>
+              <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
+              <button onClick={() => deleteStep(task.id, idx)} className="rounded-lg border px-2 py-1 text-xs text-zinc-500 transition hover:bg-zinc-50">삭제</button>
             </div>
-          ) : (
-            <>
-              <textarea
-                value={draftNote}
-                onChange={(e) => setDraftNote(e.target.value)}
-                onBlur={commitNote}
-                rows={2}
-                className="mt-2 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400"
-              />
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {!task.start && (
-                  <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
-                    시작
-                  </button>
-                )}
-                {task.start && !task.end && (
-                  <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
-                    종료
-                  </button>
-                )}
-                {task.status === '진행 중' && (
-                  <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
-                    멈춤
-                  </button>
-                )}
-                <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">
-                  초기화
-                </button>
-                <select
-                  value={task.priority}
-                  onChange={(e) => updateTask(task.id, { priority: e.target.value })}
-                  className="rounded-xl border px-3 py-2.5 text-sm"
-                >
-                  <option>가장 중요</option>
-                  <option>중요</option>
-                  <option>가벼운 일</option>
-                </select>
-              </div>
-
-              {(task.start || task.end) && (
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {task.start && <InfoBox label="시작 시간" value={task.start} />}
-                  {task.end && <InfoBox label="종료 시간" value={task.end} />}
-                </div>
-              )}
-
-              <div className="mt-4 rounded-[26px] bg-zinc-50 p-4">
-                <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">
-                  AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.
-                </div>
-
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-zinc-700">작업 단계</p>
-                    <p className="text-xs text-zinc-500">완료 {doneCount}/{totalSteps}</p>
-                  </div>
-                  <button onClick={() => addStep(task.id)} className="rounded-xl border px-3 py-2 text-sm transition hover:bg-white">
-                    단계 추가
-                  </button>
-                </div>
-
-                <div className="mb-4 h-2 overflow-hidden rounded-full bg-white">
-                  <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${stepProgress}%` }} />
-                </div>
-
-                <div className="space-y-2">
-                  {(task.steps || []).map((step, idx) => (
-                    <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
-                      <button onClick={() => toggleStep(task.id, idx)} className={`flex h-5 w-5 items-center justify-center rounded-md border text-[10px] ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-transparent'}`}>
-                        ✓
-                      </button>
-                      <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
-                      <button onClick={() => deleteStep(task.id, idx)} className="rounded-lg border px-2 py-1 text-xs text-zinc-500 transition hover:bg-zinc-50">
-                        삭제
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+          ))}
         </div>
       </div>
     </article>
   );
-});
-
+}
