@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
@@ -944,6 +944,8 @@ const TaskCard = React.memo(function TaskCard({
 }) {
   const [draftTitle, setDraftTitle] = useState(task.title);
   const [draftNote, setDraftNote] = useState(task.note);
+  const [isExpanded, setIsExpanded] = useState(Boolean(isNew || task.status === '진행 중'));
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     setDraftTitle(task.title);
@@ -952,6 +954,12 @@ const TaskCard = React.memo(function TaskCard({
   useEffect(() => {
     setDraftNote(task.note);
   }, [task.note]);
+
+  useEffect(() => {
+    if (isNew || task.status === '진행 중') {
+      setIsExpanded(true);
+    }
+  }, [isNew, task.status]);
 
   const commitTitle = () => {
     if (draftTitle === task.title) return;
@@ -964,9 +972,16 @@ const TaskCard = React.memo(function TaskCard({
   };
 
   const doneCount = (task.steps || []).filter((step) => step.done).length;
-  const stepProgress = (task.steps || []).length
-    ? Math.round((doneCount / task.steps.length) * 100)
-    : 0;
+  const totalSteps = (task.steps || []).length;
+  const stepProgress = totalSteps ? Math.round((doneCount / totalSteps) * 100) : 0;
+
+  const mainActionLabel = !task.start ? '시작' : !task.end ? '종료' : '완료됨';
+  const canFinish = Boolean(task.start && !task.end);
+
+  const runAndClose = (fn) => {
+    setShowMenu(false);
+    fn();
+  };
 
   return (
     <article
@@ -975,117 +990,201 @@ const TaskCard = React.memo(function TaskCard({
       onDragStart={() => onDragStart(task.id)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onDropCard(task.id)}
-      className={`rounded-[30px] border p-5 transition ${
+      className={`rounded-[26px] border p-4 transition ${
         task.status === '진행 중'
-          ? 'border-emerald-300 bg-emerald-50/50 shadow-sm'
+          ? 'border-emerald-300 bg-emerald-50/60 shadow-sm'
           : isNew
           ? 'border-violet-400 bg-violet-50/60 shadow-sm'
           : 'border-zinc-100 bg-white'
       }`}
     >
-      <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
-        <span className="rounded-full bg-zinc-100 px-2 py-1">드래그 정렬</span>
-        <span>카드를 길게 잡고 위치를 바꿀 수 있어요</span>
-      </div>
-
-      <div className="min-w-0">
-        <div className="flex flex-wrap gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
-          <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
-        </div>
-
-        <input
-          value={draftTitle}
-          onChange={(e) => setDraftTitle(e.target.value)}
-          onBlur={commitTitle}
-          className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400"
-        />
-
-        <textarea
-          value={draftNote}
-          onChange={(e) => setDraftNote(e.target.value)}
-          onBlur={commitNote}
-          rows={2}
-          className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400"
-        />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {!task.start && (
-          <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
-            시작
-          </button>
-        )}
-        {task.start && !task.end && (
-          <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
-            종료
-          </button>
-        )}
-        {task.status === '진행 중' && (
-          <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
-            멈춤
-          </button>
-        )}
-        <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">
-          초기화
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          aria-label="드래그 정렬"
+          className="mt-1 rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2 text-sm text-zinc-500 cursor-grab active:cursor-grabbing"
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          ☰
         </button>
-        <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="rounded-xl border px-3 py-2.5 text-sm">
-          <option>가장 중요</option>
-          <option>중요</option>
-          <option>가벼운 일</option>
-        </select>
-        <button onClick={() => recommendPriority(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
-          우선순위 추천
-        </button>
-        <button onClick={() => splitTask(task.id)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
-          AI 작업분해
-        </button>
-        <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
-          {task.list === 'today' ? 'Later로' : 'Today로'}
-        </button>
-        <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
-          삭제
-        </button>
-      </div>
 
-      {(task.start || task.end) && (
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {task.start && <InfoBox label="시작 시간" value={task.start} />}
-          {task.end && <InfoBox label="종료 시간" value={task.end} />}
-        </div>
-      )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap gap-2">
+                <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
+                <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
+              </div>
 
-      <div className="mt-4 rounded-[26px] bg-zinc-50 p-4">
-        <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">
-          AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.
-        </div>
+              <input
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                onBlur={commitTitle}
+                className="mt-3 w-full bg-transparent text-base font-semibold outline-none placeholder:text-zinc-400 md:text-lg"
+              />
 
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-zinc-700">작업 단계</p>
-            <p className="text-xs text-zinc-500">완료 {doneCount}/{(task.steps || []).length}</p>
-          </div>
-          <button onClick={() => addStep(task.id)} className="rounded-xl border px-3 py-2 text-sm transition hover:bg-white">
-            단계 추가
-          </button>
-        </div>
-
-        <div className="mb-4 h-2 overflow-hidden rounded-full bg-white">
-          <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${stepProgress}%` }} />
-        </div>
-
-        <div className="space-y-2">
-          {(task.steps || []).map((step, idx) => (
-            <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
-              <button onClick={() => toggleStep(task.id, idx)} className={`flex h-5 w-5 items-center justify-center rounded-md border text-[10px] ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-transparent'}`}>
-                ✓
-              </button>
-              <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
-              <button onClick={() => deleteStep(task.id, idx)} className="rounded-lg border px-2 py-1 text-xs text-zinc-500 transition hover:bg-zinc-50">
-                삭제
-              </button>
+              {!isExpanded && (
+                <>
+                  {draftNote ? (
+                    <p className="mt-1 line-clamp-1 text-sm text-zinc-500">{draftNote}</p>
+                  ) : null}
+                  <div className="mt-3">
+                    <div className="mb-2 flex items-center justify-between text-xs text-zinc-400">
+                      <span>{totalSteps ? `작업 단계 ${doneCount}/${totalSteps}` : '작업 단계 없음'}</span>
+                      <span>{stepProgress}%</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+                      <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${stepProgress}%` }} />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          ))}
+
+            <button
+              type="button"
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className="rounded-xl border border-zinc-200 px-3 py-2 text-xs text-zinc-500 transition hover:bg-zinc-50"
+            >
+              {isExpanded ? '접기' : '펼치기'}
+            </button>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {!task.start ? (
+              <button
+                onClick={() => recordStart(task.id)}
+                className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]"
+              >
+                {mainActionLabel}
+              </button>
+            ) : canFinish ? (
+              <button
+                onClick={() => recordEnd(task.id)}
+                className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]"
+              >
+                {mainActionLabel}
+              </button>
+            ) : (
+              <button
+                disabled
+                className="rounded-xl bg-zinc-200 px-4 py-2.5 text-sm text-zinc-500"
+              >
+                {mainActionLabel}
+              </button>
+            )}
+
+            {task.status === '진행 중' && (
+              <button
+                onClick={() => pauseTask(task.id)}
+                className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100"
+                title="멈춤"
+              >
+                ⏸
+              </button>
+            )}
+
+            <button
+              onClick={() => resetTask(task.id)}
+              className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100"
+              title="초기화"
+            >
+              ↺
+            </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu((prev) => !prev)}
+                className="rounded-xl border border-zinc-200 px-3 py-2.5 text-sm text-zinc-700 transition hover:bg-zinc-50"
+              >
+                ⋯
+              </button>
+
+              {showMenu && (
+                <div className="absolute right-0 top-12 z-20 min-w-[180px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl">
+                  <button
+                    onClick={() => runAndClose(() => recommendPriority(task.id))}
+                    className="block w-full px-4 py-3 text-left text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    우선순위 추천
+                  </button>
+                  <button
+                    onClick={() => runAndClose(() => splitTask(task.id))}
+                    className="block w-full px-4 py-3 text-left text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    작업분해
+                  </button>
+                  <button
+                    onClick={() => runAndClose(() => moveList(task.id, task.list === 'today' ? 'later' : 'today'))}
+                    className="block w-full px-4 py-3 text-left text-sm text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    {task.list === 'today' ? 'Later로 이동' : 'Today로 이동'}
+                  </button>
+                  <div className="h-px bg-zinc-100" />
+                  <button
+                    onClick={() => runAndClose(() => deleteTask(task.id))}
+                    className="block w-full px-4 py-3 text-left text-sm text-rose-600 transition hover:bg-rose-50"
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(task.start || task.end) && (
+            <div className="mt-3 flex flex-wrap gap-3 text-xs text-zinc-500">
+              {task.start && <span>시작 {task.start}</span>}
+              {task.end && <span>종료 {task.end}</span>}
+            </div>
+          )}
+
+          {isExpanded && (
+            <>
+              <textarea
+                value={draftNote}
+                onChange={(e) => setDraftNote(e.target.value)}
+                onBlur={commitNote}
+                rows={2}
+                className="mt-4 w-full resize-none rounded-2xl bg-zinc-50 px-3 py-3 text-sm text-zinc-600 outline-none placeholder:text-zinc-400"
+              />
+
+              <div className="mt-4 rounded-[22px] bg-zinc-50 p-4">
+                <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">
+                  AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.
+                </div>
+
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-700">작업 단계</p>
+                    <p className="text-xs text-zinc-500">완료 {doneCount}/{totalSteps}</p>
+                  </div>
+                  <button onClick={() => addStep(task.id)} className="rounded-xl border px-3 py-2 text-sm transition hover:bg-white">
+                    단계 추가
+                  </button>
+                </div>
+
+                <div className="mb-4 h-2 overflow-hidden rounded-full bg-white">
+                  <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${stepProgress}%` }} />
+                </div>
+
+                <div className="space-y-2">
+                  {(task.steps || []).map((step, idx) => (
+                    <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
+                      <button onClick={() => toggleStep(task.id, idx)} className={`flex h-5 w-5 items-center justify-center rounded-md border text-[10px] ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-transparent'}`}>
+                        ✓
+                      </button>
+                      <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
+                      <button onClick={() => deleteStep(task.id, idx)} className="rounded-lg border px-2 py-1 text-xs text-zinc-500 transition hover:bg-zinc-50">
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </article>
