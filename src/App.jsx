@@ -1336,6 +1336,7 @@ function TaskCard({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {!task.start && <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>}
+        <button onClick={() => recordStart(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm text-violet-700 transition hover:bg-violet-100">집중 시작</button}
         {task.start && !task.end && <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">종료</button>}
         {task.status === '진행 중' && <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">멈춤</button>}
         <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">초기화</button>
