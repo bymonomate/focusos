@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
   focusMinutes: 'focus-os-focus-minutes',
+  todayStamp: 'focus-os-today-stamp',
 };
 
 const TODAY_LIMIT = 5;
@@ -132,6 +133,26 @@ function getTodayLabel() {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+
+function getDayStamp(date = new Date()) {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+
+function resetTasksForNewDay(taskList) {
+  return taskList.map((task) => {
+    if (task.status === '완료') return task;
+    if (task.list !== 'today') return task;
+    return {
+      ...task,
+      list: 'later',
+      status: '대기',
+      start: '',
+      end: '',
+      steps: (task.steps || []).map((step) => ({ ...step, done: false })),
+    };
+  });
+}
+
 function getRewardMessage(score) {
   if (score >= 90) return '오늘 흐름 정말 좋음';
   if (score >= 70) return '집중 유지 잘하고 있어요';
@@ -234,6 +255,8 @@ export default function FocusOS() {
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [dayStamp, setDayStamp] = useState(getDayStamp());
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -282,12 +305,18 @@ export default function FocusOS() {
 
     const savedTasks = storage.getItem(STORAGE_KEYS.tasks);
     const savedFocusMinutes = storage.getItem(STORAGE_KEYS.focusMinutes);
+    const savedDayStamp = storage.getItem(STORAGE_KEYS.todayStamp);
+    const currentStamp = getDayStamp();
 
     if (savedTasks) {
       try {
         const parsed = JSON.parse(savedTasks);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setTasks(parsed.map(normalizeTask));
+          const normalized = parsed.map(normalizeTask);
+          const nextTasks = savedDayStamp && savedDayStamp !== currentStamp
+            ? resetTasksForNewDay(normalized)
+            : normalized;
+          setTasks(nextTasks);
         }
       } catch {}
     }
@@ -299,6 +328,9 @@ export default function FocusOS() {
         setTimerSeconds(minutes * 60);
       }
     }
+
+    storage.setItem(STORAGE_KEYS.todayStamp, currentStamp);
+    setDayStamp(currentStamp);
   }, []);
 
   useEffect(() => {
@@ -306,7 +338,8 @@ export default function FocusOS() {
     if (!storage) return;
     storage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
     storage.setItem(STORAGE_KEYS.focusMinutes, String(focusMinutes));
-  }, [tasks, focusMinutes]);
+    storage.setItem(STORAGE_KEYS.todayStamp, dayStamp);
+  }, [tasks, focusMinutes, dayStamp]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -367,6 +400,7 @@ export default function FocusOS() {
   const laterTasks = sortedTasks.filter((task) => task.list === 'later' && task.status !== '완료');
   const completedTasks = sortedTasks.filter((task) => task.status === '완료');
   const focusTask = sortedTasks.find((task) => task.status === '진행 중') || todayTasks[0] || null;
+  const visibleTodayTasks = focusMode ? (focusTask ? [focusTask] : []) : todayTasks;
 
   const progress = sortedTasks.length ? Math.round((completedTasks.length / sortedTasks.length) * 100) : 0;
   const startedCount = sortedTasks.filter((task) => Boolean(task.start)).length;
@@ -579,6 +613,15 @@ export default function FocusOS() {
     setTimerSeconds(focusMinutes * 60);
   };
 
+
+  const toggleFocusMode = () => {
+    if (!focusMode && !focusTask) {
+      showToastMessage('집중할 작업이 아직 없어요. 먼저 Today에 작업을 추가해 주세요.');
+      return;
+    }
+    setFocusMode((prev) => !prev);
+  };
+
   const dailySummary = {
     completed: completedTasks.length,
     started: startedCount,
@@ -611,7 +654,7 @@ export default function FocusOS() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
             <p className="truncate text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
-          <div className="shrink-0 rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm">Focus Mode</div>
+          <button onClick={toggleFocusMode} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium shadow-sm transition ${focusMode ? 'bg-violet-600 text-white' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}>{focusMode ? '● Focus Mode ON' : 'Focus Mode'}</button>
         </div>
       </div>
 
@@ -693,20 +736,41 @@ export default function FocusOS() {
               <RuleCard title="작업 분해" desc="큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요." />
             </div>
           </Panel>
+
         </section>
+
+        {focusMode && focusTask && (
+          <section className="mb-6 rounded-[28px] border border-violet-200 bg-violet-50/60 p-5 shadow-sm sm:mb-8 sm:rounded-[32px] sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-violet-700">Focus Mode</p>
+                <h2 className="mt-1 text-[clamp(1.6rem,4.5vw,2.25rem)] font-semibold tracking-tight text-zinc-900">{focusTask.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">지금은 이 카드 하나만 보고 끝내면 돼요.</p>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto">
+                <button onClick={() => recordStart(focusTask.id)} className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01]">
+                  지금 시작하기
+                </button>
+                <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
+                  5분만 시작
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         <SectionCard
           eyebrow="Today"
-          title={`오늘 할 일 (${todayTasks.length}/${TODAY_LIMIT})`}
-          action={
+          title={`오늘 할 일 (${todayTasks.length}/${TODAY_LIMIT})${focusMode ? " · 집중 보기" : ""}`}
+          action={!focusMode ? (
             <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
               <button onClick={() => addTask('today')} className="order-1 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 오늘 할 일 추가</button>
               <button onClick={autoPrioritize} className="order-2 rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">우선순위 자동정리</button>
             </div>
-          }
+          ) : null}
         >
           <div className="space-y-4">
-            {todayTasks.length > 0 ? todayTasks.map((task) => (
+            {visibleTodayTasks.length > 0 ? visibleTodayTasks.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
@@ -728,11 +792,11 @@ export default function FocusOS() {
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
               />
-            )) : <EmptyBox text="오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요." />}
+            )) : <EmptyBox text={focusMode ? '집중 모드에서 보여줄 작업이 없어요. 먼저 시작할 작업을 정해보세요.' : '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.'} />}
           </div>
         </SectionCard>
 
-        <SectionCard
+        {!focusMode && <SectionCard
           eyebrow="Later"
           title="나중에 할 일"
           action={<button onClick={() => addTask('later')} className="w-full rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 sm:w-auto">+ 나중에 할 일 추가</button>}
@@ -760,9 +824,9 @@ export default function FocusOS() {
               />
             )) : <EmptyBox text="지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요." />}
           </div>
-        </SectionCard>
+        </SectionCard>}
 
-        {completedTasks.length > 0 && (
+        {!focusMode && completedTasks.length > 0 && (
           <SectionCard
             eyebrow="Completed"
             title="완료 목록"
