@@ -286,6 +286,7 @@ export default function FocusOS() {
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -754,6 +755,8 @@ export default function FocusOS() {
     setTimerSeconds(focusMinutes * 60);
   };
 
+  const toggleFocusMode = () => setFocusMode((prev) => !prev);
+
   const signOut = async () => {
     if (!supabaseClient) return;
     await supabaseClient.auth.signOut();
@@ -790,7 +793,7 @@ export default function FocusOS() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] text-zinc-900">
+    <main className={`min-h-screen text-zinc-900 ${focusMode ? "bg-zinc-950 text-white" : "bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)]"}`}>
       <div className="sticky top-0 z-30 border-b border-white/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
           <div>
@@ -798,12 +801,43 @@ export default function FocusOS() {
             <p className="text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm">Focus Mode</div>
+            <button onClick={toggleFocusMode} className={`rounded-full px-3 py-1.5 text-xs font-medium text-white shadow-sm transition ${focusMode ? "bg-violet-600" : "bg-zinc-900 hover:bg-zinc-800"}`}>{focusMode ? "● Focus Mode ON" : "Focus Mode"}</button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">로그아웃</button>
           </div>
         </div>
       </div>
 
+      {focusMode ? (
+        <section className="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-10">
+          <div className="rounded-[36px] border border-white/10 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] md:p-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-xl">
+                <p className="text-sm text-zinc-400">Focus Mode</p>
+                <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">{formatTimer(timerSeconds)}</h1>
+                <p className="mt-3 text-sm text-zinc-400">지금은 이 카드 하나만 보고 끝내면 돼.</p>
+                <div className="mt-6 rounded-[28px] border border-violet-400/20 bg-violet-500/10 p-5">
+                  <p className="text-sm text-violet-200">현재 작업</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{focusTask ? focusTask.title : '선택된 작업 없음'}</p>
+                  <p className="mt-2 text-sm leading-6 text-zinc-300">{focusTask ? focusTask.note || '작게 시작해도 충분해요.' : '오늘 할 일에서 시작 버튼을 눌러보세요.'}</p>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-2.5">
+                  <button onClick={toggleTimer} className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-zinc-900 transition hover:scale-[1.01]">{timerRunning ? '일시정지' : '타이머 시작'}</button>
+                  <button onClick={resetTimer} className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/15">리셋</button>
+                  <button onClick={quickStartFive} className="rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]">5분만 시작</button>
+                  <button onClick={toggleFocusMode} className="rounded-2xl border border-white/15 bg-transparent px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10">포커스 모드 종료</button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <ReportCard label="완료" value={`${completedTasks.length}`} sub="오늘 끝낸 일" dark />
+                <ReportCard label="진행률" value={`${progress}%`} sub="전체 흐름" dark />
+                <ReportCard label="시작" value={`${startedCount}`} sub="시도한 일" dark />
+                <ReportCard label="집중 점수" value={`${focusScore}`} sub={rewardMessage} dark />
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
         <header className="mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -983,6 +1017,8 @@ export default function FocusOS() {
             </div>
           </SectionCard>
         )}
+
+      )}
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
           <p className="font-medium text-zinc-700">Focus OS</p>
