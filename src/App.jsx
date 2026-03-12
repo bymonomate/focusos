@@ -235,6 +235,47 @@ export default function FocusOS() {
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  const [tailwindReady, setTailwindReady] = useState(
+    typeof window !== 'undefined' && !!window.tailwind
+  );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (window.tailwind) {
+      setTailwindReady(true);
+      return;
+    }
+
+    const existing = document.querySelector('script[data-focus-tailwind="1"]');
+    if (existing) {
+      existing.addEventListener('load', () => setTailwindReady(true), { once: true });
+      return;
+    }
+
+    const configScript = document.createElement('script');
+    configScript.setAttribute('data-focus-tailwind-config', '1');
+    configScript.text = `
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif']
+            }
+          }
+        }
+      }
+    `;
+    document.head.appendChild(configScript);
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.tailwindcss.com';
+    script.setAttribute('data-focus-tailwind', '1');
+    script.onload = () => setTailwindReady(true);
+    document.head.appendChild(script);
+  }, []);
+
+
   useEffect(() => {
     const storage = getStorage();
     if (!storage) return;
@@ -544,6 +585,23 @@ export default function FocusOS() {
     remaining: todayTasks.length,
     rewardMessage,
   };
+
+  if (!tailwindReady) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          background: 'linear-gradient(180deg, #f4f0ff 0%, #fffdf8 48%, #ffffff 100%)',
+          color: '#18181b',
+          fontFamily: 'Inter, system-ui, sans-serif',
+        }}
+      >
+        스타일 적용 중...
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] text-zinc-900">
