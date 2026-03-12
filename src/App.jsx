@@ -184,15 +184,44 @@ function getRewardMessage(score) {
   return '한 단계만 해도 충분해요';
 }
 
-function suggestPriority(title = '', note = '') {
+function getPriorityScore(title = '', note = '') {
   const text = `${title} ${note}`.toLowerCase();
 
-  if (text.includes('기획') || text.includes('마감') || text.includes('제안') || text.includes('발표')) {
-    return '가장 중요';
-  }
-  if (text.includes('답장') || text.includes('정리') || text.includes('확인') || text.includes('업로드')) {
-    return '가벼운 일';
-  }
+  let score = 0;
+
+  const urgentStrong = ['오늘', '지금', '급', '긴급', '마감', '제출', '오류', '수정'];
+  const urgentMedium = ['확인', '검토', '정리', '답장', '업로드', '발송', '세금계산서', '계약'];
+  const heavyWork = ['기획', '제안', '발표', '보고서', '브랜딩', '상세페이지', '디자인'];
+  const lightHints = ['가볍게', '짧게', '나중에', '아이디어', '레퍼런스', '초안 보기'];
+
+  urgentStrong.forEach((keyword) => {
+    if (text.includes(keyword)) score += 4;
+  });
+
+  urgentMedium.forEach((keyword) => {
+    if (text.includes(keyword)) score += 2;
+  });
+
+  heavyWork.forEach((keyword) => {
+    if (text.includes(keyword)) score += 1;
+  });
+
+  lightHints.forEach((keyword) => {
+    if (text.includes(keyword)) score -= 2;
+  });
+
+  if (text.includes('확인만')) score -= 1;
+  if (text.includes('먼저')) score += 1;
+  if (text.includes('바로')) score += 1;
+
+  return score;
+}
+
+function suggestPriority(title = '', note = '') {
+  const score = getPriorityScore(title, note);
+
+  if (score >= 6) return '가장 중요';
+  if (score <= 1) return '가벼운 일';
   return '중요';
 }
 
@@ -544,9 +573,7 @@ export default function FocusOS() {
   const laterTasks = sortedTasks.filter((task) => task.list === 'later' && task.status !== '완료');
   const completedTasks = sortedTasks.filter((task) => task.status === '완료');
   const activeTask = sortedTasks.find((task) => task.status === '진행 중') || null;
-  const focusTask = focusMode
-    ? sortedTasks.find((task) => task.id === focusedTaskId) || null
-    : activeTask;
+  const focusTask = activeTask;
 
   const progress = sortedTasks.length ? Math.round((completedTasks.length / sortedTasks.length) * 100) : 0;
   const startedCount = sortedTasks.filter((task) => Boolean(task.start)).length;
@@ -618,7 +645,7 @@ export default function FocusOS() {
   };
 
   const pauseTask = (taskId) => {
-    patchTask(taskId, (task) => (task.id === taskId ? { ...task, status: '대기' } : task));
+    patchTask(taskId, (task) => (task.status === '진행 중' ? { ...task, status: '대기' } : task));
     setTimerRunning(false);
     showToastMessage('작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.');
   };
@@ -666,16 +693,36 @@ export default function FocusOS() {
 
   const autoPrioritize = () => {
     setTasks((prev) => {
-      const reprioritized = prev.map((task) => ({
-        ...task,
-        priority: suggestPriority(task.title, task.note),
-      }));
-      return sortTasks(reprioritized).map((task, index) => ({
-        ...task,
-        createdAt: index + 1,
-      }));
+      const next = [...prev];
+
+      ['today', 'later'].forEach((listName) => {
+        const indexes = next
+          .map((task, index) => ({ task, index }))
+          .filter(({ task }) => task.list === listName && task.status !== '완료');
+
+        if (indexes.length === 0) return;
+
+        const ranked = [...indexes].sort((a, b) => {
+          const scoreDiff = getPriorityScore(b.task.title, b.task.note) - getPriorityScore(a.task.title, a.task.note);
+          if (scoreDiff !== 0) return scoreDiff;
+          return a.task.createdAt - b.task.createdAt;
+        });
+
+        ranked.forEach(({ index }, rankIndex) => {
+          let priority = '중요';
+          if (rankIndex === 0) {
+            priority = '가장 중요';
+          } else if (rankIndex >= Math.max(2, ranked.length - 1)) {
+            priority = '가벼운 일';
+          }
+          next[index] = { ...next[index], priority };
+        });
+      });
+
+      return next;
     });
-    showToastMessage('전체 할 일 우선순위를 다시 추천했어요.');
+
+    showToastMessage('현재 카드 기준으로 우선순위를 다시 정리했어요.');
   };
 
   const handleDrop = (targetId) => {
@@ -870,7 +917,7 @@ export default function FocusOS() {
                   {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 선택해 주세요. 필요하면 Focus Mode 종료로 원래 화면으로 돌아갈 수 있어요.'}
+                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '오늘 할 일에서 시작 버튼을 누르거나, 여기서 5분만 시작을 눌러 첫 작업을 바로 시작해 보세요.'}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1358,7 +1405,7 @@ function TaskCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>
+        {!task.start && <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>}
         <button onClick={() => startFocusMode(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:bg-violet-100">집중 시작</button>
         {task.start && !task.end && <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">종료</button>}
         {task.status === '진행 중' && <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">멈춤</button>}
