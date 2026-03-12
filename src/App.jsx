@@ -544,7 +544,9 @@ export default function FocusOS() {
   const laterTasks = sortedTasks.filter((task) => task.list === 'later' && task.status !== '완료');
   const completedTasks = sortedTasks.filter((task) => task.status === '완료');
   const activeTask = sortedTasks.find((task) => task.status === '진행 중') || null;
-  const focusTask = activeTask;
+  const focusTask = focusMode
+    ? sortedTasks.find((task) => task.id === focusedTaskId) || null
+    : activeTask;
 
   const progress = sortedTasks.length ? Math.round((completedTasks.length / sortedTasks.length) * 100) : 0;
   const startedCount = sortedTasks.filter((task) => Boolean(task.start)).length;
@@ -616,7 +618,7 @@ export default function FocusOS() {
   };
 
   const pauseTask = (taskId) => {
-    patchTask(taskId, (task) => (task.status === '진행 중' ? { ...task, status: '대기' } : task));
+    patchTask(taskId, (task) => (task.id === taskId ? { ...task, status: '대기' } : task));
     setTimerRunning(false);
     showToastMessage('작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.');
   };
@@ -663,7 +665,16 @@ export default function FocusOS() {
   };
 
   const autoPrioritize = () => {
-    setTasks((prev) => prev.map((task) => ({ ...task, priority: suggestPriority(task.title, task.note) })));
+    setTasks((prev) => {
+      const reprioritized = prev.map((task) => ({
+        ...task,
+        priority: suggestPriority(task.title, task.note),
+      }));
+      return sortTasks(reprioritized).map((task, index) => ({
+        ...task,
+        createdAt: index + 1,
+      }));
+    });
     showToastMessage('전체 할 일 우선순위를 다시 추천했어요.');
   };
 
@@ -859,7 +870,7 @@ export default function FocusOS() {
                   {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '오늘 할 일에서 시작 버튼을 누르거나, 여기서 5분만 시작을 눌러 첫 작업을 바로 시작해 보세요.'}
+                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 선택해 주세요. 필요하면 Focus Mode 종료로 원래 화면으로 돌아갈 수 있어요.'}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1347,7 +1358,7 @@ function TaskCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {!task.start && <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>}
+        <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">시작</button>
         <button onClick={() => startFocusMode(task.id)} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 transition hover:bg-violet-100">집중 시작</button>
         {task.start && !task.end && <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">종료</button>}
         {task.status === '진행 중' && <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">멈춤</button>}
