@@ -9,6 +9,9 @@ const STORAGE_KEYS = {
 const TODAY_LIMIT = 5;
 const FOCUS_PRESETS = [5, 15, 25, 45];
 
+const SUPABASE_URL = 'https://txsitevklbliwqmvtkvh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4c2l0ZXZrbGJsaXdxbXZ0a3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyOTMzOTIsImV4cCI6MjA4ODg2OTM5Mn0.nLnI2rfMkGj_End1Yqs-AQiz_xQH5JwOfDVXGJ19lik';
+
 const PRIORITY_ORDER = {
   '가장 중요': 0,
   중요: 1,
@@ -128,6 +131,15 @@ function getStorage() {
   return window.localStorage;
 }
 
+function getScopedStorageKeys(userId) {
+  const scope = userId || 'guest';
+  return {
+    tasks: `${STORAGE_KEYS.tasks}-${scope}`,
+    focusMinutes: `${STORAGE_KEYS.focusMinutes}-${scope}`,
+    todayStamp: `${STORAGE_KEYS.todayStamp}-${scope}`,
+  };
+}
+
 function getTodayLabel() {
   const date = new Date();
   return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -242,6 +254,10 @@ function sortTasks(tasks) {
 export default function FocusOS() {
   const newestTaskRef = useRef(null);
 
+  const [supabaseClient, setSupabaseClient] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [session, setSession] = useState(null);
+
   const [tasks, setTasks] = useState(DEFAULT_TASKS);
   const [newTaskId, setNewTaskId] = useState(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -261,6 +277,47 @@ export default function FocusOS() {
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const ready = () => {
+      if (window.supabase?.createClient) {
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        setSupabaseClient(client);
+        client.auth.getSession().then(({ data }) => {
+          setSession(data.session ?? null);
+          setAuthReady(true);
+        });
+        const {
+          data: { subscription },
+        } = client.auth.onAuthStateChange((_event, nextSession) => {
+          setSession(nextSession ?? null);
+        });
+        return () => subscription.unsubscribe();
+      }
+      setAuthReady(true);
+      return undefined;
+    };
+
+    if (window.supabase?.createClient) {
+      return ready();
+    }
+
+    const existing = document.querySelector('script[data-focus-supabase="1"]');
+    if (existing) {
+      const handleLoad = () => ready();
+      existing.addEventListener('load', handleLoad, { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    script.setAttribute('data-focus-supabase', '1');
+    script.onload = () => ready();
+    script.onerror = () => setAuthReady(true);
+    document.head.appendChild(script);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -300,13 +357,24 @@ export default function FocusOS() {
 
 
   useEffect(() => {
+    if (!session?.user?.id) return;
     const storage = getStorage();
     if (!storage) return;
 
-    const savedTasks = storage.getItem(STORAGE_KEYS.tasks);
-    const savedFocusMinutes = storage.getItem(STORAGE_KEYS.focusMinutes);
-    const savedDayStamp = storage.getItem(STORAGE_KEYS.todayStamp);
+    const scopedKeys = getScopedStorageKeys(session.user.id);
+    const savedTasks = storage.getItem(scopedKeys.tasks);
+    const savedFocusMinutes = storage.getItem(scopedKeys.focusMinutes);
+    const savedDayStamp = storage.getItem(scopedKeys.todayStamp);
     const currentStamp = getDayStamp();
+
+    setTasks(DEFAULT_TASKS);
+    setFocusMinutes(25);
+    setTimerSeconds(25 * 60);
+    setTimerRunning(false);
+    setExpandedReport(false);
+    setDailySummaryOpen(false);
+    setShowCelebrate(false);
+    setFocusMode(false);
 
     if (savedTasks) {
       try {
@@ -329,17 +397,19 @@ export default function FocusOS() {
       }
     }
 
-    storage.setItem(STORAGE_KEYS.todayStamp, currentStamp);
+    storage.setItem(scopedKeys.todayStamp, currentStamp);
     setDayStamp(currentStamp);
-  }, []);
+  }, [session?.user?.id]);
 
   useEffect(() => {
+    if (!session?.user?.id) return;
     const storage = getStorage();
     if (!storage) return;
-    storage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
-    storage.setItem(STORAGE_KEYS.focusMinutes, String(focusMinutes));
-    storage.setItem(STORAGE_KEYS.todayStamp, dayStamp);
-  }, [tasks, focusMinutes, dayStamp]);
+    const scopedKeys = getScopedStorageKeys(session.user.id);
+    storage.setItem(scopedKeys.tasks, JSON.stringify(tasks));
+    storage.setItem(scopedKeys.focusMinutes, String(focusMinutes));
+    storage.setItem(scopedKeys.todayStamp, dayStamp);
+  }, [session?.user?.id, tasks, focusMinutes, dayStamp]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -622,6 +692,12 @@ export default function FocusOS() {
     setFocusMode((prev) => !prev);
   };
 
+  const signOut = async () => {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
+    setSession(null);
+  };
+
   const dailySummary = {
     completed: completedTasks.length,
     started: startedCount,
@@ -629,7 +705,7 @@ export default function FocusOS() {
     rewardMessage,
   };
 
-  if (!tailwindReady) {
+  if (!tailwindReady || !authReady) {
     return (
       <div
         style={{
@@ -641,9 +717,13 @@ export default function FocusOS() {
           fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
-        스타일 적용 중...
+        불러오는 중...
       </div>
     );
+  }
+
+  if (!session) {
+    return <AuthScreen supabaseClient={supabaseClient} />;
   }
 
   return (
@@ -654,7 +734,10 @@ export default function FocusOS() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
             <p className="truncate text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
-          <button onClick={toggleFocusMode} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium shadow-sm transition ${focusMode ? 'bg-violet-600 text-white' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}>{focusMode ? '● Focus Mode ON' : 'Focus Mode'}</button>
+          <div className="flex items-center gap-2">
+            <button onClick={toggleFocusMode} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium shadow-sm transition ${focusMode ? 'bg-violet-600 text-white' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}>{focusMode ? '● Focus Mode ON' : 'Focus Mode'}</button>
+            <button onClick={signOut} className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">로그아웃</button>
+          </div>
         </div>
       </div>
 
@@ -911,6 +994,112 @@ export default function FocusOS() {
           }
         `}</style>
       </section>
+    </main>
+  );
+}
+
+
+function AuthScreen({ supabaseClient }) {
+  const [mode, setMode] = useState('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const submit = async () => {
+    if (!supabaseClient) {
+      setMessage('인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    if (!email || !password) {
+      setMessage('이메일과 비밀번호를 입력해 주세요.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    if (mode === 'signup') {
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) {
+        setMessage(error.message);
+      } else {
+        setMessage('회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.');
+      }
+    } else {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        setMessage(error.message);
+      }
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
+      <div className="mx-auto max-w-md">
+        <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">Focus OS</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">지금 바로 시작하기</h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-500">
+            로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.
+          </p>
+
+          <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1">
+            <button
+              onClick={() => setMode('signin')}
+              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${mode === 'signin' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+            >
+              로그인
+            </button>
+            <button
+              onClick={() => setMode('signup')}
+              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${mode === 'signup' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
+            >
+              회원가입
+            </button>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            <input
+              type="email"
+              placeholder="이메일"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-violet-300"
+            />
+            <input
+              type="password"
+              placeholder="비밀번호"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-violet-300"
+            />
+          </div>
+
+          <button
+            onClick={submit}
+            disabled={loading}
+            className="mt-5 w-full rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? '처리 중...' : mode === 'signup' ? '회원가입하기' : '로그인하기'}
+          </button>
+
+          {message ? (
+            <div className="mt-4 rounded-2xl bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+              {message}
+            </div>
+          ) : null}
+
+          <div className="mt-6 rounded-[24px] bg-violet-50 p-4">
+            <p className="text-sm font-medium text-violet-700">7일 무료 체험</p>
+            <p className="mt-1 text-sm leading-6 text-zinc-600">
+              가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.
+            </p>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
