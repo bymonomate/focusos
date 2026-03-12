@@ -3,14 +3,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
   focusMinutes: 'focus-os-focus-minutes',
-  todayStamp: 'focus-os-today-stamp',
 };
 
 const TODAY_LIMIT = 5;
 const FOCUS_PRESETS = [5, 15, 25, 45];
-
-const SUPABASE_URL = 'https://txsitevklbliwqmvtkvh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4c2l0ZXZrbGJsaXdxbXZ0a3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyOTMzOTIsImV4cCI6MjA4ODg2OTM5Mn0.nLnI2rfMkGj_End1Yqs-AQiz_xQH5JwOfDVXGJ19lik';
 
 const PRIORITY_ORDER = {
   '가장 중요': 0,
@@ -131,38 +127,9 @@ function getStorage() {
   return window.localStorage;
 }
 
-function getScopedStorageKeys(userId) {
-  const scope = userId || 'guest';
-  return {
-    tasks: `${STORAGE_KEYS.tasks}-${scope}`,
-    focusMinutes: `${STORAGE_KEYS.focusMinutes}-${scope}`,
-    todayStamp: `${STORAGE_KEYS.todayStamp}-${scope}`,
-  };
-}
-
 function getTodayLabel() {
   const date = new Date();
   return `${date.getMonth() + 1}/${date.getDate()}`;
-}
-
-
-function getDayStamp(date = new Date()) {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-}
-
-function resetTasksForNewDay(taskList) {
-  return taskList.map((task) => {
-    if (task.status === '완료') return task;
-    if (task.list !== 'today') return task;
-    return {
-      ...task,
-      list: 'later',
-      status: '대기',
-      start: '',
-      end: '',
-      steps: (task.steps || []).map((step) => ({ ...step, done: false })),
-    };
-  });
 }
 
 function getRewardMessage(score) {
@@ -254,10 +221,6 @@ function sortTasks(tasks) {
 export default function FocusOS() {
   const newestTaskRef = useRef(null);
 
-  const [supabaseClient, setSupabaseClient] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [session, setSession] = useState(null);
-
   const [tasks, setTasks] = useState(DEFAULT_TASKS);
   const [newTaskId, setNewTaskId] = useState(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -271,53 +234,10 @@ export default function FocusOS() {
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-  const [dayStamp, setDayStamp] = useState(getDayStamp());
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
   );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const ready = () => {
-      if (window.supabase?.createClient) {
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        setSupabaseClient(client);
-        client.auth.getSession().then(({ data }) => {
-          setSession(data.session ?? null);
-          setAuthReady(true);
-        });
-        const {
-          data: { subscription },
-        } = client.auth.onAuthStateChange((_event, nextSession) => {
-          setSession(nextSession ?? null);
-        });
-        return () => subscription.unsubscribe();
-      }
-      setAuthReady(true);
-      return undefined;
-    };
-
-    if (window.supabase?.createClient) {
-      return ready();
-    }
-
-    const existing = document.querySelector('script[data-focus-supabase="1"]');
-    if (existing) {
-      const handleLoad = () => ready();
-      existing.addEventListener('load', handleLoad, { once: true });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-    script.setAttribute('data-focus-supabase', '1');
-    script.onload = () => ready();
-    script.onerror = () => setAuthReady(true);
-    document.head.appendChild(script);
-  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -357,34 +277,17 @@ export default function FocusOS() {
 
 
   useEffect(() => {
-    if (!session?.user?.id) return;
     const storage = getStorage();
     if (!storage) return;
 
-    const scopedKeys = getScopedStorageKeys(session.user.id);
-    const savedTasks = storage.getItem(scopedKeys.tasks);
-    const savedFocusMinutes = storage.getItem(scopedKeys.focusMinutes);
-    const savedDayStamp = storage.getItem(scopedKeys.todayStamp);
-    const currentStamp = getDayStamp();
-
-    setTasks(DEFAULT_TASKS);
-    setFocusMinutes(25);
-    setTimerSeconds(25 * 60);
-    setTimerRunning(false);
-    setExpandedReport(false);
-    setDailySummaryOpen(false);
-    setShowCelebrate(false);
-    setFocusMode(false);
+    const savedTasks = storage.getItem(STORAGE_KEYS.tasks);
+    const savedFocusMinutes = storage.getItem(STORAGE_KEYS.focusMinutes);
 
     if (savedTasks) {
       try {
         const parsed = JSON.parse(savedTasks);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const normalized = parsed.map(normalizeTask);
-          const nextTasks = savedDayStamp && savedDayStamp !== currentStamp
-            ? resetTasksForNewDay(normalized)
-            : normalized;
-          setTasks(nextTasks);
+          setTasks(parsed.map(normalizeTask));
         }
       } catch {}
     }
@@ -396,20 +299,14 @@ export default function FocusOS() {
         setTimerSeconds(minutes * 60);
       }
     }
-
-    storage.setItem(scopedKeys.todayStamp, currentStamp);
-    setDayStamp(currentStamp);
-  }, [session?.user?.id]);
+  }, []);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
     const storage = getStorage();
     if (!storage) return;
-    const scopedKeys = getScopedStorageKeys(session.user.id);
-    storage.setItem(scopedKeys.tasks, JSON.stringify(tasks));
-    storage.setItem(scopedKeys.focusMinutes, String(focusMinutes));
-    storage.setItem(scopedKeys.todayStamp, dayStamp);
-  }, [session?.user?.id, tasks, focusMinutes, dayStamp]);
+    storage.setItem(STORAGE_KEYS.tasks, JSON.stringify(tasks));
+    storage.setItem(STORAGE_KEYS.focusMinutes, String(focusMinutes));
+  }, [tasks, focusMinutes]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -470,7 +367,6 @@ export default function FocusOS() {
   const laterTasks = sortedTasks.filter((task) => task.list === 'later' && task.status !== '완료');
   const completedTasks = sortedTasks.filter((task) => task.status === '완료');
   const focusTask = sortedTasks.find((task) => task.status === '진행 중') || todayTasks[0] || null;
-  const visibleTodayTasks = focusMode ? (focusTask ? [focusTask] : []) : todayTasks;
 
   const progress = sortedTasks.length ? Math.round((completedTasks.length / sortedTasks.length) * 100) : 0;
   const startedCount = sortedTasks.filter((task) => Boolean(task.start)).length;
@@ -683,21 +579,6 @@ export default function FocusOS() {
     setTimerSeconds(focusMinutes * 60);
   };
 
-
-  const toggleFocusMode = () => {
-    if (!focusMode && !focusTask) {
-      showToastMessage('집중할 작업이 아직 없어요. 먼저 Today에 작업을 추가해 주세요.');
-      return;
-    }
-    setFocusMode((prev) => !prev);
-  };
-
-  const signOut = async () => {
-    if (!supabaseClient) return;
-    await supabaseClient.auth.signOut();
-    setSession(null);
-  };
-
   const dailySummary = {
     completed: completedTasks.length,
     started: startedCount,
@@ -705,7 +586,7 @@ export default function FocusOS() {
     rewardMessage,
   };
 
-  if (!tailwindReady || !authReady) {
+  if (!tailwindReady) {
     return (
       <div
         style={{
@@ -717,27 +598,20 @@ export default function FocusOS() {
           fontFamily: 'Inter, system-ui, sans-serif',
         }}
       >
-        불러오는 중...
+        스타일 적용 중...
       </div>
     );
   }
 
-  if (!session) {
-    return <AuthScreen supabaseClient={supabaseClient} />;
-  }
-
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] text-zinc-900">
-      <div className="sticky top-0 z-30 border-b border-white/70 bg-white/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 md:px-6">
-          <div className="min-w-0">
+      <div className="sticky top-0 z-30 border-b border-white/70 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
+          <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
-            <p className="truncate text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
+            <p className="text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={toggleFocusMode} className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium shadow-sm transition ${focusMode ? 'bg-violet-600 text-white' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}>{focusMode ? '● Focus Mode ON' : 'Focus Mode'}</button>
-            <button onClick={signOut} className="shrink-0 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">로그아웃</button>
-          </div>
+          <div className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm">Focus Mode</div>
         </div>
       </div>
 
@@ -819,41 +693,20 @@ export default function FocusOS() {
               <RuleCard title="작업 분해" desc="큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요." />
             </div>
           </Panel>
-
         </section>
-
-        {focusMode && focusTask && (
-          <section className="mb-6 rounded-[28px] border border-violet-200 bg-violet-50/60 p-5 shadow-sm sm:mb-8 sm:rounded-[32px] sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-violet-700">Focus Mode</p>
-                <h2 className="mt-1 text-[clamp(1.6rem,4.5vw,2.25rem)] font-semibold tracking-tight text-zinc-900">{focusTask.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">지금은 이 카드 하나만 보고 끝내면 돼요.</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto">
-                <button onClick={() => recordStart(focusTask.id)} className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01]">
-                  지금 시작하기
-                </button>
-                <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-5 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
-                  5분만 시작
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
 
         <SectionCard
           eyebrow="Today"
-          title={`오늘 할 일 (${todayTasks.length}/${TODAY_LIMIT})${focusMode ? " · 집중 보기" : ""}`}
-          action={!focusMode ? (
-            <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-              <button onClick={() => addTask('today')} className="order-1 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 오늘 할 일 추가</button>
-              <button onClick={autoPrioritize} className="order-2 rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">우선순위 자동정리</button>
+          title={`오늘 할 일 (${todayTasks.length}/${TODAY_LIMIT})`}
+          action={
+            <div className="flex flex-wrap gap-2">
+              <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">우선순위 자동정리</button>
+              <button onClick={() => addTask('today')} className="rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 오늘 할 일 추가</button>
             </div>
-          ) : null}
+          }
         >
           <div className="space-y-4">
-            {visibleTodayTasks.length > 0 ? visibleTodayTasks.map((task) => (
+            {todayTasks.length > 0 ? todayTasks.map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
@@ -875,14 +728,14 @@ export default function FocusOS() {
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
               />
-            )) : <EmptyBox text={focusMode ? '집중 모드에서 보여줄 작업이 없어요. 먼저 시작할 작업을 정해보세요.' : '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.'} />}
+            )) : <EmptyBox text="오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요." />}
           </div>
         </SectionCard>
 
-        {!focusMode && <SectionCard
+        <SectionCard
           eyebrow="Later"
           title="나중에 할 일"
-          action={<button onClick={() => addTask('later')} className="w-full rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 sm:w-auto">+ 나중에 할 일 추가</button>}
+          action={<button onClick={() => addTask('later')} className="rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 나중에 할 일 추가</button>}
         >
           <div className="space-y-4">
             {laterTasks.length > 0 ? laterTasks.map((task) => (
@@ -907,9 +760,9 @@ export default function FocusOS() {
               />
             )) : <EmptyBox text="지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요." />}
           </div>
-        </SectionCard>}
+        </SectionCard>
 
-        {!focusMode && completedTasks.length > 0 && (
+        {completedTasks.length > 0 && (
           <SectionCard
             eyebrow="Completed"
             title="완료 목록"
@@ -998,125 +851,19 @@ export default function FocusOS() {
   );
 }
 
-
-function AuthScreen({ supabaseClient }) {
-  const [mode, setMode] = useState('signin');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    if (!supabaseClient) {
-      setMessage('인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
-      return;
-    }
-    if (!email || !password) {
-      setMessage('이메일과 비밀번호를 입력해 주세요.');
-      return;
-    }
-
-    setLoading(true);
-    setMessage('');
-
-    if (mode === 'signup') {
-      const { error } = await supabaseClient.auth.signUp({ email, password });
-      if (error) {
-        setMessage(error.message);
-      } else {
-        setMessage('회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.');
-      }
-    } else {
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        setMessage(error.message);
-      }
-    }
-
-    setLoading(false);
-  };
-
-  return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
-      <div className="mx-auto max-w-md">
-        <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">Focus OS</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">지금 바로 시작하기</h1>
-          <p className="mt-2 text-sm leading-6 text-zinc-500">
-            로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.
-          </p>
-
-          <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1">
-            <button
-              onClick={() => setMode('signin')}
-              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${mode === 'signin' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
-            >
-              로그인
-            </button>
-            <button
-              onClick={() => setMode('signup')}
-              className={`rounded-2xl px-4 py-2.5 text-sm font-medium transition ${mode === 'signup' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
-            >
-              회원가입
-            </button>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            <input
-              type="email"
-              placeholder="이메일"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-violet-300"
-            />
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none transition focus:border-violet-300"
-            />
-          </div>
-
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="mt-5 w-full rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? '처리 중...' : mode === 'signup' ? '회원가입하기' : '로그인하기'}
-          </button>
-
-          {message ? (
-            <div className="mt-4 rounded-2xl bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-              {message}
-            </div>
-          ) : null}
-
-          <div className="mt-6 rounded-[24px] bg-violet-50 p-4">
-            <p className="text-sm font-medium text-violet-700">7일 무료 체험</p>
-            <p className="mt-1 text-sm leading-6 text-zinc-600">
-              가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
-}
-
 function Panel({ children }) {
   return <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm">{children}</div>;
 }
 
 function SectionCard({ eyebrow, title, action, children }) {
   return (
-    <section className="mb-6 rounded-[28px] border border-zinc-100 bg-white p-4 shadow-sm sm:mb-8 sm:rounded-[32px] sm:p-6">
-      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
+    <section className="mb-8 rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div>
           <p className="text-sm font-medium text-violet-700">{eyebrow}</p>
-          <h2 className="text-[clamp(1.75rem,5vw,2.25rem)] font-semibold tracking-tight sm:text-2xl">{title}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         </div>
-        {action ? <div className="w-full sm:w-auto">{action}</div> : null}
+        {action}
       </div>
       {children}
     </section>
@@ -1175,7 +922,6 @@ function InfoBox({ label, value }) {
 }
 
 
-
 const TaskCard = React.memo(function TaskCard({
   task,
   isNew,
@@ -1214,13 +960,6 @@ const TaskCard = React.memo(function TaskCard({
     if (task.status === '진행 중') setCollapsed(false);
   }, [task.status]);
 
-  useEffect(() => {
-    const close = () => setMenuOpen(false);
-    if (!menuOpen) return;
-    window.addEventListener('click', close);
-    return () => window.removeEventListener('click', close);
-  }, [menuOpen]);
-
   const commitTitle = () => {
     if (draftTitle === task.title) return;
     updateTask(task.id, { title: draftTitle });
@@ -1238,8 +977,6 @@ const TaskCard = React.memo(function TaskCard({
   const enableDrag = () => setDragReady(true);
   const disableDrag = () => setDragReady(false);
 
-  const primaryAction = !task.start ? 'start' : !task.end ? 'finish' : 'done';
-
   return (
     <article
       ref={innerRef}
@@ -1248,7 +985,7 @@ const TaskCard = React.memo(function TaskCard({
       onDragEnd={disableDrag}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onDropCard(task.id)}
-      className={`rounded-[24px] border p-3 transition sm:rounded-[30px] sm:p-4 ${
+      className={`rounded-[30px] border p-4 transition ${
         task.status === '진행 중'
           ? 'border-emerald-300 bg-emerald-50/50 shadow-sm'
           : isNew
@@ -1264,29 +1001,20 @@ const TaskCard = React.memo(function TaskCard({
           onMouseLeave={disableDrag}
           onTouchStart={enableDrag}
           onTouchEnd={disableDrag}
-          className="mt-1 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 active:scale-95 cursor-grab active:cursor-grabbing"
+          className="mt-1 shrink-0 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 active:scale-95"
           title="드래그해서 순서 정렬"
         >
           ☰
         </button>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <input
-                value={draftTitle}
-                onChange={(e) => setDraftTitle(e.target.value)}
-                onBlur={commitTitle}
-                className="w-full bg-transparent text-[22px] font-semibold leading-tight outline-none placeholder:text-zinc-400 sm:text-lg"
-              />
-
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
-                <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
-              </div>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
+              <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setCollapsed((prev) => !prev)}
@@ -1298,20 +1026,14 @@ const TaskCard = React.memo(function TaskCard({
               <div className="relative">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpen((prev) => !prev);
-                  }}
+                  onClick={() => setMenuOpen((prev) => !prev)}
                   className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50"
                 >
                   ⋯
                 </button>
 
                 {menuOpen && (
-                  <div
-                    className="absolute right-0 top-12 z-20 min-w-[170px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <div className="absolute right-0 top-12 z-20 min-w-[170px] overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg">
                     <button
                       type="button"
                       onClick={() => {
@@ -1345,16 +1067,6 @@ const TaskCard = React.memo(function TaskCard({
                     <button
                       type="button"
                       onClick={() => {
-                        resetTask(task.id);
-                        setMenuOpen(false);
-                      }}
-                      className="block w-full border-b border-zinc-100 px-4 py-3 text-left text-sm text-zinc-700 hover:bg-zinc-50 sm:hidden"
-                    >
-                      초기화
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
                         deleteTask(task.id);
                         setMenuOpen(false);
                       }}
@@ -1368,7 +1080,14 @@ const TaskCard = React.memo(function TaskCard({
             </div>
           </div>
 
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
+          <input
+            value={draftTitle}
+            onChange={(e) => setDraftTitle(e.target.value)}
+            onBlur={commitTitle}
+            className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400"
+          />
+
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100">
             <div
               className="h-full rounded-full bg-violet-500 transition-all"
               style={{ width: `${stepProgress}%` }}
@@ -1390,22 +1109,22 @@ const TaskCard = React.memo(function TaskCard({
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {primaryAction === 'start' && (
-                  <button onClick={() => recordStart(task.id)} className="min-h-10 rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
+                {!task.start && (
+                  <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
                     시작
                   </button>
                 )}
-                {primaryAction === 'finish' && (
-                  <button onClick={() => recordEnd(task.id)} className="min-h-10 rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
+                {task.start && !task.end && (
+                  <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
                     종료
                   </button>
                 )}
                 {task.status === '진행 중' && (
-                  <button onClick={() => pauseTask(task.id)} className="min-h-10 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
+                  <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
                     멈춤
                   </button>
                 )}
-                <button onClick={() => resetTask(task.id)} className="hidden min-h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100 sm:inline-flex">
+                <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">
                   초기화
                 </button>
               </div>
@@ -1422,27 +1141,27 @@ const TaskCard = React.memo(function TaskCard({
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {!task.start && (
-                  <button onClick={() => recordStart(task.id)} className="min-h-10 rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
+                  <button onClick={() => recordStart(task.id)} className="rounded-xl bg-black px-4 py-2.5 text-sm text-white transition hover:scale-[1.01]">
                     시작
                   </button>
                 )}
                 {task.start && !task.end && (
-                  <button onClick={() => recordEnd(task.id)} className="min-h-10 rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
+                  <button onClick={() => recordEnd(task.id)} className="rounded-xl border px-4 py-2.5 text-sm transition hover:bg-zinc-50">
                     종료
                   </button>
                 )}
                 {task.status === '진행 중' && (
-                  <button onClick={() => pauseTask(task.id)} className="min-h-10 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
+                  <button onClick={() => pauseTask(task.id)} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700 transition hover:bg-amber-100">
                     멈춤
                   </button>
                 )}
-                <button onClick={() => resetTask(task.id)} className="min-h-10 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">
+                <button onClick={() => resetTask(task.id)} className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700 transition hover:bg-rose-100">
                   초기화
                 </button>
                 <select
                   value={task.priority}
                   onChange={(e) => updateTask(task.id, { priority: e.target.value })}
-                  className="min-h-10 rounded-xl border px-3 py-2.5 text-sm"
+                  className="rounded-xl border px-3 py-2.5 text-sm"
                 >
                   <option>가장 중요</option>
                   <option>중요</option>
@@ -1451,13 +1170,13 @@ const TaskCard = React.memo(function TaskCard({
               </div>
 
               {(task.start || task.end) && (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
                   {task.start && <InfoBox label="시작 시간" value={task.start} />}
                   {task.end && <InfoBox label="종료 시간" value={task.end} />}
                 </div>
               )}
 
-              <div className="mt-4 rounded-[22px] bg-zinc-50 p-3 sm:rounded-[26px] sm:p-4">
+              <div className="mt-4 rounded-[26px] bg-zinc-50 p-4">
                 <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">
                   AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.
                 </div>
@@ -1478,7 +1197,7 @@ const TaskCard = React.memo(function TaskCard({
 
                 <div className="space-y-2">
                   {(task.steps || []).map((step, idx) => (
-                    <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-zinc-100 sm:rounded-[20px]">
+                    <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
                       <button onClick={() => toggleStep(task.id, idx)} className={`flex h-5 w-5 items-center justify-center rounded-md border text-[10px] ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-transparent'}`}>
                         ✓
                       </button>
@@ -1497,5 +1216,4 @@ const TaskCard = React.memo(function TaskCard({
     </article>
   );
 });
-
 
