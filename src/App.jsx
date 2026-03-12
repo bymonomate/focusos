@@ -542,7 +542,8 @@ export default function FocusOS() {
   const todayTasks = sortedTasks.filter((task) => task.list === 'today' && task.status !== '완료');
   const laterTasks = sortedTasks.filter((task) => task.list === 'later' && task.status !== '완료');
   const completedTasks = sortedTasks.filter((task) => task.status === '완료');
-  const focusTask = sortedTasks.find((task) => task.status === '진행 중') || todayTasks[0] || null;
+  const activeTask = sortedTasks.find((task) => task.status === '진행 중') || null;
+  const focusTask = activeTask;
 
   const progress = sortedTasks.length ? Math.round((completedTasks.length / sortedTasks.length) * 100) : 0;
   const startedCount = sortedTasks.filter((task) => Boolean(task.start)).length;
@@ -732,9 +733,10 @@ export default function FocusOS() {
   const quickStartFive = () => {
     setFocusMinutes(5);
     setTimerSeconds(5 * 60);
-    const target = todayTasks[0];
+    const target = focusTask || todayTasks[0] || null;
     if (target) {
       recordStart(target.id);
+      if (!focusMode) setFocusMode(true);
     } else {
       showToastMessage('먼저 오늘 할 일을 하나 추가해 주세요.');
     }
@@ -745,13 +747,25 @@ export default function FocusOS() {
   };
 
   const toggleTimer = () => {
-    if (!timerRunning) {
-      playBeep();
-      if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
-      setTimerRunning(true);
+    const target = focusTask || todayTasks[0] || null;
+
+    if (!target) {
+      showToastMessage('먼저 오늘 할 일을 하나 추가해 주세요.');
       return;
     }
-    setTimerRunning(false);
+
+    if (!timerRunning) {
+      if (target.status !== '진행 중') {
+        recordStart(target.id);
+      } else {
+        playBeep();
+        if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
+        setTimerRunning(true);
+      }
+      return;
+    }
+
+    pauseTask(target.id);
   };
 
   const resetTimer = () => {
@@ -823,16 +837,31 @@ export default function FocusOS() {
       {focusMode && (
         <section className="mx-auto max-w-6xl px-4 pt-6 md:px-6">
           <div className="rounded-[32px] border border-violet-200 bg-violet-50/70 p-5 shadow-sm">
-            <p className="text-sm font-medium text-violet-700">Focus Mode</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-              {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
-            </h2>
-            <p className="mt-3 text-base text-zinc-600">
-              {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '현재 작업에서 시작 버튼을 누르면 이 공간에 집중 카드가 보여요.'}
-            </p>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-violet-700">Focus Mode</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
+                  {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
+                </h2>
+                <p className="mt-3 text-base text-zinc-600">
+                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '오늘 할 일에서 시작 버튼을 누르거나, 여기서 5분만 시작을 눌러 첫 작업을 바로 시작해 보세요.'}
+                </p>
+                {focusTask?.start ? (
+                  <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
+                    시작 시간 {focusTask.start}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="shrink-0 rounded-[28px] bg-zinc-950 px-6 py-5 text-white shadow-sm">
+                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="mt-2 text-4xl font-bold tracking-tight">{formatTimer(timerSeconds)}</p>
+              </div>
+            </div>
+
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]">
-                {timerRunning ? '일시정지' : '타이머 시작'}
+                {timerRunning ? '일시정지' : focusTask ? '타이머 시작' : '첫 작업 시작'}
               </button>
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 5분만 시작
@@ -846,7 +875,7 @@ export default function FocusOS() {
       )}
 
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
-        <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "opacity-35" : ""}`}>
+        <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "hidden" : ""}`}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl">
               <p className="text-sm text-zinc-400">오늘의 리포트</p>
@@ -881,7 +910,7 @@ export default function FocusOS() {
           )}
         </header>
 
-        <section className={`mb-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] transition ${focusMode ? "opacity-35" : ""}`}>
+        <section className={`mb-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] transition ${focusMode ? "hidden" : ""}`}>
           <Panel>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-md">
@@ -929,14 +958,16 @@ export default function FocusOS() {
           eyebrow="Today"
           title={`오늘 할 일 (${todayTasks.length}/${TODAY_LIMIT})`}
           action={
-            <div className="flex flex-wrap gap-2">
-              <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">우선순위 자동정리</button>
-              <button onClick={() => addTask('today')} className="rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 오늘 할 일 추가</button>
-            </div>
+            focusMode ? null : (
+              <div className="flex flex-wrap gap-2">
+                <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">우선순위 자동정리</button>
+                <button onClick={() => addTask('today')} className="rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 오늘 할 일 추가</button>
+              </div>
+            )
           }
         >
           <div className="space-y-4">
-            {todayTasks.length > 0 ? todayTasks.map((task) => (
+            {(focusMode ? (focusTask ? [focusTask] : []) : todayTasks).length > 0 ? (focusMode ? (focusTask ? [focusTask] : []) : todayTasks).map((task) => (
               <TaskCard
                 key={task.id}
                 task={task}
@@ -958,11 +989,11 @@ export default function FocusOS() {
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
               />
-            )) : <EmptyBox text="오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요." />}
+            )) : <EmptyBox text={focusMode ? '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.' : '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.'} />}
           </div>
         </SectionCard></div>
 
-        <section className={focusMode ? "opacity-30 pointer-events-none" : ""}><SectionCard
+        <section className={focusMode ? "hidden" : ""}><SectionCard
           eyebrow="Later"
           title="나중에 할 일"
           action={<button onClick={() => addTask('later')} className="rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">+ 나중에 할 일 추가</button>}
@@ -993,7 +1024,7 @@ export default function FocusOS() {
         </SectionCard></section>
 
         {completedTasks.length > 0 && (
-          <section className={focusMode ? "opacity-30 pointer-events-none" : ""}><SectionCard
+          <section className={focusMode ? "hidden" : ""}><SectionCard
             eyebrow="Completed"
             title="완료 목록"
             action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}개</span>}
