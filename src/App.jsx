@@ -338,6 +338,8 @@ export default function FocusOS() {
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState('');
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
 
@@ -891,6 +893,38 @@ export default function FocusOS() {
     setDbReady(false);
   };
 
+  const resetAllTasks = async () => {
+    const confirmed =
+      typeof window !== 'undefined'
+        ? window.confirm('지금까지 저장된 할 일과 진행 기록을 모두 비울까요? 이 작업은 되돌릴 수 없어요.')
+        : false;
+    if (!confirmed) return;
+
+    if (supabaseClient && session?.user?.id) {
+      const { error } = await supabaseClient
+        .from('tasks')
+        .delete()
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        setSettingsMessage('데이터 초기화 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
+    }
+
+    setTasks([]);
+    setFocusMode(false);
+    setFocusedTaskId(null);
+    setTimerRunning(false);
+    setTimerSeconds(focusMinutes * 60);
+    setSettingsMessage('앱 데이터는 초기화됐어요. 계정 자체 삭제는 보안상 서버 함수 연결 후 활성화할 예정이에요.');
+    showToastMessage('앱 데이터가 초기화됐어요.');
+  };
+
+  const requestAccountDelete = () => {
+    setSettingsMessage('계정 삭제는 인증 계정까지 지워야 해서 클라이언트만으로는 안전하게 처리할 수 없어요. 지금은 데이터 초기화와 로그아웃까지만 제공해둘게요.');
+  };
+
   const dailySummary = {
     completed: completedTasks.length,
     started: startedCount,
@@ -932,10 +966,52 @@ export default function FocusOS() {
             <p className="text-sm text-zinc-500">작게 시작하고, 한 번에 하나씩 끝내기</p>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">설정</button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">로그아웃</button>
           </div>
         </div>
       </div>
+
+      {settingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
+          <div className="w-full max-w-xl rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-violet-700">Settings</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">계정 및 앱 설정</h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">로그아웃, 데이터 초기화, 계정 삭제 안내를 여기서 관리할 수 있어요.</p>
+              </div>
+              <button onClick={() => { setSettingsOpen(false); setSettingsMessage(''); }} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">닫기</button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-sm font-medium text-zinc-900">로그아웃</p>
+                <p className="mt-1 text-sm text-zinc-500">현재 기기에서 로그인 상태만 해제해요.</p>
+                <button onClick={signOut} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">로그아웃</button>
+              </div>
+
+              <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-sm font-medium text-zinc-900">앱 데이터 초기화</p>
+                <p className="mt-1 text-sm text-zinc-500">오늘 할 일, 나중에 할 일, 진행 기록을 모두 비워요.</p>
+                <button onClick={resetAllTasks} className="mt-4 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-50">데이터 초기화</button>
+              </div>
+
+              <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-sm font-medium text-zinc-900">계정 삭제</p>
+                <p className="mt-1 text-sm text-zinc-500">인증 계정 삭제는 보안상 서버 함수가 필요해서 아직 앱 안에서 직접 처리하지 않아요.</p>
+                <button onClick={requestAccountDelete} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">삭제 안내 보기</button>
+              </div>
+            </div>
+
+            {settingsMessage && (
+              <div className="mt-5 rounded-[22px] bg-violet-50 px-4 py-3 text-sm leading-6 text-violet-700 ring-1 ring-violet-100">
+                {settingsMessage}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {focusMode && (
         <section className="mx-auto max-w-6xl px-4 pt-6 md:px-6">
