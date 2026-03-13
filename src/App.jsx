@@ -32,7 +32,7 @@ const STATUS_BADGE = {
 
 const EN_TEXT = {
   '지금 바로 시작하기': 'Start Now',
-  '{t('로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.')}': 'Your tasks, focus sessions, and daily flow are saved to this account.',
+  '로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.': 'Your tasks, focus sessions, and daily flow are saved to this account.',
   '이메일': 'Email',
   '비밀번호': 'Password',
   '로그인하기': 'Log In',
@@ -76,24 +76,24 @@ const EN_TEXT = {
   '완료 목록': 'Completed',
   '복원': 'Restore',
 
-  '{t('Focus Mode')}': '{t('Focus Mode')}',
+  'Focus Mode': 'Focus Mode',
   '지금은 이 카드 하나만 보고 끝내면 돼요.': 'Just focus on this one card for now.',
-  '{t('포커스 타이머')}': 'Focus Timer',
+  '포커스 타이머': 'Focus Timer',
   '타이머 시작': 'Start Timer',
-  '{t('Focus Mode')} 종료': 'Exit {t('Focus Mode')}',
+  'Focus Mode 종료': 'Exit Focus Mode',
   '시작 시간': 'Started at',
 
   '설정': 'Settings',
   '로그아웃': 'Log out',
   '계정 및 앱 설정': 'Account & App Settings',
-  '{t('로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.')}': 'Manage sign out, data reset, and account deletion here.',
+  '로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.': 'Manage sign out, data reset, and account deletion here.',
   '닫기': 'Close',
   '현재 기기에서 로그인 상태만 해제해요.': 'Sign out only on this device.',
   '앱 데이터 초기화': 'Reset App Data',
-  '{t('오늘 할 일, 나중에 할 일, 진행 기록을 모두 비워요.')}': 'Clear your tasks and progress history.',
+  '오늘 할 일, 나중에 할 일, 진행 기록을 모두 비워요.': 'Clear your tasks and progress history.',
   '데이터 초기화': 'Reset Data',
   '계정 삭제': 'Delete Account',
-  '{t('관리자 확인 후 삭제돼요.')}': 'Deleted after review.',
+  '관리자 확인 후 삭제돼요.': 'Deleted after review.',
   '삭제 요청': 'Request Deletion',
   '삭제 요청이 접수됐어요.': 'Your deletion request was received.',
   '삭제 요청 처리 중 문제가 생겼어요.': 'Something went wrong while sending your deletion request.',
@@ -118,7 +118,7 @@ const EN_TEXT = {
   '단계 추가': 'Add step',
   '단계 삭제': 'Delete step',
   '작업 분해': 'Task Breakdown',
-  '{t('AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.')}': 'AI suggests three actionable starter steps from your task title and note.',
+  'AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.': 'AI suggests three actionable starter steps from your task title and note.',
   '단계 완료': 'Complete step',
   '단계 완료 취소': 'Undo step completion',
 
@@ -144,6 +144,12 @@ const EN_TEXT = {
   '카드 순서를 바꿨어요.': 'Card order updated.',
   '오늘 할 일은 5개까지만 유지하는 게 좋아요.': 'It works best to keep Today under 5 tasks.',
   '오늘 할 일은 5개까지만 두는 걸 추천해요.': 'We recommend keeping Today to 5 tasks or fewer.',
+  '오늘 끝낸 일': 'Completed today',
+  '진행률': 'Progress',
+  '시작': 'Start',
+  'Completed': 'Completed',
+  'Settings': 'Settings',
+  '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.': 'No task selected. Start a task from Today or leave Focus Mode to go back.',
   '오늘 할 일로 복원했어요.': 'Moved back to Today.',
 };
 
@@ -1138,9 +1144,9 @@ export default function FocusOS() {
           <div className="w-full max-w-xl rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-violet-700">Settings</p>
+                <p className="text-sm font-medium text-violet-700">{t('Settings')}</p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{t("계정 및 앱 설정")}</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">로그아웃, 데이터 초기화, 계정 삭제 요청을 여기서 관리할 수 있어요.</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.</p>
               </div>
               <button onClick={() => { setSettingsOpen(false); setSettingsMessage(''); }} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t("닫기")}</button>
             </div>
@@ -1184,7 +1190,7 @@ export default function FocusOS() {
                   {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, {t('Focus Mode')} 종료로 원래 화면으로 돌아가세요.'}
+                  {focusTask ? (focusTask.note || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : (lang === 'en' ? 'No task selected. Start a task from Today or leave Focus Mode to go back.' : '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.')}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1230,10 +1236,10 @@ export default function FocusOS() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub="오늘 끝낸 일" />
-              <ReportCard label="시작" value={`${startedCount}`} sub="시도한 일" />
+              <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub={lang === "en" ? "Completed today" : "오늘 끝낸 일"} />
+              <ReportCard label={lang === "en" ? "Start" : "시작"} value={`${startedCount}`} sub="시도한 일" />
               <ReportCard label={lang === "en" ? "Progress" : "진행률"} value={`${progress}%`} sub={t("전체 흐름")} />
-              <ReportCard label={t("집중 점수")} value={`${focusScore}`} sub={rewardMessage} />
+              <ReportCard label={t("집중 점수")} value={`${focusScore}`} sub={lang === "en" ? tr("en", rewardMessage) : rewardMessage} />
             </div>
           </div>
 
@@ -1416,7 +1422,7 @@ export default function FocusOS() {
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <SummaryTile label={t("완료")} value={String(dailySummary.completed)} />
-                <SummaryTile label="시작" value={String(dailySummary.started)} />
+                <SummaryTile label={lang === "en" ? "Start" : "시작"} value={String(dailySummary.started)} />
                 <SummaryTile label="남은 일" value={String(dailySummary.remaining)} />
               </div>
               <div className="mt-5 rounded-[24px] bg-zinc-50 p-4">
@@ -1819,7 +1825,7 @@ function TaskCard({
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-zinc-700">{t("작업 단계")}</p>
-            <p className="text-xs text-zinc-500">완료 {doneCount}/{(task.steps || []).length}</p>
+            <p className="text-xs text-zinc-500">{lang === "en" ? "Completed" : "완료"} {doneCount}/{(task.steps || []).length}</p>
           </div>
           <button onClick={() => addStep(task.id)} title={t("단계 추가")} aria-label={t("단계 추가")} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white"><InlineIcon name="add-step" className="h-4 w-4" />{t("단계 추가")}</button>
         </div>
