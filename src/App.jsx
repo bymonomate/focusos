@@ -1086,7 +1086,7 @@ export default function FocusOS() {
               <div>
                 <p className="text-sm font-medium text-violet-700">Settings</p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{t('계정 및 앱 설정')}</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">{t('{t('로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.')}')}</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">{t('로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.')}</p>
               </div>
               <button onClick={() => { setSettingsOpen(false); setSettingsMessage(''); }} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
             </div>
