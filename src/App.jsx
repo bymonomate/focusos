@@ -1084,7 +1084,7 @@ export default function FocusOS() {
           <div className="w-full max-w-xl rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-violet-700">Settings</p>
+                <p className="text-sm font-medium text-violet-700">{t("설정")}</p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{t('계정 및 앱 설정')}</h2>
                 <p className="mt-2 text-sm leading-6 text-zinc-500">{t('로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.')}</p>
               </div>
@@ -1127,10 +1127,10 @@ export default function FocusOS() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-violet-700">Focus Mode</p>
                 <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-                  {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
+                  {focusTask ? focusTask.title : t('지금 한 가지에만 집중하기')}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.'}
+                  {focusTask ? (focusTask.note || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : t('선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.')}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1140,7 +1140,7 @@ export default function FocusOS() {
               </div>
 
               <div className="shrink-0 rounded-[28px] bg-zinc-950 px-6 py-5 text-white shadow-sm">
-                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-2 text-4xl font-bold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
@@ -1176,10 +1176,10 @@ export default function FocusOS() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <ReportCard label="완료" value={`${completedTasks.length}`} sub="오늘 끝낸 일" />
-              <ReportCard label="시작" value={`${startedCount}`} sub="시도한 일" />
-              <ReportCard label="진행률" value={`${progress}%`} sub="전체 흐름" />
-              <ReportCard label="집중 점수" value={`${focusScore}`} sub={rewardMessage} />
+              <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub={t("오늘 끝낸 일")} />
+              <ReportCard label={t("시작")} value={`${startedCount}`} sub="시도한 일" />
+              <ReportCard label={t("진행률")} value={`${progress}%`} sub={t("전체 흐름")} />
+              <ReportCard label={t("집중 점수")} value={`${focusScore}`} sub={rewardMessage} />
             </div>
           </div>
 
@@ -1189,8 +1189,8 @@ export default function FocusOS() {
 
           {expandedReport && (
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption="과하게 늘리지 않고 5개 이내 유지" />
-              <GlassCard title="현재 집중" value={focusTask ? focusTask.title : t('없음')} caption={t("한 번에 하나씩")} compact />
+              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption={t("과하게 늘리지 않고 5개 이내 유지")} />
+              <GlassCard title={t("현재 집중")} value={focusTask ? focusTask.title : t('없음')} caption={t("한 번에 하나씩")} compact />
               <GlassCard title={t("타이머")} value={formatTimer(timerSeconds)} caption={t("지금 집중 흐름")} />
             </div>
           )}
@@ -1205,7 +1205,7 @@ export default function FocusOS() {
                 <p className="mt-2 text-sm leading-6 text-zinc-500">타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.</p>
               </div>
               <div className="rounded-[28px] bg-zinc-950 px-5 py-4 text-center text-white shadow-sm">
-                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-1 text-4xl font-semibold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
@@ -1235,7 +1235,7 @@ export default function FocusOS() {
         </section>
 
         <div className={focusMode ? "ring-2 ring-violet-200 rounded-[36px]" : ""}><SectionCard
-          eyebrow="Today"
+          eyebrow={t("Today는 5개 제한")}
           title={`${t("오늘 할 일")} (${todayTasks.length}/${TODAY_LIMIT})`}
           action={
             focusMode ? null : (
@@ -1275,7 +1275,7 @@ export default function FocusOS() {
         </SectionCard></div>
 
         <section className={focusMode ? "hidden" : ""}><SectionCard
-          eyebrow="Later"
+          eyebrow={t("Later는 보관함")}
           title={t("나중에 할 일")}
           action={<button onClick={() => addTask('later')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t('나중에 할 일 추가')}</button>}
         >
@@ -1309,7 +1309,7 @@ export default function FocusOS() {
           <section className={focusMode ? "hidden" : ""}><SectionCard
             eyebrow="Completed"
             title={t("완료 목록")}
-            action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}개</span>}
+            action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}{lang === "en" ? "" : "개"}</span>}
           >
             <div className="space-y-3">
               {completedTasks.map((task) => (
@@ -1323,8 +1323,8 @@ export default function FocusOS() {
                       <h3 className="mt-3 text-lg font-semibold text-zinc-900">{task.title}</h3>
                       {task.note && <p className="mt-1 text-sm text-zinc-600">{task.note}</p>}
                       <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-500">
-                        {task.start && <span>시작 {task.start}</span>}
-                        {task.end && <span>종료 {task.end}</span>}
+                        {task.start && <span>{t("시작")} {task.start}</span>}
+                        {task.end && <span>{t("종료")} {task.end}</span>}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1340,7 +1340,7 @@ export default function FocusOS() {
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
           <p className="font-medium text-zinc-700">Focus OS</p>
-          <p className="mt-1">작은 완료 하나가 흐름을 만듭니다.</p>
+          <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다.")}</p>
           <p className="mt-1 text-xs text-zinc-400">Focus • Start Small • Finish One Thing</p>
         </footer>
 
@@ -1353,8 +1353,8 @@ export default function FocusOS() {
             <div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-violet-700">하루 종료 리포트</p>
-                  <h3 className="mt-1 text-2xl font-semibold text-zinc-900">오늘의 정리</h3>
+                  <p className="text-sm font-medium text-violet-700">{t("하루 종료 리포트")}</p>
+                  <h3 className="mt-1 text-2xl font-semibold text-zinc-900">{lang === "en" ? "Today at a glance" : "오늘의 정리"}</h3>
                 </div>
                 <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">닫기</button>
               </div>
