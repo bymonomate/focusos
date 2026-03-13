@@ -1333,16 +1333,16 @@ function InlineIcon({ name, className = 'h-4 w-4' }) {
 function IconButton({ title, icon, onClick, tone = 'default', disabled = false }) {
   const toneClass =
     tone === 'primary'
-      ? 'border-zinc-900 bg-zinc-900 text-white hover:scale-[1.02]'
+      ? 'text-zinc-950 hover:text-zinc-700'
       : tone === 'violet'
-        ? 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
+        ? 'text-violet-700 hover:text-violet-500'
         : tone === 'emerald'
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+          ? 'text-emerald-700 hover:text-emerald-500'
           : tone === 'amber'
-            ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+            ? 'text-amber-700 hover:text-amber-500'
             : tone === 'rose'
-              ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-              : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+              ? 'text-rose-700 hover:text-rose-500'
+              : 'text-zinc-500 hover:text-zinc-900';
 
   return (
     <button
@@ -1350,9 +1350,9 @@ function IconButton({ title, icon, onClick, tone = 'default', disabled = false }
       title={title}
       aria-label={title}
       disabled={disabled}
-      className={`flex h-10 w-10 items-center justify-center rounded-xl border transition ${toneClass} ${disabled ? 'cursor-not-allowed opacity-40 hover:scale-100' : ''}`}
+      className={`inline-flex h-8 w-8 items-center justify-center transition ${toneClass} ${disabled ? 'cursor-not-allowed opacity-30' : ''}`}
     >
-      <InlineIcon name={icon} className="h-[18px] w-[18px]" />
+      <InlineIcon name={icon} className="h-5 w-5" />
     </button>
   );
 }
@@ -1470,8 +1470,8 @@ function TaskCard({
         <textarea value={task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <IconButton title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
           <IconButton title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
           {task.start && !task.end && <IconButton title="종료" icon="done" tone="emerald" onClick={() => recordEnd(task.id)} />}
@@ -1520,7 +1520,9 @@ function TaskCard({
             <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
               <button onClick={() => toggleStep(task.id, idx)} title={step.done ? '단계 완료 취소' : '단계 완료'} aria-label={step.done ? '단계 완료 취소' : '단계 완료'} className={`flex h-6 w-6 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
               <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
-              <button onClick={() => deleteStep(task.id, idx)} className="rounded-lg border px-2 py-1 text-xs text-zinc-500 transition hover:bg-zinc-50">삭제</button>
+              <button onClick={() => deleteStep(task.id, idx)} title="단계 삭제" aria-label="단계 삭제" className="inline-flex h-7 w-7 items-center justify-center text-zinc-400 transition hover:text-rose-500">
+                <InlineIcon name="delete" className="h-4 w-4" />
+              </button>
             </div>
           ))}
         </div>
