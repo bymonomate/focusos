@@ -596,7 +596,9 @@ export default function FocusOS() {
   const laterTasks = sortedTasks.filter((task) => task.list === 'later' && task.status !== '완료');
   const completedTasks = sortedTasks.filter((task) => task.status === '완료');
   const activeTask = sortedTasks.find((task) => task.status === '진행 중') || null;
-  const focusTask = activeTask;
+  const focusTask = focusMode
+    ? sortedTasks.find((task) => task.id === focusedTaskId) || null
+    : activeTask;
 
   const progress = sortedTasks.length ? Math.round((completedTasks.length / sortedTasks.length) * 100) : 0;
   const startedCount = sortedTasks.filter((task) => Boolean(task.start)).length;
@@ -668,7 +670,7 @@ export default function FocusOS() {
   };
 
   const pauseTask = (taskId) => {
-    patchTask(taskId, (task) => (task.status === '진행 중' ? { ...task, status: '대기' } : task));
+    patchTask(taskId, (task) => (task.id === taskId ? { ...task, status: '대기' } : task));
     setTimerRunning(false);
     showToastMessage('작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.');
   };
@@ -692,6 +694,11 @@ export default function FocusOS() {
   };
 
   const deleteTask = (taskId) => {
+    if (focusedTaskId === taskId) {
+      setFocusMode(false);
+      setFocusedTaskId(null);
+      setTimerRunning(false);
+    }
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
   };
 
@@ -930,7 +937,7 @@ export default function FocusOS() {
         </div>
       </div>
 
-      {focusMode && focusTask && (
+      {focusMode && (
         <section className="mx-auto max-w-6xl px-4 pt-6 md:px-6">
           <div className="rounded-[32px] border border-violet-200 bg-violet-50/70 p-5 shadow-sm">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -940,7 +947,7 @@ export default function FocusOS() {
                   {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '오늘 할 일에서 시작 버튼을 누르거나, 여기서 5분만 시작을 눌러 첫 작업을 바로 시작해 보세요.'}
+                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.'}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1344,15 +1351,29 @@ function IconButton({ title, icon, onClick, tone = 'default', disabled = false }
               ? 'text-rose-700 hover:text-rose-500'
               : 'text-zinc-500 hover:text-zinc-900';
 
+  const label =
+    title === '집중 시작'
+      ? '집중'
+      : title === '우선순위 추천'
+        ? '추천'
+        : title === 'AI 작업분해'
+          ? '분해'
+          : title === 'Later로 이동'
+            ? '나중'
+            : title === 'Today로 이동'
+              ? '오늘'
+              : title;
+
   return (
     <button
       onClick={onClick}
       title={title}
       aria-label={title}
       disabled={disabled}
-      className={`inline-flex h-8 w-8 items-center justify-center transition ${toneClass} ${disabled ? 'cursor-not-allowed opacity-30' : ''}`}
+      className={`inline-flex min-w-[44px] flex-col items-center justify-center gap-1 text-center transition ${toneClass} ${disabled ? 'cursor-not-allowed opacity-30' : ''}`}
     >
       <InlineIcon name={icon} className="h-5 w-5" />
+      <span className="text-[11px] leading-none">{label}</span>
     </button>
   );
 }
@@ -1470,8 +1491,8 @@ function TaskCard({
         <textarea value={task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="mt-5 flex flex-wrap items-start gap-5">
+        <div className="flex flex-wrap items-start gap-5">
           <IconButton title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
           <IconButton title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
           {task.start && !task.end && <IconButton title="종료" icon="done" tone="emerald" onClick={() => recordEnd(task.id)} />}
