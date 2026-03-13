@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
   focusMinutes: 'focus-os-focus-minutes',
+  dayStamp: 'focus-os-day-stamp',
 };
 
 const TODAY_LIMIT = 5;
@@ -116,6 +117,22 @@ function formatDate(date = new Date()) {
     month: 'long',
     day: 'numeric',
     weekday: 'long',
+  });
+}
+
+function getDayStamp(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function moveUnfinishedTodayToLater(tasks) {
+  return tasks.map((task) => {
+    if (task.list === 'today' && task.status !== '완료') {
+      return { ...task, list: 'later', status: '대기' };
+    }
+    return task;
   });
 }
 
@@ -338,6 +355,7 @@ export default function FocusOS() {
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [dayStamp, setDayStamp] = useState(getDayStamp());
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
 
@@ -439,6 +457,11 @@ export default function FocusOS() {
         setTimerSeconds(minutes * 60);
       }
     }
+
+    const savedDayStamp = storage.getItem(STORAGE_KEYS.dayStamp);
+    if (savedDayStamp) {
+      setDayStamp(savedDayStamp);
+    }
   }, []);
 
   useEffect(() => {
@@ -448,12 +471,20 @@ export default function FocusOS() {
   }, [focusMinutes]);
 
   useEffect(() => {
+    const storage = getStorage();
+    if (!storage) return;
+    storage.setItem(STORAGE_KEYS.dayStamp, dayStamp);
+  }, [dayStamp]);
+
+  useEffect(() => {
     if (!session?.user?.id) return;
 
     const loadTasks = async () => {
       if (!supabaseClient) return;
       hydratingFromDbRef.current = true;
       setDbReady(false);
+
+      const currentDayStamp = getDayStamp();
 
       const { data, error } = await supabaseClient
         .from('tasks')
@@ -464,13 +495,27 @@ export default function FocusOS() {
       if (error) {
         console.error('tasks load error', error);
         setTasks(DEFAULT_TASKS.map(normalizeTask));
+        setDayStamp(currentDayStamp);
         setDbReady(true);
         hydratingFromDbRef.current = false;
         return;
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        setTasks(data.map(mapTaskFromDb).map(normalizeTask));
+        let loadedTasks = data.map(mapTaskFromDb).map(normalizeTask);
+
+        if (dayStamp !== currentDayStamp) {
+          loadedTasks = moveUnfinishedTodayToLater(loadedTasks);
+          const rows = loadedTasks.map((task) => mapTaskToDb(task, session.user.id));
+          const { error: resetError } = await supabaseClient.from('tasks').upsert(rows, { onConflict: 'id' });
+          if (resetError) {
+            console.error('daily reset error', resetError);
+          } else {
+            showToastMessage('어제 남은 오늘 할 일은 나중 목록으로 옮겨졌어요.');
+          }
+        }
+
+        setTasks(loadedTasks);
       } else {
         const seeded = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
         setTasks(seeded);
@@ -482,6 +527,7 @@ export default function FocusOS() {
         }
       }
 
+      setDayStamp(currentDayStamp);
       setDbReady(true);
       window.setTimeout(() => {
         hydratingFromDbRef.current = false;
