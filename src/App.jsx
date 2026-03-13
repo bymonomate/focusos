@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
   focusMinutes: 'focus-os-focus-minutes',
-  dayStamp: 'focus-os-day-stamp',
 };
 
 const TODAY_LIMIT = 5;
@@ -117,22 +116,6 @@ function formatDate(date = new Date()) {
     month: 'long',
     day: 'numeric',
     weekday: 'long',
-  });
-}
-
-function getDayStamp(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function moveUnfinishedTodayToLater(tasks) {
-  return tasks.map((task) => {
-    if (task.list === 'today' && task.status !== '완료') {
-      return { ...task, list: 'later', status: '대기' };
-    }
-    return task;
   });
 }
 
@@ -355,7 +338,6 @@ export default function FocusOS() {
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [dayStamp, setDayStamp] = useState(getDayStamp());
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
 
@@ -457,11 +439,6 @@ export default function FocusOS() {
         setTimerSeconds(minutes * 60);
       }
     }
-
-    const savedDayStamp = storage.getItem(STORAGE_KEYS.dayStamp);
-    if (savedDayStamp) {
-      setDayStamp(savedDayStamp);
-    }
   }, []);
 
   useEffect(() => {
@@ -471,20 +448,12 @@ export default function FocusOS() {
   }, [focusMinutes]);
 
   useEffect(() => {
-    const storage = getStorage();
-    if (!storage) return;
-    storage.setItem(STORAGE_KEYS.dayStamp, dayStamp);
-  }, [dayStamp]);
-
-  useEffect(() => {
     if (!session?.user?.id) return;
 
     const loadTasks = async () => {
       if (!supabaseClient) return;
       hydratingFromDbRef.current = true;
       setDbReady(false);
-
-      const currentDayStamp = getDayStamp();
 
       const { data, error } = await supabaseClient
         .from('tasks')
@@ -495,27 +464,13 @@ export default function FocusOS() {
       if (error) {
         console.error('tasks load error', error);
         setTasks(DEFAULT_TASKS.map(normalizeTask));
-        setDayStamp(currentDayStamp);
         setDbReady(true);
         hydratingFromDbRef.current = false;
         return;
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        let loadedTasks = data.map(mapTaskFromDb).map(normalizeTask);
-
-        if (dayStamp !== currentDayStamp) {
-          loadedTasks = moveUnfinishedTodayToLater(loadedTasks);
-          const rows = loadedTasks.map((task) => mapTaskToDb(task, session.user.id));
-          const { error: resetError } = await supabaseClient.from('tasks').upsert(rows, { onConflict: 'id' });
-          if (resetError) {
-            console.error('daily reset error', resetError);
-          } else {
-            showToastMessage('어제 남은 오늘 할 일은 나중 목록으로 옮겨졌어요.');
-          }
-        }
-
-        setTasks(loadedTasks);
+        setTasks(data.map(mapTaskFromDb).map(normalizeTask));
       } else {
         const seeded = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
         setTasks(seeded);
@@ -527,7 +482,6 @@ export default function FocusOS() {
         }
       }
 
-      setDayStamp(currentDayStamp);
       setDbReady(true);
       window.setTimeout(() => {
         hydratingFromDbRef.current = false;
@@ -1295,6 +1249,33 @@ function AuthScreen({ supabaseClient }) {
     setLoading(false);
   };
 
+  const submitOAuth = async (provider) => {
+    if (!supabaseClient) {
+      setMessage('인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+
+    if (provider === 'naver') {
+      setMessage('네이버 로그인은 Supabase 대시보드 설정 후 연결할 수 있어요. 지금은 구글과 카카오부터 바로 사용할 수 있어요.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+      },
+    });
+
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
       <div className="mx-auto max-w-4xl">
@@ -1344,6 +1325,36 @@ function AuthScreen({ supabaseClient }) {
           >
             {loading ? '처리 중...' : mode === 'signup' ? '회원가입하기' : '로그인하기'}
           </button>
+
+          <div className="mt-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-zinc-200" />
+            <span className="text-sm text-zinc-400">간편 로그인</span>
+            <div className="h-px flex-1 bg-zinc-200" />
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <button
+              onClick={() => submitOAuth('google')}
+              disabled={loading}
+              className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 text-base font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              구글로 계속하기
+            </button>
+            <button
+              onClick={() => submitOAuth('kakao')}
+              disabled={loading}
+              className="rounded-[22px] border border-zinc-200 bg-[#FEE500] px-4 py-4 text-base font-semibold text-[#191919] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              카카오로 계속하기
+            </button>
+            <button
+              onClick={() => submitOAuth('naver')}
+              disabled={loading}
+              className="rounded-[22px] border border-zinc-200 bg-[#03C75A] px-4 py-4 text-base font-semibold text-white transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              네이버로 계속하기
+            </button>
+          </div>
 
           {message ? (
             <div className="mt-5 rounded-[24px] bg-zinc-50 px-5 py-4 text-base text-zinc-600">
@@ -1405,9 +1416,9 @@ function IconButton({ title, icon, onClick, tone = 'default', disabled = false }
         : title === 'AI 작업분해'
           ? '분해'
           : title === 'Later로 이동'
-            ? '나중으로'
+            ? '나중'
             : title === 'Today로 이동'
-              ? '오늘로'
+              ? '오늘'
               : title;
 
   return (
