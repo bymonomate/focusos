@@ -1249,14 +1249,9 @@ function AuthScreen({ supabaseClient }) {
     setLoading(false);
   };
 
-  const submitOAuth = async (provider) => {
+  const submitOAuth = async () => {
     if (!supabaseClient) {
       setMessage('인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
-      return;
-    }
-
-    if (provider === 'naver') {
-      setMessage('네이버 로그인은 Supabase 대시보드 설정 후 연결할 수 있어요. 지금은 구글과 카카오부터 바로 사용할 수 있어요.');
       return;
     }
 
@@ -1264,7 +1259,7 @@ function AuthScreen({ supabaseClient }) {
     setMessage('');
 
     const { error } = await supabaseClient.auth.signInWithOAuth({
-      provider,
+      provider: 'google',
       options: {
         redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
       },
@@ -1332,27 +1327,13 @@ function AuthScreen({ supabaseClient }) {
             <div className="h-px flex-1 bg-zinc-200" />
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6">
             <button
-              onClick={() => submitOAuth('google')}
+              onClick={submitOAuth}
               disabled={loading}
-              className="rounded-[22px] border border-zinc-200 bg-white px-4 py-4 text-base font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-[22px] border border-zinc-200 bg-white px-4 py-4 text-base font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               구글로 계속하기
-            </button>
-            <button
-              onClick={() => submitOAuth('kakao')}
-              disabled={loading}
-              className="rounded-[22px] border border-zinc-200 bg-[#FEE500] px-4 py-4 text-base font-semibold text-[#191919] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              카카오로 계속하기
-            </button>
-            <button
-              onClick={() => submitOAuth('naver')}
-              disabled={loading}
-              className="rounded-[22px] border border-zinc-200 bg-[#03C75A] px-4 py-4 text-base font-semibold text-white transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              네이버로 계속하기
             </button>
           </div>
 
