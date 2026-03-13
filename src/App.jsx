@@ -999,7 +999,7 @@ export default function FocusOS() {
               <div>
                 <p className="text-sm font-medium text-violet-700">Settings</p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">계정 및 앱 설정</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">로그아웃, 데이터 초기화, 계정 삭제 요청을 여기서 관리할 수 있어요.</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">로그아웃, 데이터 초기화, 계정 삭제을 여기서 관리할 수 있어요.</p>
               </div>
               <button onClick={() => { setSettingsOpen(false); setSettingsMessage(''); }} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">닫기</button>
             </div>
@@ -1018,9 +1018,9 @@ export default function FocusOS() {
               </div>
 
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-sm font-medium text-zinc-900">계정 삭제 요청</p>
-                <p className="mt-1 text-sm text-zinc-500">초기 출시 단계에서는 자동 탈퇴 대신 관리자 확인 후 삭제하는 방식으로 운영해요.</p>
-                <button onClick={requestAccountDelete} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">삭제 요청 문구 복사</button>
+                <p className="text-sm font-medium text-zinc-900">계정 삭제</p>
+                <p className="mt-1 text-sm text-zinc-500">관리자 확인 후 삭제돼요.</p>
+                <button onClick={requestAccountDelete} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">삭제 요청</button>
               </div>
             </div>
 
