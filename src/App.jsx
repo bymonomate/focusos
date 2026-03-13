@@ -43,7 +43,7 @@ const EN_TEXT = {
   '구글로 계속하기': 'Continue with Google',
   '처리 중...': 'Processing...',
   '7일 무료 체험': '7-Day Free Trial',
-  '{t('가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.')}': 'Start using the app right away and see if the Focus OS flow works for you.',
+  '가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.': 'Start using the app right away and see if the Focus OS flow works for you.',
   '인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.': 'Authentication is unavailable right now. Please try again shortly.',
   '이메일과 비밀번호를 입력해 주세요.': 'Please enter your email and password.',
   '회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.': 'Your account was created. Please verify your email and sign in.',
@@ -51,14 +51,14 @@ const EN_TEXT = {
   '설정': 'Settings',
   '로그아웃': 'Log out',
   '계정 및 앱 설정': 'Account & App Settings',
-  '{t('로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.')}': 'Manage sign out, data reset, and account deletion here.',
+  '로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.': 'Manage sign out, data reset, and account deletion here.',
   '닫기': 'Close',
-  '{t('현재 기기에서 로그인 상태만 해제해요.')}': 'Sign out only on this device.',
+  '현재 기기에서 로그인 상태만 해제해요.': 'Sign out only on this device.',
   '앱 데이터 초기화': 'Reset App Data',
-  '{t('오늘 할 일, 나중에 할 일, 진행 기록을 모두 비워요.')}': 'Clear your tasks and progress history.',
+  '오늘 할 일, 나중에 할 일, 진행 기록을 모두 비워요.': 'Clear your tasks and progress history.',
   '데이터 초기화': 'Reset Data',
   '계정 삭제': 'Delete Account',
-  '{t('관리자 확인 후 삭제돼요.')}': 'Deleted after review.',
+  '관리자 확인 후 삭제돼요.': 'Deleted after review.',
   '삭제 요청': 'Request Deletion',
   '삭제 요청이 접수됐어요.': 'Your deletion request was received.',
   '삭제 요청 처리 중 문제가 생겼어요.': 'Something went wrong while sending your deletion request.',
@@ -91,7 +91,7 @@ const EN_TEXT = {
   '오늘 할 일 추가': 'Add Today Task',
   '나중에 할 일 추가': 'Add Later Task',
   '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.': 'Your Today list is empty. Add just one thing to begin.',
-  '지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.': 'Keep non-urgent work here so your Today list stays light.',
+  '지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.': 'Keep non-urgent work here so your Today list stays light.'
 };
 
 function tr(lang, value) {
@@ -1219,7 +1219,7 @@ export default function FocusOS() {
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? '일시정지' : '타이머 시작'}</button>
               <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">리셋</button>
-              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">{t('5분만 시작')}</button>
+              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">5분만 시작</button>
             </div>
           </Panel>
 
@@ -1240,8 +1240,8 @@ export default function FocusOS() {
           action={
             focusMode ? null : (
               <div className="flex flex-wrap gap-2">
-                <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t("우선순위 자동정리")}</button>
-                <button onClick={() => addTask('today')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t("오늘 할 일 추가")}</button>
+                <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('우선순위 자동정리')}</button>
+                <button onClick={() => addTask('today')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t('오늘 할 일 추가')}</button>
               </div>
             )
           }
@@ -1277,7 +1277,7 @@ export default function FocusOS() {
         <section className={focusMode ? "hidden" : ""}><SectionCard
           eyebrow="Later"
           title={t("나중에 할 일")}
-          action={<button onClick={() => addTask('later')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t("나중에 할 일 추가")}</button>}
+          action={<button onClick={() => addTask('later')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t('나중에 할 일 추가')}</button>}
         >
           <div className="space-y-4">
             {laterTasks.length > 0 ? laterTasks.map((task) => (
@@ -1328,7 +1328,7 @@ export default function FocusOS() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => restoreTask(task.id)} className="rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50">{t("복원")}</button>
+                      <button onClick={() => restoreTask(task.id)} className="rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50">{t('복원')}</button>
                       <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">삭제</button>
                     </div>
                   </div>
@@ -1353,10 +1353,10 @@ export default function FocusOS() {
             <div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-violet-700">{t('하루 종료 리포트')}</p>
+                  <p className="text-sm font-medium text-violet-700">하루 종료 리포트</p>
                   <h3 className="mt-1 text-2xl font-semibold text-zinc-900">오늘의 정리</h3>
                 </div>
-                <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">{t('닫기')}</button>
+                <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">닫기</button>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <SummaryTile label="완료" value={String(dailySummary.completed)} />
