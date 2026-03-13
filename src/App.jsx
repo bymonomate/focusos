@@ -91,7 +91,60 @@ const EN_TEXT = {
   '오늘 할 일 추가': 'Add Today Task',
   '나중에 할 일 추가': 'Add Later Task',
   '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.': 'Your Today list is empty. Add just one thing to begin.',
-  '지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.': 'Keep non-urgent work here so your Today list stays light.'
+  '지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.': 'Keep non-urgent work here so your Today list stays light.',
+  '오늘 끝낸 일': 'Completed today',
+  '시도한 일': 'Started tasks',
+  '진행률': 'Progress',
+  '전체 흐름': 'Overall flow',
+  '집중 점수': 'Focus score',
+  '과하게 늘리지 않고 5개 이내 유지': 'Keep it under 5 tasks',
+  '지금 한 가지에만 집중하기': 'Focus on one thing right now',
+  '지금은 이 카드 하나만 보고 끝내면 돼요.': 'Just focus on this one card for now.',
+  '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.': 'No task selected. Start a task from Today or leave Focus Mode to go back.',
+  '시작 시간': 'Started at',
+  '종료 시간': 'Finished at',
+  '타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.': 'A soft sound plays when the timer starts and ends, and only one task stays active.',
+  '리셋': 'Reset',
+  '운영 원칙': 'Operating Principles',
+  '오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.': 'Limiting visible tasks lowers the barrier to start.',
+  '지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.': 'Move non-urgent work here and bring it back only when needed.',
+  '작업 분해': 'Task Breakdown',
+  '큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.': 'Break big work into steps you can start within 5 minutes.',
+  '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.': 'No active task yet. Start one from Today or use Start with 5 min.',
+  '{t("완료! 잘했어요 ✨")}': 'Done! Nice work ✨',
+  '오늘의 정리': 'Today at a glance',
+  '남은 일': 'Remaining',
+  '오늘 한마디': "Today's note",
+  '작은 완료 하나가 흐름을 만듭니다.': 'One small completion creates momentum.',
+  '위로': 'Top',
+  '드래그 정렬': 'Drag to sort',
+  '카드를 길게 잡고 위치를 바꿀 수 있어요': 'Drag cards to reorder them',
+  '가장 중요': 'Top Priority',
+  '중요': 'Important',
+  '가벼운 일': 'Light',
+  '대기': 'Idle',
+  '진행 중': 'In Progress',
+  '완료': 'Done',
+  '시작': 'Start',
+  '종료': 'Finish',
+  '멈춤': 'Pause',
+  '초기화': 'Reset',
+  '나중': 'Later',
+  '오늘': 'Today',
+  '집중': 'Focus',
+  '추천': 'Suggest',
+  '분해': 'Break down',
+  '새 할 일': 'New task',
+  '나중에 할 일': 'Later task',
+  '첫 단계 적기': 'Write the first step',
+  'AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.': 'AI suggests three actionable starter steps from your task title and note.',
+  '작업 단계': 'Steps',
+  '단계 추가': 'Add step',
+  '단계 완료': 'Complete step',
+  '단계 완료 취소': 'Undo step completion',
+  '단계 삭제': 'Delete step',
+  '새 단계': 'New step',
+  '삭제': 'Delete'
 };
 
 function tr(lang, value) {
@@ -1093,9 +1146,9 @@ export default function FocusOS() {
 
             <div className="mt-6 space-y-4">
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-sm font-medium text-zinc-900">로그아웃</p>
+                <p className="text-sm font-medium text-zinc-900">{t("로그아웃")}</p>
                 <p className="mt-1 text-sm text-zinc-500">{t('현재 기기에서 로그인 상태만 해제해요.')}</p>
-                <button onClick={signOut} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">로그아웃</button>
+                <button onClick={signOut} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">{t("로그아웃")}</button>
               </div>
 
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
@@ -1127,27 +1180,27 @@ export default function FocusOS() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-violet-700">Focus Mode</p>
                 <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-                  {focusTask ? focusTask.title : '지금 한 가지에만 집중하기'}
+                  {focusTask ? focusTask.title : t('지금 한 가지에만 집중하기')}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? (focusTask.note || '지금은 이 카드 하나만 보고 끝내면 돼요.') : '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.'}
+                  {focusTask ? (focusTask.note || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : t('선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.')}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
-                    시작 시간 {focusTask.start}
+                    {t("시작 시간")} {focusTask.start}
                   </div>
                 ) : null}
               </div>
 
               <div className="shrink-0 rounded-[28px] bg-zinc-950 px-6 py-5 text-white shadow-sm">
-                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-2 text-4xl font-bold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]">
-                {timerRunning ? '일시정지' : '타이머 시작'}
+                {timerRunning ? t('일시정지') : t('타이머 시작')}
               </button>
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 5분만 시작
@@ -1176,10 +1229,10 @@ export default function FocusOS() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <ReportCard label="완료" value={`${completedTasks.length}`} sub="오늘 끝낸 일" />
-              <ReportCard label="시작" value={`${startedCount}`} sub="시도한 일" />
-              <ReportCard label="진행률" value={`${progress}%`} sub="전체 흐름" />
-              <ReportCard label="집중 점수" value={`${focusScore}`} sub={rewardMessage} />
+              <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub={t("오늘 끝낸 일")} />
+              <ReportCard label={t("시작")} value={`${startedCount}`} sub={t("시도한 일")} />
+              <ReportCard label={t("진행률")} value={`${progress}%`} sub={t("전체 흐름")} />
+              <ReportCard label={t("집중 점수")} value={`${focusScore}`} sub={t(rewardMessage)} />
             </div>
           </div>
 
@@ -1189,8 +1242,8 @@ export default function FocusOS() {
 
           {expandedReport && (
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption="과하게 늘리지 않고 5개 이내 유지" />
-              <GlassCard title="현재 집중" value={focusTask ? focusTask.title : t('없음')} caption={t("한 번에 하나씩")} compact />
+              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption={t("과하게 늘리지 않고 5개 이내 유지")} />
+              <GlassCard title={t("현재 집중")} value={focusTask ? focusTask.title : t("없음")} caption={t("한 번에 하나씩")} compact />
               <GlassCard title={t("타이머")} value={formatTimer(timerSeconds)} caption={t("지금 집중 흐름")} />
             </div>
           )}
@@ -1201,11 +1254,11 @@ export default function FocusOS() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-md">
                 <p className="text-sm font-medium text-violet-700">Focus</p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight">지금 한 가지에만 집중하기</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight">{t("지금 한 가지에만 집중하기")}</h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">{t("타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.")}</p>
               </div>
               <div className="rounded-[28px] bg-zinc-950 px-5 py-4 text-center text-white shadow-sm">
-                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-1 text-4xl font-semibold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
@@ -1217,19 +1270,19 @@ export default function FocusOS() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2.5">
-              <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? '일시정지' : '타이머 시작'}</button>
-              <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">리셋</button>
-              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">5분만 시작</button>
+              <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? t('일시정지') : t('타이머 시작')}</button>
+              <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">{t("리셋")}</button>
+              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">{t("5분만 시작")}</button>
             </div>
           </Panel>
 
           <Panel>
-            <p className="text-sm font-medium text-violet-700">운영 원칙</p>
+            <p className="text-sm font-medium text-violet-700">{t("운영 원칙")}</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight">Focus OS</h2>
             <div className="mt-5 grid gap-3">
-              <RuleCard title="Today는 5개 제한" desc="오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요." />
-              <RuleCard title="Later는 보관함" desc="지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요." />
-              <RuleCard title="작업 분해" desc="큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요." />
+              <RuleCard title={t("Today는 5개 제한")} desc={t("오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.")} />
+              <RuleCard title={t("Later는 보관함")} desc={t("지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.")} />
+              <RuleCard title={t("작업 분해")} desc={t("큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.")} />
             </div>
           </Panel>
         </section>
@@ -1269,8 +1322,9 @@ export default function FocusOS() {
                 startFocusMode={openFocusMode}
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
+                lang={lang}
               />
-            )) : <EmptyBox text={focusMode ? '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.' : '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.'} />}
+             )) : <EmptyBox text={focusMode ? t('현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.') : t('오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.')} />}
           </div>
         </SectionCard></div>
 
@@ -1300,8 +1354,9 @@ export default function FocusOS() {
                 startFocusMode={openFocusMode}
                 onDragStart={setDraggedTaskId}
                 onDropCard={handleDrop}
+                lang={lang}
               />
-            )) : <EmptyBox text="지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요." />}
+             )) : <EmptyBox text={t("지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.")} />}
           </div>
         </SectionCard></section>
 
@@ -1309,7 +1364,7 @@ export default function FocusOS() {
           <section className={focusMode ? "hidden" : ""}><SectionCard
             eyebrow="Completed"
             title={t("완료 목록")}
-            action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}개</span>}
+            action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}{lang === "en" ? "" : "개"}</span>}
           >
             <div className="space-y-3">
               {completedTasks.map((task) => (
@@ -1317,19 +1372,19 @@ export default function FocusOS() {
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="flex flex-wrap gap-2">
-                        <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
-                        <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
+                        <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{tr(lang, task.priority)}</span>
+                        <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{tr(lang, task.status)}</span>
                       </div>
                       <h3 className="mt-3 text-lg font-semibold text-zinc-900">{task.title}</h3>
                       {task.note && <p className="mt-1 text-sm text-zinc-600">{task.note}</p>}
                       <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-500">
-                        {task.start && <span>시작 {task.start}</span>}
-                        {task.end && <span>종료 {task.end}</span>}
+                        {task.start && <span>{t("시작")} {task.start}</span>}
+                        {task.end && <span>{t("종료")} {task.end}</span>}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => restoreTask(task.id)} className="rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50">{t('복원')}</button>
-                      <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">삭제</button>
+                      <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">{t("삭제")}</button>
                     </div>
                   </div>
                 </div>
@@ -1340,12 +1395,12 @@ export default function FocusOS() {
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
           <p className="font-medium text-zinc-700">Focus OS</p>
-          <p className="mt-1">작은 완료 하나가 흐름을 만듭니다.</p>
+          <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다.")}</p>
           <p className="mt-1 text-xs text-zinc-400">Focus • Start Small • Finish One Thing</p>
         </footer>
 
         {showScrollTop && (
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-40 rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:scale-105">↑ 위로</button>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-40 rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:scale-105">{t("위로")}</button>
         )}
 
         {dailySummaryOpen && (
@@ -1354,18 +1409,18 @@ export default function FocusOS() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-violet-700">하루 종료 리포트</p>
-                  <h3 className="mt-1 text-2xl font-semibold text-zinc-900">오늘의 정리</h3>
+                  <h3 className="mt-1 text-2xl font-semibold text-zinc-900">{t("오늘의 정리")}</h3>
                 </div>
-                <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">닫기</button>
+                <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">{t("닫기")}</button>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <SummaryTile label="완료" value={String(dailySummary.completed)} />
-                <SummaryTile label="시작" value={String(dailySummary.started)} />
-                <SummaryTile label="남은 일" value={String(dailySummary.remaining)} />
+                <SummaryTile label={t("완료")} value={String(dailySummary.completed)} />
+                <SummaryTile label={t("시작")} value={String(dailySummary.started)} />
+                <SummaryTile label={t("남은 일")} value={String(dailySummary.remaining)} />
               </div>
               <div className="mt-5 rounded-[24px] bg-zinc-50 p-4">
-                <p className="text-sm text-zinc-500">오늘 한마디</p>
-                <p className="mt-2 text-lg font-semibold text-zinc-900">{dailySummary.rewardMessage}</p>
+                <p className="text-sm text-zinc-500">{t("오늘 한마디")}</p>
+                <p className="mt-2 text-lg font-semibold text-zinc-900">{t(dailySummary.rewardMessage)}</p>
               </div>
             </div>
           </div>
@@ -1373,7 +1428,7 @@ export default function FocusOS() {
 
         {showCelebrate && (
           <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-            <div className="absolute left-1/2 top-24 -translate-x-1/2 rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-xl animate-[celebrate_1.2s_ease-out]">완료! 잘했어요 ✨</div>
+            <div className="absolute left-1/2 top-24 -translate-x-1/2 rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-xl animate-[celebrate_1.2s_ease-out]">{t("완료! 잘했어요 ✨")}</div>
           </div>
         )}
 
@@ -1474,13 +1529,13 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
               onClick={() => setMode('signin')}
               className={`rounded-[24px] px-4 py-4 text-base font-semibold transition ${mode === 'signin' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
             >
-              로그인
+              {t("로그인")}
             </button>
             <button
               onClick={() => setMode('signup')}
               className={`rounded-[24px] px-4 py-4 text-base font-semibold transition ${mode === 'signup' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
             >
-              회원가입
+              {t("회원가입")}
             </button>
           </div>
 
@@ -1521,7 +1576,7 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
               disabled={loading}
               className="w-full rounded-[22px] border border-zinc-200 bg-white px-4 py-4 text-base font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              구글로 계속하기
+              {t("구글로 계속하기")}
             </button>
           </div>
 
@@ -1563,7 +1618,7 @@ function InlineIcon({ name, className = 'h-4 w-4' }) {
   );
 }
 
-function IconButton({ title, icon, onClick, tone = 'default', disabled = false }) {
+function IconButton({ title, icon, onClick, tone = 'default', disabled = false, lang = 'ko' }) {
   const toneClass =
     tone === 'primary'
       ? 'text-zinc-950 hover:text-zinc-700'
@@ -1579,16 +1634,16 @@ function IconButton({ title, icon, onClick, tone = 'default', disabled = false }
 
   const label =
     title === '집중 시작'
-      ? '집중'
+      ? tr(lang, '집중')
       : title === '우선순위 추천'
-        ? '추천'
+        ? tr(lang, '추천')
         : title === 'AI 작업분해'
-          ? '분해'
+          ? tr(lang, '분해')
           : title === 'Later로 이동'
-            ? '나중'
+            ? tr(lang, '나중')
             : title === 'Today로 이동'
-              ? '오늘'
-              : title;
+              ? tr(lang, '오늘')
+              : tr(lang, title);
 
   return (
     <button
@@ -1690,6 +1745,7 @@ function TaskCard({
   startFocusMode,
   onDragStart,
   onDropCard,
+  lang = 'ko',
 }) {
   const doneCount = (task.steps || []).filter((step) => step.done).length;
   const stepProgress = (task.steps || []).length ? Math.round((doneCount / task.steps.length) * 100) : 0;
@@ -1704,14 +1760,14 @@ function TaskCard({
       className={`rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
     >
       <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
-        <span className="rounded-full bg-zinc-100 px-2 py-1">드래그 정렬</span>
-        <span>카드를 길게 잡고 위치를 바꿀 수 있어요</span>
+        <span className="rounded-full bg-zinc-100 px-2 py-1">{tr(lang, "드래그 정렬")}</span>
+        <span>{tr(lang, "카드를 길게 잡고 위치를 바꿀 수 있어요")}</span>
       </div>
 
       <div className="min-w-0">
         <div className="flex flex-wrap gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{task.priority}</span>
-          <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{task.status}</span>
+          <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{tr(lang, task.priority)}</span>
+          <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{tr(lang, task.status)}</span>
         </div>
         <input value={task.title} onChange={(e) => updateTask(task.id, { title: e.target.value })} className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400" />
         <textarea value={task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
@@ -1719,43 +1775,43 @@ function TaskCard({
 
       <div className="mt-5 flex flex-wrap items-start gap-5">
         <div className="flex flex-wrap items-start gap-5">
-          <IconButton title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
-          <IconButton title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
-          {task.start && !task.end && <IconButton title="종료" icon="done" tone="emerald" onClick={() => recordEnd(task.id)} />}
-          {task.status === '진행 중' && <IconButton title="멈춤" icon="pause" tone="amber" onClick={() => pauseTask(task.id)} />}
-          <IconButton title="초기화" icon="reset" tone="rose" onClick={() => resetTask(task.id)} />
-          <IconButton title={task.list === 'today' ? 'Later로 이동' : 'Today로 이동'} icon="later" onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} />
-          <IconButton title="우선순위 추천" icon="priority" onClick={() => recommendPriority(task.id)} />
-          <IconButton title="AI 작업분해" icon="split" onClick={() => splitTask(task.id)} />
-          <IconButton title="삭제" icon="delete" onClick={() => deleteTask(task.id)} />
+          <IconButton lang={lang} title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
+          <IconButton lang={lang} title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
+          {task.start && !task.end && <IconButton lang={lang} title="종료" icon="done" tone="emerald" onClick={() => recordEnd(task.id)} />}
+          {task.status === '진행 중' && <IconButton lang={lang} title="멈춤" icon="pause" tone="amber" onClick={() => pauseTask(task.id)} />}
+          <IconButton lang={lang} title="초기화" icon="reset" tone="rose" onClick={() => resetTask(task.id)} />
+          <IconButton lang={lang} title={task.list === 'today' ? 'Later로 이동' : 'Today로 이동'} icon="later" onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} />
+          <IconButton lang={lang} title="우선순위 추천" icon="priority" onClick={() => recommendPriority(task.id)} />
+          <IconButton lang={lang} title="AI 작업분해" icon="split" onClick={() => splitTask(task.id)} />
+          <IconButton lang={lang} title="삭제" icon="delete" onClick={() => deleteTask(task.id)} />
         </div>
 
         <div className="ml-auto inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
           <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
           <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="bg-transparent text-sm outline-none">
-            <option>가장 중요</option>
-            <option>중요</option>
-            <option>가벼운 일</option>
+            <option>{tr(lang, "가장 중요")}</option>
+            <option>{tr(lang, "중요")}</option>
+            <option>{tr(lang, "가벼운 일")}</option>
           </select>
         </div>
       </div>
 
       {(task.start || task.end) && (
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {task.start && <InfoBox label="시작 시간" value={task.start} />}
-          {task.end && <InfoBox label="종료 시간" value={task.end} />}
+          {task.start && <InfoBox label={tr(lang, "시작 시간")} value={task.start} />}
+          {task.end && <InfoBox label={tr(lang, "종료 시간")} value={task.end} />}
         </div>
       )}
 
       <div className="mt-4 rounded-[26px] bg-zinc-50 p-4">
-        <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.</div>
+        <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">{tr(lang, "AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.")}</div>
 
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-zinc-700">작업 단계</p>
-            <p className="text-xs text-zinc-500">완료 {doneCount}/{(task.steps || []).length}</p>
+            <p className="text-sm font-medium text-zinc-700">{tr(lang, "작업 단계")}</p>
+            <p className="text-xs text-zinc-500">{tr(lang, "완료")} {doneCount}/{(task.steps || []).length}</p>
           </div>
-          <button onClick={() => addStep(task.id)} title="단계 추가" aria-label="단계 추가" className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white"><InlineIcon name="add-step" className="h-4 w-4" />단계 추가</button>
+          <button onClick={() => addStep(task.id)} title={tr(lang, "단계 추가")} aria-label={tr(lang, "단계 추가")} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white"><InlineIcon name="add-step" className="h-4 w-4" />{tr(lang, "단계 추가")}</button>
         </div>
 
         <div className="mb-4 h-2 overflow-hidden rounded-full bg-white">
@@ -1765,9 +1821,9 @@ function TaskCard({
         <div className="space-y-2">
           {(task.steps || []).map((step, idx) => (
             <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
-              <button onClick={() => toggleStep(task.id, idx)} title={step.done ? '단계 완료 취소' : '단계 완료'} aria-label={step.done ? '단계 완료 취소' : '단계 완료'} className={`flex h-6 w-6 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
+              <button onClick={() => toggleStep(task.id, idx)} title={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} aria-label={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} className={`flex h-6 w-6 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
               <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
-              <button onClick={() => deleteStep(task.id, idx)} title="단계 삭제" aria-label="단계 삭제" className="inline-flex h-7 w-7 items-center justify-center text-zinc-400 transition hover:text-rose-500">
+              <button onClick={() => deleteStep(task.id, idx)} title={tr(lang, "단계 삭제")} aria-label={tr(lang, "단계 삭제")} className="inline-flex h-7 w-7 items-center justify-center text-zinc-400 transition hover:text-rose-500">
                 <InlineIcon name="delete" className="h-4 w-4" />
               </button>
             </div>
