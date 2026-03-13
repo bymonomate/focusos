@@ -922,24 +922,26 @@ export default function FocusOS() {
   };
 
   const requestAccountDelete = async () => {
-    const requestText = [
-      'FocusOS 계정 삭제 요청',
-      `이메일: ${session?.user?.email || '없음'}`,
-      `사용자 ID: ${session?.user?.id || '없음'}`,
-      '',
-      '아래 계정의 삭제를 요청합니다.',
-      '앱 데이터와 인증 계정 삭제를 함께 진행해 주세요.',
-    ].join('\n');
+    if (!session?.user) {
+      setSettingsMessage('로그인이 필요해요.');
+      return;
+    }
 
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(requestText);
-        setSettingsMessage('계정 삭제 요청 문구를 복사했어요. 현재는 초기 출시 단계라 자동 탈퇴 대신 관리자 확인 후 삭제하는 방식으로 운영할게요.');
-      } else {
-        setSettingsMessage(requestText);
-      }
+      const { error } = await supabaseClient
+        .from('delete_requests')
+        .insert({
+          user_id: session.user.id,
+          email: session.user.email || null,
+        });
+
+      if (error) throw error;
+
+      setSettingsMessage('삭제 요청이 접수됐어요.');
+      showToastMessage('삭제 요청이 접수됐어요.');
     } catch (error) {
-      setSettingsMessage(requestText);
+      console.error(error);
+      setSettingsMessage('삭제 요청 처리 중 문제가 생겼어요.');
     }
   };
 
