@@ -1405,9 +1405,9 @@ function IconButton({ title, icon, onClick, tone = 'default', disabled = false }
         : title === 'AI 작업분해'
           ? '분해'
           : title === 'Later로 이동'
-            ? '나중'
+            ? '나중으로'
             : title === 'Today로 이동'
-              ? '오늘'
+              ? '오늘로'
               : title;
 
   return (
