@@ -1934,9 +1934,9 @@ function FocusLivePage({
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
               <div className="mb-3">
-<button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
-</div>
-<h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
+                <button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
+              </div>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
               <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
               <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
                 🟢 {mergedSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
@@ -1966,7 +1966,7 @@ function FocusLivePage({
           </div>
         </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="mt-8 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <div>
             {joinedActive && (
               <div className="mb-4 rounded-[28px] border border-violet-200 bg-violet-50/80 p-5 shadow-sm">
@@ -1994,10 +1994,38 @@ function FocusLivePage({
             </div>
 
             {mergedSessions.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {mergedSessions.map((session) => (
-                  <LiveSessionCard key={session.id || `${session.anonymous_name}-${session.task_title}`} session={session} lang={lang} />
-                ))}
+              <div className="overflow-hidden rounded-[28px] border border-zinc-100 bg-white shadow-sm">
+                <div className={`divide-y divide-zinc-100 ${mergedSessions.length > 10 ? 'max-h-[520px] overflow-y-auto' : ''}`}>
+                  {mergedSessions.map((session) => {
+                    const isMine =
+                      joinedActive &&
+                      (session.id === joinedSession?.id || session.anonymous_name === joinedSession?.anonymous_name);
+
+                    return (
+                      <div
+                        key={session.id || `${session.anonymous_name}-${session.started_at}`}
+                        className={`flex items-center justify-between gap-3 px-4 py-3 ${isMine ? 'bg-violet-50/70' : 'bg-white'}`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-block h-2.5 w-2.5 rounded-full ${isMine ? 'bg-violet-600' : 'bg-emerald-500'}`}></span>
+                            <p className="truncate text-sm font-semibold text-zinc-900">
+                              {session.anonymous_name || 'Focuser'}
+                            </p>
+                          </div>
+                          <p className="mt-1 truncate text-xs text-zinc-500">
+                            {session.task_title || t('집중 세션')}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className={`text-sm font-semibold ${isMine ? 'text-violet-700' : 'text-zinc-700'}`}>
+                            {formatRemainingLabel(getRemainingSeconds(session), lang)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="rounded-[28px] border border-dashed border-zinc-200 bg-white/80 px-6 py-14 text-center text-zinc-500 shadow-sm">
@@ -2012,48 +2040,56 @@ function FocusLivePage({
             )}
           </div>
 
-          <div className="rounded-[32px] border border-zinc-100 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-violet-700">{t('응원 한마디')}</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{t('댓글 남기기')}</h2>
-
-            <div className="mt-4 flex gap-2">
-              <input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={t('메시지 입력')}
-                className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
-              />
-              <button
-                onClick={submitComment}
-                className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]"
-              >
-                {t('보내기')}
-              </button>
+          <div className="overflow-hidden rounded-[32px] border border-zinc-100 bg-white shadow-sm">
+            <div className="border-b border-zinc-100 px-5 py-4">
+              <p className="text-sm font-medium text-violet-700">{t('응원 한마디')}</p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{t('댓글 남기기')}</h2>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              {['화이팅', '같이 집중해요', '끝까지 가요'].map((quick) => (
-                <button
-                  key={quick}
-                  onClick={() => setDraft(quick)}
-                  className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100"
-                >
-                  {tr(lang, quick)}
-                </button>
-              ))}
-            </div>
+            <div className="flex h-[520px] flex-col">
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <div className="space-y-3">
+                  {comments.length > 0 ? comments.map((comment) => (
+                    <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="max-w-[92%] rounded-2xl bg-zinc-50 px-4 py-3">
+                      <p className="text-sm font-semibold text-zinc-900">{comment.anonymous_name || 'Focuser'}</p>
+                      <p className="mt-1 text-sm leading-6 text-zinc-600">{comment.message}</p>
+                    </div>
+                  )) : (
+                    <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
+                      {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-            <div className="mt-6 space-y-3">
-              {comments.length > 0 ? comments.map((comment) => (
-                <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="rounded-2xl bg-zinc-50 p-4">
-                  <p className="text-sm font-semibold text-zinc-900">{comment.anonymous_name || 'Focuser'}</p>
-                  <p className="mt-1 text-sm text-zinc-600">{comment.message}</p>
+              <div className="border-t border-zinc-100 px-5 py-4">
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {['화이팅', '같이 집중해요', '끝까지 가요'].map((quick) => (
+                    <button
+                      key={quick}
+                      onClick={() => setDraft(quick)}
+                      className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100"
+                    >
+                      {tr(lang, quick)}
+                    </button>
+                  ))}
                 </div>
-              )) : (
-                <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
-                  {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
+
+                <div className="flex gap-2">
+                  <input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder={t('메시지 입력')}
+                    className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
+                  />
+                  <button
+                    onClick={submitComment}
+                    className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]"
+                  >
+                    {t('보내기')}
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </section>
