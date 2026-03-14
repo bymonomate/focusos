@@ -47,7 +47,7 @@ const EN_TEXT = {
   '인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.': 'Authentication is unavailable right now. Please try again shortly.',
   '이메일과 비밀번호를 입력해 주세요.': 'Please enter your email and password.',
   '회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.': 'Your account was created. Please verify your email and sign in.',
-  '작게 시작하고, 한 번에 하나씩 끝내기': 'Start small and finish one thing at a time',
+  '': 'Start small and finish one thing at a time',
   '설정': 'Settings',
   '로그아웃': 'Log out',
   '계정 및 앱 설정': 'Account & App Settings',
@@ -471,7 +471,7 @@ function sortTasks(tasks) {
   });
 }
 
-export default function FocusOS() {
+export default function FocusOS <button className="md:hidden ml-auto text-xl" onClick={()=>setMenuOpen(!menuOpen)}>☰</button>() {
   const newestTaskRef = useRef(null);
   const hydratingFromDbRef = useRef(false);
 
@@ -501,7 +501,8 @@ export default function FocusOS() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
-  const [lang, setLang] = useState(defaultLang);
+  const [menuOpen,setMenuOpen] = useState(false);
+const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
 
@@ -1156,9 +1157,9 @@ export default function FocusOS() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
-            <p className="text-sm text-zinc-500">{t('작게 시작하고, 한 번에 하나씩 끝내기')}</p>
+            <p className="text-sm text-zinc-500">{t('')}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <div className="mr-1 flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
               <button onClick={() => setLang('ko')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>KO</button>
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
