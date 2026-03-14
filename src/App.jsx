@@ -4,10 +4,6 @@ const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
   focusMinutes: 'focus-os-focus-minutes',
   lang: 'focus-os-lang',
-  anonymousName: 'focus-os-anonymous-name',
-  liveComments: 'focus-os-live-comments',
-  liveJoinedSession: 'focus-os-live-joined-session',
-  seededTasksPrefix: 'focus-os-seeded-tasks-',
 };
 
 const TODAY_LIMIT = 5;
@@ -46,7 +42,7 @@ const EN_TEXT = {
   '간편 로그인': 'Quick sign-in',
   '구글로 계속하기': 'Continue with Google',
   '처리 중...': 'Processing...',
-  '': '7-Day Free Trial',
+  '7일 무료 체험': '7-Day Free Trial',
   '가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.': 'Start using the app right away and see if the Focus OS flow works for you.',
   '인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.': 'Authentication is unavailable right now. Please try again shortly.',
   '이메일과 비밀번호를 입력해 주세요.': 'Please enter your email and password.',
@@ -99,28 +95,28 @@ const EN_TEXT = {
   '오늘 끝낸 일': 'Completed today',
   '시도한 일': 'Started tasks',
   '진행률': 'Progress',
-  '전체 흐름': 'Daily Flow',
-  '집중 점수': 'Focus Score',
-  '과하게 늘리지 않고 5개 이내 유지': 'Keep today within five tasks',
-  '지금 한 가지에만 집중하기': 'Focus on one task',
+  '전체 흐름': 'Overall flow',
+  '집중 점수': 'Focus score',
+  '과하게 늘리지 않고 5개 이내 유지': 'Keep it under 5 tasks',
+  '지금 한 가지에만 집중하기': 'Focus on one thing right now',
   '지금은 이 카드 하나만 보고 끝내면 돼요.': 'Just focus on this one card for now.',
   '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.': 'No task selected. Start a task from Today or leave Focus Mode to go back.',
   '시작 시간': 'Started at',
   '종료 시간': 'Finished at',
-  '타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.': 'Notifications at start and end. Only one active task at a time.',
+  '타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.': 'A soft sound plays when the timer starts and ends, and only one task stays active.',
   '리셋': 'Reset',
   '운영 원칙': 'Operating Principles',
   '오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.': 'Limiting visible tasks lowers the barrier to start.',
-  '지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.': 'Move non-urgent work here and bring it back when needed.',
+  '지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.': 'Move non-urgent work here and bring it back only when needed.',
   '작업 분해': 'Task Breakdown',
   '큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.': 'Break big work into steps you can start within 5 minutes.',
   '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.': 'No active task yet. Start one from Today or use Start with 5 min.',
-  '오늘의 정리': "Today's Summary",
+  '{t("완료! 잘했어요 ✨")}': 'Done! Nice work ✨',
+  '오늘의 정리': 'Today at a glance',
   '남은 일': 'Remaining',
   '오늘 한마디': "Today's note",
   '작은 완료 하나가 흐름을 만듭니다.': 'One small completion creates momentum.',
-  '완료! 잘했어요 ✨': 'Done! Nice work ✨',
-  '↑ 위로': '↑ Top',
+  '위로': 'Top',
   '드래그 정렬': 'Drag to sort',
   '카드를 길게 잡고 위치를 바꿀 수 있어요': 'Drag cards to reorder them',
   '가장 중요': 'Top Priority',
@@ -138,81 +134,23 @@ const EN_TEXT = {
   '집중': 'Focus',
   '추천': 'Suggest',
   '분해': 'Break down',
-  '삭제': 'Delete',
   '새 할 일': 'New task',
+  '나중에 할 일': 'Later task',
   '첫 단계 적기': 'Write the first step',
-  '기획안 첫 문단 쓰기': 'Write the first paragraph of the proposal',
-  '완벽하게 쓰기보다 첫 문장부터 시작하기': 'Start with the first sentence instead of making it perfect',
-  '핵심 문장 한 줄 적기': 'Write one key sentence',
-  '첫 문단 3줄 채우기': 'Fill three lines of the first paragraph',
-  '초안 저장하기': 'Save the draft',
-  '세금계산서 확인': 'Check the tax invoice',
-  '확인만 먼저 하고 수정은 따로 분리하기': 'Review first and handle edits separately',
-  '메일 열기': 'Open the email',
-  '첨부파일 확인': 'Check the attachment',
-  '이상 유무 체크': 'Check for issues',
-  '메일 답장 1개 보내기': 'Send one email reply',
-  '짧게 답할 수 있는 것부터 처리하기': 'Start with the easiest reply',
-  '받는 사람 확인': 'Check the recipient',
-  '핵심 두 줄 쓰기': 'Write the core message in two lines',
   'AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.': 'AI suggests three actionable starter steps from your task title and note.',
   '작업 단계': 'Steps',
-  '단계 추가': 'Add Step',
+  '단계 추가': 'Add step',
   '단계 완료': 'Complete step',
   '단계 완료 취소': 'Undo step completion',
   '단계 삭제': 'Delete step',
   '새 단계': 'New step',
-  '오늘 할 일은 5개까지만 유지하는 게 좋아요.': 'It works best to keep Today under 5 tasks.',
-  '새 카드가 아래에 생성됐어요.': 'A new card was added below.',
-  '집중 시작. 한 가지 일만 보면 돼요.': 'Focus started. One thing at a time.',
-  '완료 목록으로 이동했어요.': 'Moved to Completed.',
-  '작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.': 'Task paused. You can continue anytime.',
-  '작업을 초기화했어요. 처음부터 다시 시작할 수 있어요.': 'Task reset. You can start again from scratch.',
-  '오늘 할 일로 복원했어요.': 'Restored to Today.',
-  '추천 우선순위를 적용했어요.': 'Suggested priority applied.',
-  '현재 카드 기준으로 우선순위를 다시 정리했어요.': 'Priorities were re-ranked based on your current cards.',
-  '카드 순서를 바꿨어요.': 'Card order updated.',
-  '작업을 더 작은 단계로 나눴어요.': 'The task was broken into smaller steps.',
-  '먼저 오늘 할 일을 추가해 주세요.': 'Add a task to Today first.',
-  '5분 타이머를 시작했어요.': 'Started the 5-minute timer.',
-  '집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.': 'Focus time is up. Mark it and take a short break.',
-  '오늘 흐름 정말 좋음': 'Your flow is really good today.',
-  '집중 유지 잘하고 있어요': 'You are maintaining focus well.',
-  '좋아요, 계속 작은 완료를 쌓아요': 'Good progress. Keep stacking small wins.',
-  '한 단계만 해도 충분해요': 'One small step is enough.',
-  'FocusOS LIVE': 'FocusOS LIVE',
-  '지금 함께 집중 중인 사람들': 'People focusing together right now',
-  '혼자보다 같이 시작하는 게 더 쉬울 때가 있어요.': 'Sometimes it is easier to start together.',
-  '아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?': 'No one is focusing yet. Want to start first?',
-  '나도 집중 시작하기': 'Start Focus',
-  '명 집중 중': 'focusing now',
-  '남음': 'left',
-  '실시간 집중 보드': 'Live focus board',
-  '라이브 참여하기': 'Join Live',
-  '지금 함께 집중 중입니다': 'People are focusing together right now',
-  '앱으로 돌아가기': 'Back to app',
-  '내가 참여 중입니다': 'You are currently in LIVE',
-  '라이브 나가기': 'Leave LIVE',
-  '응원 한마디': 'Send a quick message',
-  '댓글 남기기': 'Leave a comment',
-  '메시지를 입력해 주세요.': 'Please enter a message.',
-  '라이브 참여가 시작됐어요.': 'You joined LIVE.',
-  '라이브에서 나갔어요.': 'You left LIVE.',
-  '응원 메시지가 등록됐어요.': 'Your message was posted.',
-  '댓글이 아직 없어요. 먼저 남겨보세요.': 'No messages yet. Be the first to post.',
-  '같이 집중해요': "Let's focus together",
-  '집중 세션': 'Focus session',
-  '지금 참여 중인 사람들': 'People currently in LIVE',
-  '라이브 집중방': 'LIVE Focus Room',
-  '메시지 입력': 'Write a message',
-  '보내기': 'Send',
-  '참여 중': 'In LIVE',
-  '구경 중': 'Viewing',
+  '삭제': 'Delete'
 };
 
 function tr(lang, value) {
   return lang === 'en' && EN_TEXT[value] ? EN_TEXT[value] : value;
 }
+
 
 const SVG_ICONS = {
   'start': { viewBox: "0 0 72.42 87.95", inner: "<g id=\"Layer_1-2\" data-name=\"Layer 1\">\n    <path d=\"M68.99,50.92L14.71,86.09c-2.47,1.6-5.75,2.27-8.16,1.6-2.17-.61-6.44-3.61-6.45-6.46L0,8.26C0,5.16,2.51,1.96,4.52.95,7.58-.59,11.64-.2,14.54,1.68l54.02,35.09c1.97,1.28,3.65,4.34,3.84,6.12.21,2.02-.9,6.41-3.4,8.03ZM64.04,47.8c1.46-.94,2.66-2.1,2.81-2.98s-.73-3.37-1.58-3.92L11.65,6.01c-.94-.61-3.72-.72-4.67-.41s-1.97,2.36-1.97,3.78v69.4c0,1.53,1.87,3.92,2.89,3.97.85.04,2.68-.36,3.55-.92l52.58-34.04Z\"/>\n  </g>" },
@@ -235,6 +173,7 @@ const SVG_ICONS = {
   'settings': { viewBox: "0 0 92.07 91.81", inner: "<g id=\"Layer_1-2\" data-name=\"Layer 1\">\n    <g>\n      <path d=\"M53.75,90.77c-5.06,1.36-10.93,1.36-15.19.17-4.17-1.17-.75-9.59-6.19-12.31-1.77-.88-4.19-.01-6.22,1.24l-6.24,3.85-8.14-7.2c-1.11-.98-2.82-3.3-3.08-4.63-.86-4.32,5.68-7.16,4.54-11.29-1.78-6.42-11.63-3.17-12.52-7.47s-1.02-9.5.01-13.77c.78-3.24,6.19-3.38,9.39-4.01,2-.4,3.68-5.64,2.56-7.34-1.73-2.63-5.59-6-3.65-9.26,2.1-3.55,5.6-6.56,9.31-9.21,4.42-3.16,8.07,6.08,14.35,3.29C37.89,10.53,33.66-.35,41.79,0l10.32.45c5.21.23,2.56,10.75,7.71,12.6,2.38.86,4.96-.09,6.58-1.73,3.41-3.44,7.45-2.78,10.35.47,1.99,2.22,4.49,4.64,6.1,7.22,3.22,5.15-7.85,8.48-3.21,14.6,2.61,3.45,10.93,1.69,11.78,5.61.93,4.31.86,9.98-.14,14.62-2.64,1.33-7.16,2.58-10.08,3.45-1.85.55-3.2,5.43-2.03,6.9,1.92,2.42,5.84,5.72,3.48,9.06s-5.78,6.75-9.07,9.42c-3.67,2.97-8.49-6.08-13.4-4.24-6.56,2.46-2.39,11.23-6.41,12.31ZM50.39,86.28l2.33-9.9c2.98-1.52,7.56-3.31,10.86-4.27l7.57,5.24c2.61-1.31,7.02-4.07,6.12-7.34-.62-2.26-5.16-5.79-4.32-8.05,1.25-3.36,3.04-7.07,4.44-9.58l9.6-2.26c.06-2.37-.2-6.45-.63-8.48l-9.18-2.15c-2-3.44-3.8-7.84-4.33-11.29l5.01-7.07c-1.13-2.65-4.04-5.66-6.63-6.82l-8.16,5.32-10.74-4.56-1.94-9.27c-2.42-.28-6.73-.46-8.75-.3l-2.16,9.55-10.24,4.58-9.2-5.34-5.86,6.04,4.03,7.32c1.75,3.18-1.45,9.86-3.83,12.3l-9.01,1.53c-.14,2.73-.11,6.67.24,9.19,2.95.81,7.96.83,9.37,2.62,1.85,2.34,3.29,6.12,3.84,9.29.35,2.02-3.26,5.52-4.17,7.56-.4,2.48,4.17,6.96,6.92,6.18,6.62-1.86,1.79-7.25,17.46.13l2.65,9.82c1.98.12,6.54.11,8.68-.01Z\"/>\n      <path d=\"M43.87,27.96c10.61-1.29,18.62,6.59,19.99,15.41,1.62,10.43-5.81,19.3-15.51,20.47-9.92,1.19-18.67-5.42-20.27-14.89s5.05-19.68,15.79-20.99ZM57.94,41.07c-4.03-8.01-12.23-10.48-18.59-6.4-6.49,4.17-8.82,12.13-4.06,18.51,4.14,5.54,11.07,7.34,17.01,4.17,5.34-2.85,8.74-10.13,5.64-16.28Z\"/>\n    </g>\n  </g>" },
   'check': { viewBox: "0 0 82.57 60.92", inner: "<g id=\"Layer_1-2\" data-name=\"Layer 1\">\n    <path d=\"M.89,34.15c-1.14-1.15-1.19-3.74-.14-4.44.88-.58,2.96.13,3.93,1.11l22.69,22.76L77.15,1.62C77.98.75,79.91,0,80.89,0s2.28,3,1.37,3.94L27.51,60.92.89,34.15Z\"/>\n  </g>" },
 };
+
 
 const DEFAULT_TASKS = [
   {
@@ -286,16 +225,16 @@ const DEFAULT_TASKS = [
   },
 ];
 
-function formatNow(date = new Date(), lang = 'ko') {
-  return date.toLocaleTimeString(lang === 'en' ? 'en-US' : 'ko-KR', {
+function formatNow(date = new Date()) {
+  return date.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   });
 }
 
-function formatDate(date = new Date(), lang = 'ko') {
-  return date.toLocaleDateString(lang === 'en' ? 'en-US' : 'ko-KR', {
+function formatDate(date = new Date()) {
+  return date.toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -335,77 +274,6 @@ function playBeep() {
 function getStorage() {
   if (typeof window === 'undefined') return null;
   return window.localStorage;
-}
-
-
-function getPageMode() {
-  if (typeof window === 'undefined') return 'home';
-  const params = new URLSearchParams(window.location.search || '');
-  return params.get('page') === 'live' ? 'live' : 'home';
-}
-
-function getAnonymousName() {
-  const storage = getStorage();
-  if (!storage) return `Focuser #${Math.floor(Math.random() * 900) + 100}`;
-  const saved = storage.getItem(STORAGE_KEYS.anonymousName);
-  if (saved) return saved;
-  const created = `Focuser #${Math.floor(Math.random() * 900) + 100}`;
-  storage.setItem(STORAGE_KEYS.anonymousName, created);
-  return created;
-}
-
-function readLocalLiveComments() {
-  const storage = getStorage();
-  if (!storage) return [];
-  try {
-    const parsed = JSON.parse(storage.getItem(STORAGE_KEYS.liveComments) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeLocalLiveComments(comments) {
-  const storage = getStorage();
-  if (!storage) return;
-  storage.setItem(STORAGE_KEYS.liveComments, JSON.stringify(comments.slice(0, 40)));
-}
-
-function readLocalJoinedSession() {
-  const storage = getStorage();
-  if (!storage) return null;
-  try {
-    const parsed = JSON.parse(storage.getItem(STORAGE_KEYS.liveJoinedSession) || 'null');
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalJoinedSession(session) {
-  const storage = getStorage();
-  if (!storage) return;
-  if (!session) {
-    storage.removeItem(STORAGE_KEYS.liveJoinedSession);
-    return;
-  }
-  storage.setItem(STORAGE_KEYS.liveJoinedSession, JSON.stringify(session));
-}
-
-function getSeededTasksKey(userId) {
-  return `${STORAGE_KEYS.seededTasksPrefix}${userId}`;
-}
-
-
-function getRemainingSeconds(session) {
-  const duration = Number(session?.duration_seconds ?? session?.remaining_time ?? 0);
-  const startedAt = session?.started_at ? new Date(session.started_at).getTime() : Date.now();
-  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
-  return Math.max(0, duration - elapsed);
-}
-
-function formatRemainingLabel(seconds, lang = 'ko') {
-  return `${formatTimer(seconds)} ${lang === 'en' ? 'left' : '남음'}`;
 }
 
 function getTodayLabel() {
@@ -583,34 +451,28 @@ export default function FocusOS() {
   const [tasks, setTasks] = useState(DEFAULT_TASKS.map(normalizeTask));
   const [newTaskId, setNewTaskId] = useState(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
-  const defaultLang =
-    typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEYS.lang)
-      ? window.localStorage.getItem(STORAGE_KEYS.lang)
-      : typeof navigator !== 'undefined' && navigator.language?.startsWith('ko')
-        ? 'ko'
-        : 'en';
-  const [currentTime, setCurrentTime] = useState(formatNow(new Date(), defaultLang));
-  const [currentDate, setCurrentDate] = useState(formatDate(new Date(), defaultLang));
+  const [currentTime, setCurrentTime] = useState(formatNow());
+  const [currentDate, setCurrentDate] = useState(formatDate());
   const [focusMinutes, setFocusMinutes] = useState(25);
   const [timerSeconds, setTimerSeconds] = useState(25 * 60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [toast, setToast] = useState('');
   const [expandedReport, setExpandedReport] = useState(false);
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
+  const defaultLang =
+    typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEYS.lang)
+      ? window.localStorage.getItem(STORAGE_KEYS.lang)
+      : typeof navigator !== 'undefined' && navigator.language?.startsWith('ko')
+        ? 'ko'
+        : 'en';
 
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
   const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
-  const [pageMode, setPageMode] = useState(getPageMode());
-  const [anonymousName, setAnonymousName] = useState('');
-  const [liveSessions, setLiveSessions] = useState([]);
-  const [liveComments, setLiveComments] = useState([]);
-  const [joinedLiveSession, setJoinedLiveSession] = useState(readLocalJoinedSession());
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -650,18 +512,6 @@ export default function FocusOS() {
     script.setAttribute('data-focus-tailwind', '1');
     script.onload = () => setTailwindReady(true);
     document.head.appendChild(script);
-  }, []);
-
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setAnonymousName(getAnonymousName());
-    setJoinedLiveSession(readLocalJoinedSession());
-    setLiveComments(readLocalLiveComments());
-
-    const syncPage = () => setPageMode(getPageMode());
-    window.addEventListener('popstate', syncPage);
-    return () => window.removeEventListener('popstate', syncPage);
   }, []);
 
   useEffect(() => {
@@ -709,109 +559,6 @@ export default function FocusOS() {
   }, []);
 
 
-  const isLivePage = pageMode === 'live';
-
-  useEffect(() => {
-    if (!supabaseClient) return;
-
-    let cancelled = false;
-
-    const loadLive = async () => {
-      try {
-        const { data } = await supabaseClient
-          .from('focus_live')
-          .select('*')
-          .eq('status', 'focusing')
-          .order('started_at', { ascending: false })
-          .limit(200);
-
-        if (!cancelled) {
-          setLiveSessions(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        console.error(error);
-        if (!cancelled) setLiveSessions([]);
-      }
-    };
-
-    loadLive();
-
-    const channel = supabaseClient
-      .channel(`live-room-${Date.now()}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'focus_live' },
-        () => loadLive()
-      )
-      .subscribe();
-
-    const refreshOnResume = () => loadLive();
-    const visibilityHandler = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        loadLive();
-      }
-    };
-    const pollId = typeof window !== 'undefined' ? window.setInterval(loadLive, 5000) : null;
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('focus', refreshOnResume);
-      window.addEventListener('online', refreshOnResume);
-      document.addEventListener('visibilitychange', visibilityHandler);
-    }
-
-    return () => {
-      cancelled = true;
-      supabaseClient.removeChannel(channel);
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('focus', refreshOnResume);
-        window.removeEventListener('online', refreshOnResume);
-        document.removeEventListener('visibilitychange', visibilityHandler);
-        if (pollId) window.clearInterval(pollId);
-      }
-    };
-  }, [supabaseClient]);
-
-
-  useEffect(() => {
-    if (!isLivePage) return;
-
-    if (!supabaseClient) {
-      setLiveComments(readLocalLiveComments());
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadComments = async () => {
-      try {
-        const { data } = await supabaseClient
-          .from('focus_live_comments')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(40);
-
-        if (!cancelled) {
-          if (Array.isArray(data)) {
-            setLiveComments(data);
-            writeLocalLiveComments(data);
-          } else {
-            setLiveComments(readLocalLiveComments());
-          }
-        }
-      } catch (error) {
-        console.error(error);
-        if (!cancelled) setLiveComments(readLocalLiveComments());
-      }
-    };
-
-    loadComments();
-    const id = window.setInterval(loadComments, 10000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [supabaseClient, isLivePage]);
 
   useEffect(() => {
     const storage = getStorage();
@@ -860,14 +607,9 @@ export default function FocusOS() {
         return;
       }
 
-      const storage = getStorage();
-      const seededKey = getSeededTasksKey(session.user.id);
-      const hasSeededBefore = storage ? storage.getItem(seededKey) === '1' : false;
-
       if (Array.isArray(data) && data.length > 0) {
         setTasks(data.map(mapTaskFromDb).map(normalizeTask));
-        storage?.setItem(seededKey, '1');
-      } else if (!hasSeededBefore) {
+      } else {
         const seeded = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
         setTasks(seeded);
 
@@ -875,11 +617,7 @@ export default function FocusOS() {
         const { error: seedError } = await supabaseClient.from('tasks').upsert(rows, { onConflict: 'id' });
         if (seedError) {
           console.error('tasks seed error', seedError);
-        } else {
-          storage?.setItem(seededKey, '1');
         }
-      } else {
-        setTasks([]);
       }
 
       setDbReady(true);
@@ -940,17 +678,11 @@ export default function FocusOS() {
   useEffect(() => {
     const id = window.setInterval(() => {
       const now = new Date();
-      setCurrentTime(formatNow(now, lang));
-      setCurrentDate(formatDate(now, lang));
+      setCurrentTime(formatNow(now));
+      setCurrentDate(formatDate(now));
     }, 30000);
     return () => window.clearInterval(id);
-  }, [lang]);
-
-  useEffect(() => {
-    const now = new Date();
-    setCurrentTime(formatNow(now, lang));
-    setCurrentDate(formatDate(now, lang));
-  }, [lang]);
+  }, []);
 
   useEffect(() => {
     if (!newTaskId) return;
@@ -969,8 +701,7 @@ export default function FocusOS() {
           window.clearInterval(id);
           setTimerRunning(false);
           playBeep();
-          syncLiveStop();
-          setToast(tr(lang, '집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.'));
+          setToast('집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.');
           return 0;
         }
         return prev - 1;
@@ -1012,137 +743,7 @@ export default function FocusOS() {
   const focusScore = Math.min(100, completedTasks.length * 18 + startedCount * 7 + (focusTask ? 10 : 0));
   const rewardMessage = getRewardMessage(focusScore);
 
-  const showToastMessage = (message) => setToast(tr(lang, message));
-
-  const syncLiveStart = async () => {};
-
-  const syncLiveStop = async () => {};
-
-  const goToHome = () => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete('page');
-    window.history.pushState({}, '', url.toString());
-    setPageMode('home');
-  };
-
-  const goToLive = () => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', 'live');
-    window.history.pushState({}, '', url.toString());
-    setPageMode('live');
-  };
-
-
-  const joinLiveFocus = async () => {
-    const nextSession = {
-      id:
-        typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `live-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      user_id: session?.user?.id || null,
-      anonymous_name: anonymousName || getAnonymousName(),
-      task_title: lang === 'en' ? 'Focus session' : '집중 세션',
-      duration_seconds: 25 * 60,
-      started_at: new Date().toISOString(),
-      status: 'focusing',
-    };
-
-    setJoinedLiveSession(nextSession);
-    writeLocalJoinedSession(nextSession);
-    setLiveSessions((prev) => {
-      const filtered = prev.filter(
-        (item) =>
-          item.id !== nextSession.id &&
-          item.anonymous_name !== nextSession.anonymous_name
-      );
-      return [nextSession, ...filtered];
-    });
-
-    if (supabaseClient) {
-      try {
-        const { data, error } = await supabaseClient
-          .from('focus_live')
-          .insert({
-            id: nextSession.id,
-            user_id: nextSession.user_id,
-            anonymous_name: nextSession.anonymous_name,
-            task_title: nextSession.task_title,
-            duration_seconds: nextSession.duration_seconds,
-            started_at: nextSession.started_at,
-            status: nextSession.status,
-          })
-          .select('id')
-          .single();
-
-        if (error) {
-          console.error(error);
-        } else if (data?.id && data.id !== nextSession.id) {
-          const synced = { ...nextSession, id: data.id };
-          setJoinedLiveSession(synced);
-          writeLocalJoinedSession(synced);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    showToastMessage('라이브 참여가 시작됐어요.');
-  };
-
-  const leaveLiveFocus = async () => {
-    const currentJoined = joinedLiveSession;
-    setJoinedLiveSession(null);
-    writeLocalJoinedSession(null);
-    setLiveSessions((prev) =>
-      prev.filter((item) => item.id !== currentJoined?.id && item.anonymous_name !== currentJoined?.anonymous_name)
-    );
-
-    if (supabaseClient && currentJoined?.id) {
-      try {
-        await supabaseClient.from('focus_live').delete().eq('id', currentJoined.id);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    showToastMessage('라이브에서 나갔어요.');
-  };
-
-  const sendLiveComment = async (message) => {
-    const value = String(message || '').trim();
-    if (!value) {
-      showToastMessage('메시지를 입력해 주세요.');
-      return;
-    }
-
-    const nextComment = {
-      id: `comment-${Date.now()}`,
-      anonymous_name: anonymousName || getAnonymousName(),
-      message: value,
-      created_at: new Date().toISOString(),
-    };
-
-    const localComments = [nextComment, ...liveComments].slice(0, 40);
-    setLiveComments(localComments);
-    writeLocalLiveComments(localComments);
-
-    if (supabaseClient) {
-      try {
-        await supabaseClient.from('focus_live_comments').insert({
-          anonymous_name: nextComment.anonymous_name,
-          message: nextComment.message,
-          user_id: session?.user?.id || null,
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    showToastMessage('응원 메시지가 등록됐어요.');
-  };
-
+  const showToastMessage = (message) => setToast(message);
 
   const patchTask = (taskId, updater) => {
     setTasks((prev) => prev.map((task) => (task.id === taskId ? updater(task) : task)));
@@ -1177,7 +778,7 @@ export default function FocusOS() {
     patchTask(taskId, (task) => ({ ...task, ...patch }));
   };
 
-  const recordStart = (taskId, durationSeconds = focusMinutes * 60) => {
+  const recordStart = (taskId) => {
     const now = formatNow();
     playBeep();
     setTasks((prev) =>
@@ -1187,9 +788,8 @@ export default function FocusOS() {
         return task;
       })
     );
-    setTimerSeconds(durationSeconds);
+    setTimerSeconds(focusMinutes * 60);
     setTimerRunning(true);
-    syncLiveStart(taskId, durationSeconds);
     showToastMessage('집중 시작. 한 가지 일만 보면 돼요.');
   };
 
@@ -1203,7 +803,6 @@ export default function FocusOS() {
     }
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
-    syncLiveStop();
     setShowCelebrate(true);
     showToastMessage('완료 목록으로 이동했어요.');
   };
@@ -1211,7 +810,6 @@ export default function FocusOS() {
   const pauseTask = (taskId) => {
     patchTask(taskId, (task) => (task.id === taskId ? { ...task, status: '대기' } : task));
     setTimerRunning(false);
-    syncLiveStop();
     showToastMessage('작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.');
   };
 
@@ -1225,7 +823,6 @@ export default function FocusOS() {
     }));
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
-    syncLiveStop();
     showToastMessage('작업을 초기화했어요. 처음부터 다시 시작할 수 있어요.');
   };
 
@@ -1371,7 +968,7 @@ export default function FocusOS() {
     setTimerRunning(true);
 
     if (focusMode && focusTask) {
-      recordStart(focusTask.id, 5 * 60);
+      recordStart(focusTask.id);
     } else {
       showToastMessage('5분 타이머를 시작했어요.');
     }
@@ -1392,7 +989,6 @@ export default function FocusOS() {
   const closeFocusMode = () => {
     setFocusMode(false);
     setFocusedTaskId(null);
-    syncLiveStop();
   };
 
   const toggleTimer = () => {
@@ -1414,7 +1010,6 @@ export default function FocusOS() {
         playBeep();
         if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
         setTimerRunning(true);
-        syncLiveStart(focusTask.id, timerSeconds || focusMinutes * 60);
       }
       return;
     }
@@ -1429,7 +1024,6 @@ export default function FocusOS() {
 
   const signOut = async () => {
     if (!supabaseClient) return;
-    await syncLiveStop();
     await supabaseClient.auth.signOut();
     setSession(null);
     setDbReady(false);
@@ -1457,7 +1051,6 @@ export default function FocusOS() {
     setTasks([]);
     setFocusMode(false);
     setFocusedTaskId(null);
-    syncLiveStop();
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
     setSettingsMessage('앱 데이터는 초기화됐어요. 계정 자체 삭제는 보안상 서버 함수 연결 후 활성화할 예정이에요.');
@@ -1510,10 +1103,6 @@ export default function FocusOS() {
     );
   }
 
-  if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} />;
-  }
-
   if (!session) {
     return <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} />;
   }
@@ -1528,48 +1117,19 @@ export default function FocusOS() {
     }`}>
       <div className="sticky top-0 z-30 border-b border-white/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-violet-600 md:text-[11px] md:uppercase md:tracking-[0.24em]">FocusOS</p>
-            <p className="hidden text-sm text-zinc-500 md:block">{t('작게 시작하고, 한 번에 하나씩 끝내기')}</p>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
+            <p className="text-sm text-zinc-500">{t('작게 시작하고, 한 번에 하나씩 끝내기')}</p>
           </div>
-
-          <button
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:bg-zinc-50 md:hidden"
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
-
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="flex items-center gap-2">
             <div className="mr-1 flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
               <button onClick={() => setLang('ko')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>KO</button>
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
             </div>
-            <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"><span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>LIVE</button>
             <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
           </div>
         </div>
-
-        {menuOpen && (
-          <div className="border-t border-zinc-200 bg-white px-4 py-3 md:hidden">
-            <div className="space-y-3">
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Language</p>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => { setLang('ko'); setMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
-                  <button onClick={() => { setLang('en'); setMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
-                <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
-                <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {settingsOpen && (
@@ -1620,10 +1180,10 @@ export default function FocusOS() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-violet-700">Focus Mode</p>
                 <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-                  {focusTask ? (lang === 'en' ? tr('en', focusTask.title) : focusTask.title) : t('지금 한 가지에만 집중하기')}
+                  {focusTask ? focusTask.title : t('지금 한 가지에만 집중하기')}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? ((lang === 'en' ? tr('en', focusTask.note) : focusTask.note) || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : t('선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.')}
+                  {focusTask ? (focusTask.note || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : t('선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.')}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1640,45 +1200,18 @@ export default function FocusOS() {
 
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]">
-                {timerRunning ? t("일시정지") : t("타이머 시작")}
+                {timerRunning ? t('일시정지') : t('타이머 시작')}
               </button>
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
-                {t("5분만 시작")}
-              </button>
-              <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>
-                LIVE
+                5분만 시작
               </button>
               <button onClick={closeFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
-                {t("Focus Mode 종료")}
+                Focus Mode 종료
               </button>
             </div>
           </div>
         </section>
       )}
-
-      <section className="mx-auto max-w-6xl px-4 pt-4 md:hidden">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToLive}
-            className="w-full rounded-[28px] border border-violet-300 bg-[linear-gradient(135deg,#f5f1ff_0%,#ede9fe_100%)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
-                  LIVE
-                </div>
-                <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
-                <p className="mt-1 text-sm text-zinc-600">🟢 {liveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
-              </div>
-              <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-                {t('라이브 참여하기')}
-              </div>
-            </div>
-          </button>
-        )}
-      </section>
 
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
         <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "hidden" : ""}`}>
@@ -1695,7 +1228,7 @@ export default function FocusOS() {
               </div>
             </div>
 
-            <div className={`${expandedReport ? 'grid' : 'hidden'} gap-3 sm:grid-cols-2 lg:grid-cols-4 md:grid`}>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub={t("오늘 끝낸 일")} />
               <ReportCard label={t("시작")} value={`${startedCount}`} sub={t("시도한 일")} />
               <ReportCard label={t("진행률")} value={`${progress}%`} sub={t("전체 흐름")} />
@@ -1710,7 +1243,7 @@ export default function FocusOS() {
           {expandedReport && (
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption={t("과하게 늘리지 않고 5개 이내 유지")} />
-              <GlassCard title={t("현재 집중")} value={focusTask ? (lang === "en" ? tr("en", focusTask.title) : focusTask.title) : t('없음')} caption={t("한 번에 하나씩")} compact />
+              <GlassCard title={t("현재 집중")} value={focusTask ? focusTask.title : t("없음")} caption={t("한 번에 하나씩")} compact />
               <GlassCard title={t("타이머")} value={formatTimer(timerSeconds)} caption={t("지금 집중 흐름")} />
             </div>
           )}
@@ -1732,12 +1265,12 @@ export default function FocusOS() {
 
             <div className="mt-5 flex flex-wrap gap-2">
               {FOCUS_PRESETS.map((minutes) => (
-                <button key={minutes} onClick={() => setFocusMinutes(minutes)} className={`rounded-full px-3.5 py-2.5 text-sm transition ${focusMinutes === minutes ? 'bg-violet-600 text-white shadow-sm' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>{lang === "en" ? `${minutes} min` : `${minutes}분`}</button>
+                <button key={minutes} onClick={() => setFocusMinutes(minutes)} className={`rounded-full px-3.5 py-2.5 text-sm transition ${focusMinutes === minutes ? 'bg-violet-600 text-white shadow-sm' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>{minutes}분</button>
               ))}
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2.5">
-              <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? t("일시정지") : t("타이머 시작")}</button>
+              <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? t('일시정지') : t('타이머 시작')}</button>
               <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">{t("리셋")}</button>
               <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">{t("5분만 시작")}</button>
             </div>
@@ -1745,10 +1278,10 @@ export default function FocusOS() {
 
           <Panel>
             <p className="text-sm font-medium text-violet-700">{t("운영 원칙")}</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight">FocusOS</h2>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight">Focus OS</h2>
             <div className="mt-5 grid gap-3">
-              <RuleCard title={lang === "en" ? "Limit Today to 5 tasks" : t("Today는 5개 제한")} desc={t("오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.")} />
-              <RuleCard title={lang === "en" ? "Later is a backlog" : t("Later는 보관함")} desc={t("지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.")} />
+              <RuleCard title={t("Today는 5개 제한")} desc={t("오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.")} />
+              <RuleCard title={t("Later는 보관함")} desc={t("지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.")} />
               <RuleCard title={t("작업 분해")} desc={t("큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.")} />
             </div>
           </Panel>
@@ -1759,9 +1292,9 @@ export default function FocusOS() {
           title={`${t("오늘 할 일")} (${todayTasks.length}/${TODAY_LIMIT})`}
           action={
             focusMode ? null : (
-              <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:items-center">
-                <button onClick={autoPrioritize} className="w-full max-w-[280px] rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 md:w-auto md:max-w-none">{t('우선순위 자동정리')}</button>
-                <button onClick={() => addTask('today')} className="inline-flex w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 md:w-auto md:max-w-none"><InlineIcon name="add" className="h-4 w-4" />{t('오늘 할 일 추가')}</button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('우선순위 자동정리')}</button>
+                <button onClick={() => addTask('today')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t('오늘 할 일 추가')}</button>
               </div>
             )
           }
@@ -1791,7 +1324,7 @@ export default function FocusOS() {
                 onDropCard={handleDrop}
                 lang={lang}
               />
-            )) : <EmptyBox text={focusMode ? t("현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.") : t("오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.")} />}
+             )) : <EmptyBox text={focusMode ? t('현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.') : t('오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.')} />}
           </div>
         </SectionCard></div>
 
@@ -1823,7 +1356,7 @@ export default function FocusOS() {
                 onDropCard={handleDrop}
                 lang={lang}
               />
-            )) : <EmptyBox text={t("지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.")} />}
+             )) : <EmptyBox text={t("지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.")} />}
           </div>
         </SectionCard></section>
 
@@ -1831,7 +1364,7 @@ export default function FocusOS() {
           <section className={focusMode ? "hidden" : ""}><SectionCard
             eyebrow="Completed"
             title={t("완료 목록")}
-            action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}개</span>}
+            action={<span className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-600">{completedTasks.length}{lang === "en" ? "" : "개"}</span>}
           >
             <div className="space-y-3">
               {completedTasks.map((task) => (
@@ -1842,16 +1375,16 @@ export default function FocusOS() {
                         <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{tr(lang, task.priority)}</span>
                         <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{tr(lang, task.status)}</span>
                       </div>
-                      <h3 className="mt-3 break-words text-lg font-semibold leading-8 text-zinc-900">{task.title}</h3>
-                      {task.note && <p className="mt-1 break-words text-sm leading-7 text-zinc-600">{task.note}</p>}
+                      <h3 className="mt-3 text-lg font-semibold text-zinc-900">{task.title}</h3>
+                      {task.note && <p className="mt-1 text-sm text-zinc-600">{task.note}</p>}
                       <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-500">
-                        {task.start && <span>시작 {task.start}</span>}
-                        {task.end && <span>종료 {task.end}</span>}
+                        {task.start && <span>{t("시작")} {task.start}</span>}
+                        {task.end && <span>{t("종료")} {task.end}</span>}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => restoreTask(task.id)} className="rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50">{t('복원')}</button>
-                      <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">삭제</button>
+                      <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">{t("삭제")}</button>
                     </div>
                   </div>
                 </div>
@@ -1861,13 +1394,13 @@ export default function FocusOS() {
         )}
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
-          <p className="font-medium text-zinc-700">FocusOS</p>
+          <p className="font-medium text-zinc-700">Focus OS</p>
           <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다.")}</p>
           <p className="mt-1 text-xs text-zinc-400">Focus • Start Small • Finish One Thing</p>
         </footer>
 
         {showScrollTop && (
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-40 rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:scale-105">{t("↑ 위로")}</button>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-40 rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:scale-105">{t("위로")}</button>
         )}
 
         {dailySummaryOpen && (
@@ -1875,7 +1408,7 @@ export default function FocusOS() {
             <div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-violet-700">{t("하루 종료 리포트")}</p>
+                  <p className="text-sm font-medium text-violet-700">하루 종료 리포트</p>
                   <h3 className="mt-1 text-2xl font-semibold text-zinc-900">{t("오늘의 정리")}</h3>
                 </div>
                 <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">{t("닫기")}</button>
@@ -1916,228 +1449,6 @@ export default function FocusOS() {
   );
 }
 
-
-function LiveSessionCard({ session, lang = 'ko' }) {
-  const secondsLeft = getRemainingSeconds(session);
-
-  return (
-    <div className="rounded-[28px] border border-zinc-100 bg-white p-5 shadow-sm">
-      <p className="text-sm font-semibold tracking-tight text-zinc-900">{session.anonymous_name || 'Focuser'}</p>
-      <p className="mt-2 text-base text-zinc-700">{session.task_title || 'Focus session'}</p>
-      <div className="mt-4 inline-flex rounded-2xl bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 ring-1 ring-violet-100">
-        ⏱ {formatRemainingLabel(secondsLeft, lang)}
-      </div>
-    </div>
-  );
-}
-
-
-function FocusLivePage({
-  sessions = [],
-  lang = 'ko',
-  isJoined = false,
-  joinedSession = null,
-  comments = [],
-  onJoin = () => {},
-  onLeave = () => {},
-  onSendComment = () => {},
-  onBack = () => {},
-}) {
-  const t = (value) => tr(lang, value);
-  const [draft, setDraft] = useState('');
-  const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
-  const mergedSessions = (() => {
-    const filtered = sessions.filter((session) => getRemainingSeconds(session) > 0);
-    if (joinedActive && !filtered.some((session) => session.id === joinedSession.id || session.user_id === joinedSession.user_id || session.anonymous_name === joinedSession.anonymous_name)) {
-      return [joinedSession, ...filtered];
-    }
-    return filtered;
-  })();
-
-  const submitComment = async () => {
-    const value = draft.trim();
-    if (!value) return;
-    await onSendComment(value);
-    setDraft('');
-  };
-
-  return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
-      <div className="mx-auto max-w-6xl">
-        <section className="overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] md:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
-              <div className="mb-3">
-<button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
-</div>
-<h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
-              <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
-              <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
-                🟢 {mergedSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
-              </div>
-              <p className="mt-5 text-base leading-7 text-zinc-300">{t('혼자보다 같이 시작하는 게 더 쉬울 때가 있어요.')}</p>
-              <p className="mt-2 text-sm text-zinc-400">Start small, finish one thing.</p>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              {!joinedActive ? (
-                <button
-                  onClick={onJoin}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
-                >
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>
-                  {t('나도 집중 시작하기')}
-                </button>
-              ) : (
-                <button
-                  onClick={onLeave}
-                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:scale-[1.01]"
-                >
-                  {t('라이브 나가기')}
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <div>
-            {joinedActive && (
-              <div className="mb-4 rounded-[28px] border border-violet-200 bg-violet-50/80 p-5 shadow-sm">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-violet-700">{t('내가 참여 중입니다')}</p>
-                    <h2 className="mt-2 text-xl font-semibold text-zinc-900">{joinedSession.anonymous_name}</h2>
-                    <p className="mt-1 text-sm text-zinc-600">{joinedSession.task_title}</p>
-                  </div>
-                  <div className="inline-flex rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
-                    ⏱ {formatRemainingLabel(getRemainingSeconds(joinedSession), lang)}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-violet-700">{t('실시간 집중 보드')}</p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{t('지금 참여 중인 사람들')}</h2>
-              </div>
-              <div className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200">
-                {joinedActive ? t('참여 중') : t('구경 중')}
-              </div>
-            </div>
-
-            {mergedSessions.length > 0 ? (
-              <div className="overflow-hidden rounded-[28px] border border-zinc-100 bg-white shadow-sm">
-                <div className={`divide-y divide-zinc-100 ${mergedSessions.length > 10 ? 'max-h-[520px] overflow-y-auto' : ''}`}>
-                  {mergedSessions.map((session) => {
-                    const isMine =
-                      joinedActive &&
-                      (session.id === joinedSession?.id || session.anonymous_name === joinedSession?.anonymous_name);
-
-                    return (
-                      <div
-                        key={session.id || `${session.anonymous_name}-${session.started_at}`}
-                        className={`flex items-center justify-between gap-3 px-4 py-3 ${isMine ? 'bg-violet-50/70' : 'bg-white'}`}
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-block h-2.5 w-2.5 rounded-full ${isMine ? 'bg-violet-600' : 'bg-emerald-500'}`}></span>
-                            <p className="truncate text-sm font-semibold text-zinc-900">
-                              {session.anonymous_name || 'Focuser'}
-                            </p>
-                          </div>
-                          <p className="mt-1 truncate text-xs text-zinc-500">
-                            {session.task_title || t('집중 세션')}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className={`text-sm font-semibold ${isMine ? 'text-violet-700' : 'text-zinc-700'}`}>
-                            {formatRemainingLabel(getRemainingSeconds(session), lang)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-[28px] border border-dashed border-zinc-200 bg-white/80 px-6 py-14 text-center text-zinc-500 shadow-sm">
-                <p className="text-lg font-medium text-zinc-700">{t('아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?')}</p>
-                <button
-                  onClick={onJoin}
-                  className="mt-5 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-                >
-                  {t('나도 집중 시작하기')}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="overflow-hidden rounded-[32px] border border-zinc-100 bg-white shadow-sm">
-            <div className="border-b border-zinc-100 px-5 py-4">
-              <p className="text-sm font-medium text-violet-700">{t('응원 한마디')}</p>
-              <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{t('댓글 남기기')}</h2>
-            </div>
-
-            <div className="flex h-[520px] flex-col">
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <div className="space-y-3">
-                  {comments.length > 0 ? comments.map((comment) => (
-                    <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="max-w-[92%] rounded-2xl bg-zinc-50 px-4 py-3">
-                      <p className="text-sm font-semibold text-zinc-900">{comment.anonymous_name || 'Focuser'}</p>
-                      <p className="mt-1 text-sm leading-6 text-zinc-600">{comment.message}</p>
-                    </div>
-                  )) : (
-                    <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
-                      {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="border-t border-zinc-100 px-5 py-4">
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {['화이팅', '같이 집중해요', '끝까지 가요'].map((quick) => (
-                    <button
-                      key={quick}
-                      onClick={() => setDraft(quick)}
-                      className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100"
-                    >
-                      {tr(lang, quick)}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        submitComment();
-                      }
-                    }}
-                    placeholder={t('메시지 입력')}
-                    className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
-                  />
-                  <button
-                    onClick={submitComment}
-                    className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]"
-                  >
-                    {t('보내기')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
-}
 
 function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
   const t = (value) => tr(lang, value);
@@ -2207,7 +1518,7 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
             <button onClick={() => setLang('ko')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
             <button onClick={() => setLang('en')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">FocusOS</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">Focus OS</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">{t('지금 바로 시작하기')}</h1>
           <p className="mt-4 text-base leading-8 text-zinc-500 sm:text-lg">
             {t('로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.')}
@@ -2218,13 +1529,13 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
               onClick={() => setMode('signin')}
               className={`rounded-[24px] px-4 py-4 text-base font-semibold transition ${mode === 'signin' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
             >
-              {t('로그인')}
+              {t("로그인")}
             </button>
             <button
               onClick={() => setMode('signup')}
               className={`rounded-[24px] px-4 py-4 text-base font-semibold transition ${mode === 'signup' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500'}`}
             >
-              {t('회원가입')}
+              {t("회원가입")}
             </button>
           </div>
 
@@ -2265,7 +1576,7 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
               disabled={loading}
               className="w-full rounded-[22px] border border-zinc-200 bg-white px-4 py-4 text-base font-semibold text-zinc-800 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {t('구글로 계속하기')}
+              {t("구글로 계속하기")}
             </button>
           </div>
 
@@ -2276,7 +1587,7 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
           ) : null}
 
           <div className="mt-8 rounded-[28px] bg-violet-50 p-5">
-            <p className="text-lg font-semibold text-violet-700">{t('')}</p>
+            <p className="text-lg font-semibold text-violet-700">{t('7일 무료 체험')}</p>
             <p className="mt-3 text-lg leading-9 text-zinc-600">
               {t('가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.')}
             </p>
@@ -2290,6 +1601,7 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
 function Panel({ children }) {
   return <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm">{children}</div>;
 }
+
 
 function InlineIcon({ name, className = 'h-4 w-4' }) {
   const icon = SVG_ICONS[name];
@@ -2437,31 +1749,6 @@ function TaskCard({
 }) {
   const doneCount = (task.steps || []).filter((step) => step.done).length;
   const stepProgress = (task.steps || []).length ? Math.round((doneCount / task.steps.length) * 100) : 0;
-  const stepRefs = useRef({});
-  const pendingFocusStepRef = useRef(null);
-  const prevStepCountRef = useRef((task.steps || []).length);
-
-  useEffect(() => {
-    const currentLength = (task.steps || []).length;
-    if (
-      pendingFocusStepRef.current !== null &&
-      currentLength > prevStepCountRef.current
-    ) {
-      const nextIndex = pendingFocusStepRef.current;
-      window.requestAnimationFrame(() => {
-        const nextField = stepRefs.current[nextIndex];
-        if (nextField) {
-          nextField.focus();
-          if (typeof nextField.setSelectionRange === 'function') {
-            const length = nextField.value?.length || 0;
-            nextField.setSelectionRange(length, length);
-          }
-        }
-      });
-      pendingFocusStepRef.current = null;
-    }
-    prevStepCountRef.current = currentLength;
-  }, [task.steps]);
 
   return (
     <article
@@ -2470,17 +1757,9 @@ function TaskCard({
       onDragStart={() => onDragStart(task.id)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onDropCard(task.id)}
-      className={`relative rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
+      className={`rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
     >
-      <button
-        onClick={() => deleteTask(task.id)}
-        title={tr(lang, "삭제")}
-        aria-label={tr(lang, "삭제")}
-        className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
-      >
-        <InlineIcon name="delete" className="h-4 w-4" />
-      </button>
-      <div className="mb-3 hidden items-center gap-2 text-xs text-zinc-400 md:flex">
+      <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
         <span className="rounded-full bg-zinc-100 px-2 py-1">{tr(lang, "드래그 정렬")}</span>
         <span>{tr(lang, "카드를 길게 잡고 위치를 바꿀 수 있어요")}</span>
       </div>
@@ -2490,21 +1769,12 @@ function TaskCard({
           <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{tr(lang, task.priority)}</span>
           <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{tr(lang, task.status)}</span>
         </div>
-        <textarea
-          rows={2}
-          value={lang === "en" ? tr("en", task.title) : task.title}
-          onChange={(e) => {
-            e.target.style.height = 'auto';
-            e.target.style.height = `${e.target.scrollHeight}px`;
-            updateTask(task.id, { title: e.target.value });
-          }}
-          className="mt-3 min-h-[56px] w-full resize-none break-words bg-transparent text-lg font-semibold leading-8 outline-none placeholder:text-zinc-400"
-        />
-        <textarea value={lang === "en" ? tr("en", task.note) : task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none break-words bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
+        <input value={task.title} onChange={(e) => updateTask(task.id, { title: e.target.value })} className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400" />
+        <textarea value={task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
       </div>
 
-      <div className="mt-5 md:flex md:items-start md:justify-between md:gap-5">
-        <div className="hidden flex-wrap items-start gap-5 md:flex">
+      <div className="mt-5 flex flex-wrap items-start gap-5">
+        <div className="flex flex-wrap items-start gap-5">
           <IconButton lang={lang} title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
           <IconButton lang={lang} title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
           {task.start && !task.end && <IconButton lang={lang} title="종료" icon="done" tone="emerald" onClick={() => recordEnd(task.id)} />}
@@ -2512,47 +1782,17 @@ function TaskCard({
           <IconButton lang={lang} title="초기화" icon="reset" tone="rose" onClick={() => resetTask(task.id)} />
           <IconButton lang={lang} title={task.list === 'today' ? 'Later로 이동' : 'Today로 이동'} icon="later" onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} />
           <IconButton lang={lang} title="우선순위 추천" icon="priority" onClick={() => recommendPriority(task.id)} />
+          <IconButton lang={lang} title="AI 작업분해" icon="split" onClick={() => splitTask(task.id)} />
+          <IconButton lang={lang} title="삭제" icon="delete" onClick={() => deleteTask(task.id)} />
         </div>
 
-        <div className="hidden md:ml-auto md:inline-flex md:items-center md:gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
+        <div className="ml-auto inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
           <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
           <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="bg-transparent text-sm outline-none">
             <option>{tr(lang, "가장 중요")}</option>
             <option>{tr(lang, "중요")}</option>
             <option>{tr(lang, "가벼운 일")}</option>
           </select>
-        </div>
-
-        <div className="md:hidden">
-          <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-center gap-2">
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5">
-                <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
-                <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="bg-transparent text-sm outline-none">
-                  <option>{tr(lang, "가장 중요")}</option>
-                  <option>{tr(lang, "중요")}</option>
-                  <option>{tr(lang, "가벼운 일")}</option>
-                </select>
-              </div>
-
-              <button onClick={() => recommendPriority(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "추천")}</button>
-
-              {task.start && !task.end ? (
-                <>
-                  <button onClick={() => pauseTask(task.id)} className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white">{tr(lang, "멈춤")}</button>
-                  <button onClick={() => recordEnd(task.id)} className="shrink-0 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white">{tr(lang, "종료")}</button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => recordStart(task.id)} className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white">{tr(lang, "시작")}</button>
-                  <button onClick={() => startFocusMode(task.id)} className="shrink-0 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-medium text-violet-700">{tr(lang, "집중")}</button>
-                </>
-              )}
-
-              <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, task.list === 'today' ? '나중' : '오늘')}</button>
-              <button onClick={() => resetTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "초기화")}</button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2566,15 +1806,12 @@ function TaskCard({
       <div className="mt-4 rounded-[26px] bg-zinc-50 p-4">
         <div className="mb-3 rounded-2xl bg-white px-3 py-2 text-xs text-zinc-500 ring-1 ring-zinc-100">{tr(lang, "AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.")}</div>
 
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-zinc-700">{tr(lang, "작업 단계")}</p>
             <p className="text-xs text-zinc-500">{tr(lang, "완료")} {doneCount}/{(task.steps || []).length}</p>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <button onClick={() => splitTask(task.id)} title={tr(lang, "분해")} aria-label={tr(lang, "분해")} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white sm:w-auto"><InlineIcon name="split" className="h-4 w-4" />{tr(lang, "분해")}</button>
-            <button onClick={() => addStep(task.id)} title={tr(lang, "단계 추가")} aria-label={tr(lang, "단계 추가")} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white sm:w-auto"><InlineIcon name="add-step" className="h-4 w-4" />{tr(lang, "단계 추가")}</button>
-          </div>
+          <button onClick={() => addStep(task.id)} title={tr(lang, "단계 추가")} aria-label={tr(lang, "단계 추가")} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white"><InlineIcon name="add-step" className="h-4 w-4" />{tr(lang, "단계 추가")}</button>
         </div>
 
         <div className="mb-4 h-2 overflow-hidden rounded-full bg-white">
@@ -2583,29 +1820,10 @@ function TaskCard({
 
         <div className="space-y-2">
           {(task.steps || []).map((step, idx) => (
-            <div key={`${task.id}-step-${idx}`} className="flex items-start gap-2 rounded-[20px] bg-white px-3 py-3 ring-1 ring-zinc-100">
-              <button onClick={() => toggleStep(task.id, idx)} title={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} aria-label={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
-              <textarea
-                ref={(el) => {
-                  stepRefs.current[idx] = el;
-                }}
-                rows={1}
-                value={lang === "en" ? tr("en", step.text) : step.text}
-                onChange={(e) => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                  updateStep(task.id, idx, e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    pendingFocusStepRef.current = idx + 1;
-                    addStep(task.id);
-                  }
-                }}
-                className={`min-h-[28px] w-full resize-none bg-transparent text-sm leading-6 outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`}
-              />
-              <button onClick={() => deleteStep(task.id, idx)} title={tr(lang, "단계 삭제")} aria-label={tr(lang, "단계 삭제")} className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center text-zinc-400 transition hover:text-rose-500">
+            <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
+              <button onClick={() => toggleStep(task.id, idx)} title={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} aria-label={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} className={`flex h-6 w-6 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
+              <input value={step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
+              <button onClick={() => deleteStep(task.id, idx)} title={tr(lang, "단계 삭제")} aria-label={tr(lang, "단계 삭제")} className="inline-flex h-7 w-7 items-center justify-center text-zinc-400 transition hover:text-rose-500">
                 <InlineIcon name="delete" className="h-4 w-4" />
               </button>
             </div>
