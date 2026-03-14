@@ -729,11 +729,19 @@ export default function FocusOS() {
     };
 
     loadLive();
-    const id = window.setInterval(loadLive, 10000);
+
+    const channel = supabaseClient
+      .channel('live-room')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'focus_live' },
+        () => loadLive()
+      )
+      .subscribe();
 
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      supabaseClient.removeChannel(channel);
     };
   }, [supabaseClient, isLivePage]);
 
@@ -1899,7 +1907,10 @@ function FocusLivePage({
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
+              <div className="mb-3">
+<button onClick={goToHome} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
+</div>
+<h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
               <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
               <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
                 🟢 {mergedSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
