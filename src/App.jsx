@@ -199,7 +199,7 @@ const EN_TEXT = {
   '라이브에서 나갔어요.': 'You left LIVE.',
   '응원 메시지가 등록됐어요.': 'Your message was posted.',
   '댓글이 아직 없어요. 먼저 남겨보세요.': 'No messages yet. Be the first to post.',
-  '같이 집중해요': 'Let's focus together',
+  '같이 집중해요': "Let's focus together",
   '집중 세션': 'Focus session',
   '지금 참여 중인 사람들': 'People currently in LIVE',
   '라이브 집중방': 'LIVE Focus Room',
