@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   anonymousName: 'focus-os-anonymous-name',
   liveComments: 'focus-os-live-comments',
   liveJoinedSession: 'focus-os-live-joined-session',
+  seededTasksPrefix: 'focus-os-seeded-tasks-',
 };
 
 const TODAY_LIMIT = 5;
@@ -390,6 +391,11 @@ function writeLocalJoinedSession(session) {
   }
   storage.setItem(STORAGE_KEYS.liveJoinedSession, JSON.stringify(session));
 }
+
+function getSeededTasksKey(userId) {
+  return `${STORAGE_KEYS.seededTasksPrefix}${userId}`;
+}
+
 
 function getRemainingSeconds(session) {
   const duration = Number(session?.duration_seconds ?? session?.remaining_time ?? 0);
@@ -834,9 +840,14 @@ export default function FocusOS() {
         return;
       }
 
+      const storage = getStorage();
+      const seededKey = getSeededTasksKey(session.user.id);
+      const hasSeededBefore = storage ? storage.getItem(seededKey) === '1' : false;
+
       if (Array.isArray(data) && data.length > 0) {
         setTasks(data.map(mapTaskFromDb).map(normalizeTask));
-      } else {
+        storage?.setItem(seededKey, '1');
+      } else if (!hasSeededBefore) {
         const seeded = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
         setTasks(seeded);
 
@@ -844,7 +855,11 @@ export default function FocusOS() {
         const { error: seedError } = await supabaseClient.from('tasks').upsert(rows, { onConflict: 'id' });
         if (seedError) {
           console.error('tasks seed error', seedError);
+        } else {
+          storage?.setItem(seededKey, '1');
         }
+      } else {
+        setTasks([]);
       }
 
       setDbReady(true);
@@ -1807,8 +1822,8 @@ export default function FocusOS() {
                         <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{tr(lang, task.priority)}</span>
                         <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{tr(lang, task.status)}</span>
                       </div>
-                      <h3 className="mt-3 text-lg font-semibold text-zinc-900">{task.title}</h3>
-                      {task.note && <p className="mt-1 text-sm text-zinc-600">{task.note}</p>}
+                      <h3 className="mt-3 break-words text-lg font-semibold leading-8 text-zinc-900">{task.title}</h3>
+                      {task.note && <p className="mt-1 break-words text-sm leading-7 text-zinc-600">{task.note}</p>}
                       <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-500">
                         {task.start && <span>시작 {task.start}</span>}
                         {task.end && <span>종료 {task.end}</span>}
@@ -2388,8 +2403,17 @@ function TaskCard({
           <span className={`rounded-full px-3 py-1 text-xs ${PRIORITY_BADGE[task.priority]}`}>{tr(lang, task.priority)}</span>
           <span className={`rounded-full px-3 py-1 text-xs ${STATUS_BADGE[task.status]}`}>{tr(lang, task.status)}</span>
         </div>
-        <input value={lang === "en" ? tr("en", task.title) : task.title} onChange={(e) => updateTask(task.id, { title: e.target.value })} className="mt-3 w-full bg-transparent text-lg font-semibold outline-none placeholder:text-zinc-400" />
-        <textarea value={lang === "en" ? tr("en", task.note) : task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
+        <textarea
+          rows={2}
+          value={lang === "en" ? tr("en", task.title) : task.title}
+          onChange={(e) => {
+            e.target.style.height = 'auto';
+            e.target.style.height = `${e.target.scrollHeight}px`;
+            updateTask(task.id, { title: e.target.value });
+          }}
+          className="mt-3 min-h-[56px] w-full resize-none break-words bg-transparent text-lg font-semibold leading-8 outline-none placeholder:text-zinc-400"
+        />
+        <textarea value={lang === "en" ? tr("en", task.note) : task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none break-words bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
       </div>
 
       <div className="mt-5 md:flex md:items-start md:justify-between md:gap-5">
