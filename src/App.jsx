@@ -176,6 +176,11 @@ const EN_TEXT = {
   '집중 유지 잘하고 있어요': 'You are maintaining focus well.',
   '좋아요, 계속 작은 완료를 쌓아요': 'Good progress. Keep stacking small wins.',
   '한 단계만 해도 충분해요': 'One small step is enough.',
+  '공유': 'Share',
+  '집중 공유': 'Share Focus',
+  '공유 텍스트가 복사됐어요.': 'Share text copied.',
+  '공유를 지원하지 않는 환경이에요.': 'Sharing is not available on this device.',
+  '집중 공유를 준비하지 못했어요.': 'Could not prepare the share message.',
 };
 
 function tr(lang, value) {
@@ -778,6 +783,43 @@ export default function FocusOS() {
   const rewardMessage = getRewardMessage(focusScore);
 
   const showToastMessage = (message) => setToast(tr(lang, message));
+  const buildFocusShareText = () => {
+    const baseText =
+      lang === 'en'
+        ? `Starting a focus session.\n\nStart small, finish one thing.\n\nFocusOS`
+        : `지금 집중 시작.\n\n작게 시작하고\n하나만 끝내기.\n\nFocusOS`;
+
+    const url = typeof window !== 'undefined' ? window.location.origin : '';
+    return url ? `${baseText}\n${url}` : baseText;
+  };
+
+  const shareFocusSession = async () => {
+    try {
+      const textToShare = buildFocusShareText();
+
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title: 'FocusOS',
+          text: textToShare,
+          url: typeof window !== 'undefined' ? window.location.origin : undefined,
+        });
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(textToShare);
+        showToastMessage('공유 텍스트가 복사됐어요.');
+        return;
+      }
+
+      showToastMessage('공유를 지원하지 않는 환경이에요.');
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      console.error(error);
+      showToastMessage('집중 공유를 준비하지 못했어요.');
+    }
+  };
+
 
   const patchTask = (taskId, updater) => {
     setTasks((prev) => prev.map((task) => (task.id === taskId ? updater(task) : task)));
@@ -1265,6 +1307,9 @@ export default function FocusOS() {
               </button>
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 {t("5분만 시작")}
+              </button>
+              <button onClick={shareFocusSession} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
+                {t("공유")}
               </button>
               <button onClick={closeFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
                 {t("Focus Mode 종료")}
