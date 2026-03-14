@@ -185,6 +185,8 @@ const EN_TEXT = {
   '명 집중 중': 'focusing now',
   '남음': 'left',
   '실시간 집중 보드': 'Live focus board',
+  '라이브 참여하기': 'Join Live',
+  '지금 함께 집중 중입니다': 'People are focusing together right now',
 };
 
 function tr(lang, value) {
@@ -315,9 +317,10 @@ function getStorage() {
 }
 
 
-function getPathname() {
-  if (typeof window === 'undefined') return '/';
-  return window.location.pathname || '/';
+function getPageMode() {
+  if (typeof window === 'undefined') return 'home';
+  const params = new URLSearchParams(window.location.search || '');
+  return params.get('page') === 'live' ? 'live' : 'home';
 }
 
 function getAnonymousName() {
@@ -539,7 +542,7 @@ export default function FocusOS() {
   const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
-  const [pathname, setPathname] = useState(getPathname());
+  const [pageMode, setPageMode] = useState(getPageMode());
   const [anonymousName, setAnonymousName] = useState('');
   const [liveSessions, setLiveSessions] = useState([]);
 
@@ -588,9 +591,9 @@ export default function FocusOS() {
     if (typeof window === 'undefined') return;
     setAnonymousName(getAnonymousName());
 
-    const syncPath = () => setPathname(getPathname());
-    window.addEventListener('popstate', syncPath);
-    return () => window.removeEventListener('popstate', syncPath);
+    const syncPage = () => setPageMode(getPageMode());
+    window.addEventListener('popstate', syncPage);
+    return () => window.removeEventListener('popstate', syncPage);
   }, []);
 
   useEffect(() => {
@@ -638,7 +641,7 @@ export default function FocusOS() {
   }, []);
 
 
-  const isLivePage = pathname === '/live';
+  const isLivePage = pageMode === 'live';
 
   useEffect(() => {
     if (!supabaseClient || !isLivePage) return;
@@ -897,7 +900,18 @@ export default function FocusOS() {
 
   const goToHome = () => {
     if (typeof window === 'undefined') return;
-    window.location.href = window.location.origin;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('page');
+    window.history.pushState({}, '', url.toString());
+    setPageMode('home');
+  };
+
+  const goToLive = () => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', 'live');
+    window.history.pushState({}, '', url.toString());
+    setPageMode('live');
   };
 
 
@@ -1303,6 +1317,7 @@ export default function FocusOS() {
               <button onClick={() => setLang('ko')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>KO</button>
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
             </div>
+            <button onClick={goToLive} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">LIVE</button>
             <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
           </div>
@@ -1319,6 +1334,7 @@ export default function FocusOS() {
                 </div>
               </div>
               <div className="flex flex-col gap-2">
+                <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">LIVE</button>
                 <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
                 <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
               </div>
@@ -1400,6 +1416,9 @@ export default function FocusOS() {
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 {t("5분만 시작")}
               </button>
+              <button onClick={goToLive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
+                LIVE
+              </button>
               <button onClick={closeFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
                 {t("Focus Mode 종료")}
               </button>
@@ -1407,6 +1426,26 @@ export default function FocusOS() {
           </div>
         </section>
       )}
+
+      <section className="mx-auto max-w-6xl px-4 pt-4 md:hidden">
+        {!focusMode && !isLivePage && (
+          <button
+            onClick={goToLive}
+            className="w-full rounded-[28px] border border-violet-200 bg-violet-50/80 p-4 text-left shadow-sm transition hover:bg-violet-100"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">● LIVE</p>
+                <p className="mt-2 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
+                <p className="mt-1 text-sm text-zinc-600">🟢 {liveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
+              </div>
+              <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 ring-1 ring-violet-100">
+                {t('라이브 참여하기')}
+              </div>
+            </div>
+          </button>
+        )}
+      </section>
 
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
         <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "hidden" : ""}`}>
