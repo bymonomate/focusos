@@ -484,6 +484,12 @@ export default function FocusOS() {
   const [tasks, setTasks] = useState(DEFAULT_TASKS.map(normalizeTask));
   const [newTaskId, setNewTaskId] = useState(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
+  const defaultLang =
+    typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEYS.lang)
+      ? window.localStorage.getItem(STORAGE_KEYS.lang)
+      : typeof navigator !== 'undefined' && navigator.language?.startsWith('ko')
+        ? 'ko'
+        : 'en';
   const [currentTime, setCurrentTime] = useState(formatNow(new Date(), defaultLang));
   const [currentDate, setCurrentDate] = useState(formatDate(new Date(), defaultLang));
   const [focusMinutes, setFocusMinutes] = useState(25);
@@ -492,12 +498,6 @@ export default function FocusOS() {
   const [toast, setToast] = useState('');
   const [expandedReport, setExpandedReport] = useState(false);
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
-  const defaultLang =
-    typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEYS.lang)
-      ? window.localStorage.getItem(STORAGE_KEYS.lang)
-      : typeof navigator !== 'undefined' && navigator.language?.startsWith('ko')
-        ? 'ko'
-        : 'en';
 
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
