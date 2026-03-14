@@ -92,33 +92,33 @@ const EN_TEXT = {
   '나중에 할 일 추가': 'Add Later Task',
   '오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.': 'Your Today list is empty. Add just one thing to begin.',
   '지금 당장 안 해도 되는 일을 여기에 보관해두면 Today가 훨씬 가벼워져요.': 'Keep non-urgent work here so your Today list stays light.',
-'오늘 끝낸 일': 'Completed today',
+  '오늘 끝낸 일': 'Completed today',
   '시도한 일': 'Started tasks',
   '진행률': 'Progress',
-  '전체 흐름': 'Overall flow',
-  '집중 점수': 'Focus score',
-  '과하게 늘리지 않고 5개 이내 유지': 'Keep it under 5 tasks',
+  '전체 흐름': 'Daily Flow',
+  '집중 점수': 'Focus Score',
+  '과하게 늘리지 않고 5개 이내 유지': 'Keep today within five tasks',
   '지금 한 가지에만 집중하기': 'Focus on one task',
   '지금은 이 카드 하나만 보고 끝내면 돼요.': 'Just focus on this one card for now.',
   '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.': 'No task selected. Start a task from Today or leave Focus Mode to go back.',
   '시작 시간': 'Started at',
   '종료 시간': 'Finished at',
-  '타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.': 'A sound plays when the timer starts and ends, and only one task stays active.',
+  '타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.': 'Notifications at start and end. Only one active task at a time.',
   '리셋': 'Reset',
   '운영 원칙': 'Operating Principles',
   '오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.': 'Limiting visible tasks lowers the barrier to start.',
-  '지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.': 'Move non-urgent work here and bring it back only when needed.',
+  '지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.': 'Move non-urgent work here and bring it back when needed.',
   '작업 분해': 'Task Breakdown',
   '큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.': 'Break big work into steps you can start within 5 minutes.',
   '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.': 'No active task yet. Start one from Today or use Start with 5 min.',
-  '오늘의 정리': 'Today at a glance',
+  '오늘의 정리': "Today's Summary",
   '남은 일': 'Remaining',
   '오늘 한마디': "Today's note",
   '작은 완료 하나가 흐름을 만듭니다.': 'One small completion creates momentum.',
   '완료! 잘했어요 ✨': 'Done! Nice work ✨',
   '↑ 위로': '↑ Top',
   '드래그 정렬': 'Drag to sort',
-  '카드를 길게 잡고 위치를 바꿀 수 있어요': 'Drag cards to reorder cards',
+  '카드를 길게 잡고 위치를 바꿀 수 있어요': 'Drag cards to reorder them',
   '가장 중요': 'Top Priority',
   '중요': 'Important',
   '가벼운 일': 'Light',
@@ -134,13 +134,13 @@ const EN_TEXT = {
   '집중': 'Focus',
   '추천': 'Suggest',
   '분해': 'Break down',
+  '삭제': 'Delete',
   '새 할 일': 'New task',
-  '나중에 할 일': 'Later task',
   '첫 단계 적기': 'Write the first step',
   '기획안 첫 문단 쓰기': 'Write the first paragraph of the proposal',
   '완벽하게 쓰기보다 첫 문장부터 시작하기': 'Start with the first sentence instead of making it perfect',
   '핵심 문장 한 줄 적기': 'Write one key sentence',
-  '첫 문단 3줄 채우기': 'Fill in three lines of the first paragraph',
+  '첫 문단 3줄 채우기': 'Fill three lines of the first paragraph',
   '초안 저장하기': 'Save the draft',
   '세금계산서 확인': 'Check the tax invoice',
   '확인만 먼저 하고 수정은 따로 분리하기': 'Review first and handle edits separately',
@@ -153,19 +153,18 @@ const EN_TEXT = {
   '핵심 두 줄 쓰기': 'Write the core message in two lines',
   'AI 작업분해는 할 일 제목과 메모를 보고 바로 시작 가능한 3단계 정도로 자동 추천해줘요.': 'AI suggests three actionable starter steps from your task title and note.',
   '작업 단계': 'Steps',
-  '단계 추가': 'Add step',
+  '단계 추가': 'Add Step',
   '단계 완료': 'Complete step',
   '단계 완료 취소': 'Undo step completion',
   '단계 삭제': 'Delete step',
   '새 단계': 'New step',
   '오늘 할 일은 5개까지만 유지하는 게 좋아요.': 'It works best to keep Today under 5 tasks.',
   '새 카드가 아래에 생성됐어요.': 'A new card was added below.',
-  '집중 시작. 한 가지 일만 보면 돼요.': 'Focus started. Just look at one thing.',
+  '집중 시작. 한 가지 일만 보면 돼요.': 'Focus started. One thing at a time.',
   '완료 목록으로 이동했어요.': 'Moved to Completed.',
   '작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.': 'Task paused. You can continue anytime.',
   '작업을 초기화했어요. 처음부터 다시 시작할 수 있어요.': 'Task reset. You can start again from scratch.',
   '오늘 할 일로 복원했어요.': 'Restored to Today.',
-  '오늘 할 일은 5개까지만 두는 걸 추천해요.': 'We recommend keeping Today to five tasks or fewer.',
   '추천 우선순위를 적용했어요.': 'Suggested priority applied.',
   '현재 카드 기준으로 우선순위를 다시 정리했어요.': 'Priorities were re-ranked based on your current cards.',
   '카드 순서를 바꿨어요.': 'Card order updated.',
@@ -176,8 +175,7 @@ const EN_TEXT = {
   '오늘 흐름 정말 좋음': 'Your flow is really good today.',
   '집중 유지 잘하고 있어요': 'You are maintaining focus well.',
   '좋아요, 계속 작은 완료를 쌓아요': 'Good progress. Keep stacking small wins.',
-  '한 단계만 해도 충분해요': 'One small step is enough.'
-
+  '한 단계만 해도 충분해요': 'One small step is enough.',
 };
 
 function tr(lang, value) {
@@ -545,7 +543,7 @@ export default function FocusOS() {
     script.setAttribute('data-focus-tailwind', '1');
     script.onload = () => setTailwindReady(true);
     document.head.appendChild(script);
-  }, [lang]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -715,7 +713,13 @@ export default function FocusOS() {
       setCurrentDate(formatDate(now, lang));
     }, 30000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [lang]);
+
+  useEffect(() => {
+    const now = new Date();
+    setCurrentTime(formatNow(now, lang));
+    setCurrentDate(formatDate(now, lang));
+  }, [lang]);
 
   useEffect(() => {
     if (!newTaskId) return;
@@ -725,12 +729,6 @@ export default function FocusOS() {
     }, 120);
     return () => window.clearTimeout(id);
   }, [newTaskId]);
-
-  useEffect(() => {
-    const now = new Date();
-    setCurrentTime(formatNow(now, lang));
-    setCurrentDate(formatDate(now, lang));
-  }, [lang]);
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -1082,7 +1080,7 @@ export default function FocusOS() {
         .eq('user_id', session.user.id);
 
       if (error) {
-        setSettingsMessage(tr(lang, '데이터 초기화 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.'));
+        setSettingsMessage('데이터 초기화 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
         return;
       }
     }
@@ -1092,13 +1090,13 @@ export default function FocusOS() {
     setFocusedTaskId(null);
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
-    setSettingsMessage(lang === 'en' ? 'App data was reset. Account deletion will be enabled after the secure server function is connected.' : '앱 데이터는 초기화됐어요. 계정 자체 삭제는 보안상 서버 함수 연결 후 활성화할 예정이에요.');
+    setSettingsMessage('앱 데이터는 초기화됐어요. 계정 자체 삭제는 보안상 서버 함수 연결 후 활성화할 예정이에요.');
     showToastMessage('앱 데이터가 초기화됐어요.');
   };
 
   const requestAccountDelete = async () => {
     if (!session?.user || !supabaseClient) {
-      setSettingsMessage(tr(lang, '로그인이 필요해요.'));
+      setSettingsMessage('로그인이 필요해요.');
       return;
     }
 
@@ -1110,11 +1108,11 @@ export default function FocusOS() {
 
       if (error) throw error;
 
-      setSettingsMessage(tr(lang, '삭제 요청이 접수됐어요.'));
+      setSettingsMessage('삭제 요청이 접수됐어요.');
       showToastMessage('삭제 요청이 접수됐어요.');
     } catch (error) {
       console.error(error);
-      setSettingsMessage(tr(lang, '삭제 요청 처리 중 문제가 생겼어요.'));
+      setSettingsMessage('삭제 요청 처리 중 문제가 생겼어요.');
     }
   };
 
@@ -1185,9 +1183,9 @@ export default function FocusOS() {
 
             <div className="mt-6 space-y-4">
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-sm font-medium text-zinc-900">{t('로그아웃')}</p>
+                <p className="text-sm font-medium text-zinc-900">{t("로그아웃")}</p>
                 <p className="mt-1 text-sm text-zinc-500">{t('현재 기기에서 로그인 상태만 해제해요.')}</p>
-                <button onClick={signOut} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">{t('로그아웃')}</button>
+                <button onClick={signOut} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">{t("로그아웃")}</button>
               </div>
 
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
@@ -1232,7 +1230,7 @@ export default function FocusOS() {
               </div>
 
               <div className="shrink-0 rounded-[28px] bg-zinc-950 px-6 py-5 text-white shadow-sm">
-                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-2 text-4xl font-bold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
@@ -1268,10 +1266,10 @@ export default function FocusOS() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <ReportCard label="완료" value={`${completedTasks.length}`} sub="오늘 끝낸 일" />
-              <ReportCard label="시작" value={`${startedCount}`} sub={t("시도한 일")} />
-              <ReportCard label="진행률" value={`${progress}%`} sub="전체 흐름" />
-              <ReportCard label="집중 점수" value={`${focusScore}`} sub={t(rewardMessage)} />
+              <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub={t("오늘 끝낸 일")} />
+              <ReportCard label={t("시작")} value={`${startedCount}`} sub={t("시도한 일")} />
+              <ReportCard label={t("진행률")} value={`${progress}%`} sub={t("전체 흐름")} />
+              <ReportCard label={t("집중 점수")} value={`${focusScore}`} sub={t(rewardMessage)} />
             </div>
           </div>
 
@@ -1281,8 +1279,8 @@ export default function FocusOS() {
 
           {expandedReport && (
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption="과하게 늘리지 않고 5개 이내 유지" />
-              <GlassCard title="현재 집중" value={focusTask ? focusTask.title : t('없음')} caption={t("한 번에 하나씩")} compact />
+              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption={t("과하게 늘리지 않고 5개 이내 유지")} />
+              <GlassCard title={t("현재 집중")} value={focusTask ? (lang === "en" ? tr("en", focusTask.title) : focusTask.title) : t('없음')} caption={t("한 번에 하나씩")} compact />
               <GlassCard title={t("타이머")} value={formatTimer(timerSeconds)} caption={t("지금 집중 흐름")} />
             </div>
           )}
@@ -1297,14 +1295,14 @@ export default function FocusOS() {
                 <p className="mt-2 text-sm leading-6 text-zinc-500">타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.</p>
               </div>
               <div className="rounded-[28px] bg-zinc-950 px-5 py-4 text-center text-white shadow-sm">
-                <p className="text-sm text-zinc-400">포커스 타이머</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-1 text-4xl font-semibold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
               {FOCUS_PRESETS.map((minutes) => (
-                <button key={minutes} onClick={() => setFocusMinutes(minutes)} className={`rounded-full px-3.5 py-2.5 text-sm transition ${focusMinutes === minutes ? 'bg-violet-600 text-white shadow-sm' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>{lang === 'en' ? `${minutes} min` : `${minutes}분`}</button>
+                <button key={minutes} onClick={() => setFocusMinutes(minutes)} className={`rounded-full px-3.5 py-2.5 text-sm transition ${focusMinutes === minutes ? 'bg-violet-600 text-white shadow-sm' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>{lang === "en" ? `${minutes} min` : `${minutes}분`}</button>
               ))}
             </div>
 
@@ -1423,7 +1421,7 @@ export default function FocusOS() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <button onClick={() => restoreTask(task.id)} className="rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-medium text-violet-700 transition hover:bg-violet-50">{t('복원')}</button>
-                      <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">{t("삭제")}</button>
+                      <button onClick={() => deleteTask(task.id)} className="rounded-xl border px-4 py-2 text-sm transition hover:bg-zinc-50">삭제</button>
                     </div>
                   </div>
                 </div>
@@ -1434,7 +1432,7 @@ export default function FocusOS() {
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
           <p className="font-medium text-zinc-700">Focus OS</p>
-          <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다.")}</p>
+          <p className="mt-1">작은 완료 하나가 흐름을 만듭니다.</p>
           <p className="mt-1 text-xs text-zinc-400">Focus • Start Small • Finish One Thing</p>
         </footer>
 
@@ -1447,8 +1445,8 @@ export default function FocusOS() {
             <div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-violet-700">하루 종료 리포트</p>
-                  <h3 className="mt-1 text-2xl font-semibold text-zinc-900">오늘의 정리</h3>
+                  <p className="text-sm font-medium text-violet-700">{t("하루 종료 리포트")}</p>
+                  <h3 className="mt-1 text-2xl font-semibold text-zinc-900">{t("오늘의 정리")}</h3>
                 </div>
                 <button onClick={() => setDailySummaryOpen(false)} className="rounded-xl border px-3 py-2 text-sm">{t("닫기")}</button>
               </div>
@@ -1467,7 +1465,7 @@ export default function FocusOS() {
 
         {showCelebrate && (
           <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-            <div className="absolute left-1/2 top-24 -translate-x-1/2 rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-xl animate-[celebrate_1.2s_ease-out]">{t('완료! 잘했어요 ✨')}</div>
+            <div className="absolute left-1/2 top-24 -translate-x-1/2 rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-xl animate-[celebrate_1.2s_ease-out]">{t("완료! 잘했어요 ✨")}</div>
           </div>
         )}
 
