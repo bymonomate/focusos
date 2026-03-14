@@ -1002,7 +1002,10 @@ export default function FocusOS() {
 
   const joinLiveFocus = async () => {
     const nextSession = {
-      id: `local-live-${Date.now()}`,
+      id:
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `live-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       user_id: session?.user?.id || null,
       anonymous_name: anonymousName || getAnonymousName(),
       task_title: lang === 'en' ? 'Focus session' : '집중 세션',
@@ -1013,20 +1016,38 @@ export default function FocusOS() {
 
     setJoinedLiveSession(nextSession);
     writeLocalJoinedSession(nextSession);
+    setLiveSessions((prev) => {
+      const filtered = prev.filter(
+        (item) =>
+          item.id !== nextSession.id &&
+          item.anonymous_name !== nextSession.anonymous_name
+      );
+      return [nextSession, ...filtered];
+    });
 
-    if (supabaseClient && session?.user?.id) {
+    if (supabaseClient) {
       try {
-        await supabaseClient.from('focus_live').upsert(
-          {
-            user_id: session.user.id,
+        const { data, error } = await supabaseClient
+          .from('focus_live')
+          .insert({
+            id: nextSession.id,
+            user_id: nextSession.user_id,
             anonymous_name: nextSession.anonymous_name,
             task_title: nextSession.task_title,
             duration_seconds: nextSession.duration_seconds,
             started_at: nextSession.started_at,
-            status: 'focusing',
-          },
-          { onConflict: 'user_id' }
-        );
+            status: nextSession.status,
+          })
+          .select('id')
+          .single();
+
+        if (error) {
+          console.error(error);
+        } else if (data?.id && data.id !== nextSession.id) {
+          const synced = { ...nextSession, id: data.id };
+          setJoinedLiveSession(synced);
+          writeLocalJoinedSession(synced);
+        }
       } catch (error) {
         console.error(error);
       }
@@ -1036,12 +1057,16 @@ export default function FocusOS() {
   };
 
   const leaveLiveFocus = async () => {
+    const currentJoined = joinedLiveSession;
     setJoinedLiveSession(null);
     writeLocalJoinedSession(null);
+    setLiveSessions((prev) =>
+      prev.filter((item) => item.id !== currentJoined?.id && item.anonymous_name !== currentJoined?.anonymous_name)
+    );
 
-    if (supabaseClient && session?.user?.id) {
+    if (supabaseClient && currentJoined?.id) {
       try {
-        await supabaseClient.from('focus_live').delete().eq('user_id', session.user.id);
+        await supabaseClient.from('focus_live').delete().eq('id', currentJoined.id);
       } catch (error) {
         console.error(error);
       }
