@@ -115,7 +115,7 @@ const EN_TEXT = {
   '남은 일': 'Remaining',
   '오늘 한마디': "Today's note",
   '작은 완료 하나가 흐름을 만듭니다.': 'One small completion creates momentum.',
-  '{t('완료! 잘했어요 ✨')}': 'Done! Nice work ✨',
+  '완료! 잘했어요 ✨': 'Done! Nice work ✨',
   '↑ 위로': '↑ Top',
   '드래그 정렬': 'Drag to sort',
   '카드를 길게 잡고 위치를 바꿀 수 있어요': 'Drag cards to reorder cards',
