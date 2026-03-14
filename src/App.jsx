@@ -5,6 +5,8 @@ const STORAGE_KEYS = {
   focusMinutes: 'focus-os-focus-minutes',
   lang: 'focus-os-lang',
   anonymousName: 'focus-os-anonymous-name',
+  liveComments: 'focus-os-live-comments',
+  liveJoinedSession: 'focus-os-live-joined-session',
 };
 
 const TODAY_LIMIT = 5;
@@ -185,8 +187,27 @@ const EN_TEXT = {
   '명 집중 중': 'focusing now',
   '남음': 'left',
   '실시간 집중 보드': 'Live focus board',
-
-  '라이브 참여하기': 'Join Live',};
+  '라이브 참여하기': 'Join Live',
+  '지금 함께 집중 중입니다': 'People are focusing together right now',
+  '앱으로 돌아가기': 'Back to app',
+  '내가 참여 중입니다': 'You are currently in LIVE',
+  '라이브 나가기': 'Leave LIVE',
+  '응원 한마디': 'Send a quick message',
+  '댓글 남기기': 'Leave a comment',
+  '메시지를 입력해 주세요.': 'Please enter a message.',
+  '라이브 참여가 시작됐어요.': 'You joined LIVE.',
+  '라이브에서 나갔어요.': 'You left LIVE.',
+  '응원 메시지가 등록됐어요.': 'Your message was posted.',
+  '댓글이 아직 없어요. 먼저 남겨보세요.': 'No messages yet. Be the first to post.',
+  '같이 집중해요': 'Let's focus together',
+  '집중 세션': 'Focus session',
+  '지금 참여 중인 사람들': 'People currently in LIVE',
+  '라이브 집중방': 'LIVE Focus Room',
+  '메시지 입력': 'Write a message',
+  '보내기': 'Send',
+  '참여 중': 'In LIVE',
+  '구경 중': 'Viewing',
+};
 
 function tr(lang, value) {
   return lang === 'en' && EN_TEXT[value] ? EN_TEXT[value] : value;
@@ -330,6 +351,44 @@ function getAnonymousName() {
   const created = `Focuser #${Math.floor(Math.random() * 900) + 100}`;
   storage.setItem(STORAGE_KEYS.anonymousName, created);
   return created;
+}
+
+function readLocalLiveComments() {
+  const storage = getStorage();
+  if (!storage) return [];
+  try {
+    const parsed = JSON.parse(storage.getItem(STORAGE_KEYS.liveComments) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalLiveComments(comments) {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(STORAGE_KEYS.liveComments, JSON.stringify(comments.slice(0, 40)));
+}
+
+function readLocalJoinedSession() {
+  const storage = getStorage();
+  if (!storage) return null;
+  try {
+    const parsed = JSON.parse(storage.getItem(STORAGE_KEYS.liveJoinedSession) || 'null');
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalJoinedSession(session) {
+  const storage = getStorage();
+  if (!storage) return;
+  if (!session) {
+    storage.removeItem(STORAGE_KEYS.liveJoinedSession);
+    return;
+  }
+  storage.setItem(STORAGE_KEYS.liveJoinedSession, JSON.stringify(session));
 }
 
 function getRemainingSeconds(session) {
@@ -544,6 +603,8 @@ export default function FocusOS() {
   const [pageMode, setPageMode] = useState(getPageMode());
   const [anonymousName, setAnonymousName] = useState('');
   const [liveSessions, setLiveSessions] = useState([]);
+  const [liveComments, setLiveComments] = useState([]);
+  const [joinedLiveSession, setJoinedLiveSession] = useState(readLocalJoinedSession());
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -589,6 +650,8 @@ export default function FocusOS() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setAnonymousName(getAnonymousName());
+    setJoinedLiveSession(readLocalJoinedSession());
+    setLiveComments(readLocalLiveComments());
 
     const syncPage = () => setPageMode(getPageMode());
     window.addEventListener('popstate', syncPage);
@@ -667,6 +730,48 @@ export default function FocusOS() {
 
     loadLive();
     const id = window.setInterval(loadLive, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [supabaseClient, isLivePage]);
+
+
+  useEffect(() => {
+    if (!isLivePage) return;
+
+    if (!supabaseClient) {
+      setLiveComments(readLocalLiveComments());
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadComments = async () => {
+      try {
+        const { data } = await supabaseClient
+          .from('focus_live_comments')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(40);
+
+        if (!cancelled) {
+          if (Array.isArray(data)) {
+            setLiveComments(data);
+            writeLocalLiveComments(data);
+          } else {
+            setLiveComments(readLocalLiveComments());
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) setLiveComments(readLocalLiveComments());
+      }
+    };
+
+    loadComments();
+    const id = window.setInterval(loadComments, 10000);
 
     return () => {
       cancelled = true;
@@ -866,36 +971,9 @@ export default function FocusOS() {
 
   const showToastMessage = (message) => setToast(tr(lang, message));
 
-  const syncLiveStart = async (taskId, durationSeconds = focusMinutes * 60) => {
-    if (!supabaseClient || !session?.user?.id) return;
-    const task = tasks.find((item) => item.id === taskId);
+  const syncLiveStart = async () => {};
 
-    try {
-      await supabaseClient.from('focus_live').upsert(
-        {
-          user_id: session.user.id,
-          anonymous_name: anonymousName || getAnonymousName(),
-          task_title: task?.title || 'Focus session',
-          duration_seconds: durationSeconds,
-          started_at: new Date().toISOString(),
-          status: 'focusing',
-        },
-        { onConflict: 'user_id' }
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const syncLiveStop = async () => {
-    if (!supabaseClient || !session?.user?.id) return;
-
-    try {
-      await supabaseClient.from('focus_live').delete().eq('user_id', session.user.id);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const syncLiveStop = async () => {};
 
   const goToHome = () => {
     if (typeof window === 'undefined') return;
@@ -911,6 +989,90 @@ export default function FocusOS() {
     url.searchParams.set('page', 'live');
     window.history.pushState({}, '', url.toString());
     setPageMode('live');
+  };
+
+
+  const joinLiveFocus = async () => {
+    const nextSession = {
+      id: `local-live-${Date.now()}`,
+      user_id: session?.user?.id || null,
+      anonymous_name: anonymousName || getAnonymousName(),
+      task_title: lang === 'en' ? 'Focus session' : '집중 세션',
+      duration_seconds: 25 * 60,
+      started_at: new Date().toISOString(),
+      status: 'focusing',
+    };
+
+    setJoinedLiveSession(nextSession);
+    writeLocalJoinedSession(nextSession);
+
+    if (supabaseClient && session?.user?.id) {
+      try {
+        await supabaseClient.from('focus_live').upsert(
+          {
+            user_id: session.user.id,
+            anonymous_name: nextSession.anonymous_name,
+            task_title: nextSession.task_title,
+            duration_seconds: nextSession.duration_seconds,
+            started_at: nextSession.started_at,
+            status: 'focusing',
+          },
+          { onConflict: 'user_id' }
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    showToastMessage('라이브 참여가 시작됐어요.');
+  };
+
+  const leaveLiveFocus = async () => {
+    setJoinedLiveSession(null);
+    writeLocalJoinedSession(null);
+
+    if (supabaseClient && session?.user?.id) {
+      try {
+        await supabaseClient.from('focus_live').delete().eq('user_id', session.user.id);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    showToastMessage('라이브에서 나갔어요.');
+  };
+
+  const sendLiveComment = async (message) => {
+    const value = String(message || '').trim();
+    if (!value) {
+      showToastMessage('메시지를 입력해 주세요.');
+      return;
+    }
+
+    const nextComment = {
+      id: `comment-${Date.now()}`,
+      anonymous_name: anonymousName || getAnonymousName(),
+      message: value,
+      created_at: new Date().toISOString(),
+    };
+
+    const localComments = [nextComment, ...liveComments].slice(0, 40);
+    setLiveComments(localComments);
+    writeLocalLiveComments(localComments);
+
+    if (supabaseClient) {
+      try {
+        await supabaseClient.from('focus_live_comments').insert({
+          anonymous_name: nextComment.anonymous_name,
+          message: nextComment.message,
+          user_id: session?.user?.id || null,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    showToastMessage('응원 메시지가 등록됐어요.');
   };
 
 
@@ -1281,7 +1443,7 @@ export default function FocusOS() {
   }
 
   if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} onStartFocus={goToHome} />;
+    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} />;
   }
 
   if (!session) {
@@ -1415,6 +1577,10 @@ export default function FocusOS() {
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 {t("5분만 시작")}
               </button>
+              <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>
+                LIVE
+              </button>
               <button onClick={closeFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
                 {t("Focus Mode 종료")}
               </button>
@@ -1422,6 +1588,29 @@ export default function FocusOS() {
           </div>
         </section>
       )}
+
+      <section className="mx-auto max-w-6xl px-4 pt-4 md:hidden">
+        {!focusMode && !isLivePage && (
+          <button
+            onClick={goToLive}
+            className="w-full rounded-[28px] border border-violet-300 bg-[linear-gradient(135deg,#f5f1ff_0%,#ede9fe_100%)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
+                  LIVE
+                </div>
+                <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
+                <p className="mt-1 text-sm text-zinc-600">🟢 {liveSessions.length + ((joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0) ? 1 : 0)} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
+              </div>
+              <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+                {t('라이브 참여하기')}
+              </div>
+            </div>
+          </button>
+        )}
+      </section>
 
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
         <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "hidden" : ""}`}>
@@ -1674,59 +1863,167 @@ function LiveSessionCard({ session, lang = 'ko' }) {
   );
 }
 
-function FocusLivePage({ sessions = [], lang = 'ko', onStartFocus = () => {} }) {
+
+function FocusLivePage({
+  sessions = [],
+  lang = 'ko',
+  isJoined = false,
+  joinedSession = null,
+  comments = [],
+  onJoin = () => {},
+  onLeave = () => {},
+  onSendComment = () => {},
+}) {
   const t = (value) => tr(lang, value);
-  const activeSessions = sessions.filter((session) => getRemainingSeconds(session) > 0);
+  const [draft, setDraft] = useState('');
+  const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
+  const mergedSessions = (() => {
+    const filtered = sessions.filter((session) => getRemainingSeconds(session) > 0);
+    if (joinedActive && !filtered.some((session) => session.id === joinedSession.id || session.user_id === joinedSession.user_id || session.anonymous_name === joinedSession.anonymous_name)) {
+      return [joinedSession, ...filtered];
+    }
+    return filtered;
+  })();
+
+  const submitComment = async () => {
+    const value = draft.trim();
+    if (!value) return;
+    await onSendComment(value);
+    setDraft('');
+  };
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
       <div className="mx-auto max-w-6xl">
         <section className="overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('실시간 집중 보드')}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
               <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
               <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
               <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
-                🟢 {activeSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
+                🟢 {mergedSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
               </div>
               <p className="mt-5 text-base leading-7 text-zinc-300">{t('혼자보다 같이 시작하는 게 더 쉬울 때가 있어요.')}</p>
               <p className="mt-2 text-sm text-zinc-400">Start small, finish one thing.</p>
             </div>
 
-            <button
-              onClick={onStartFocus}
-              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:scale-[1.01]"
-            >
-              {t('앱으로 돌아가기')}
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {!joinedActive ? (
+                <button
+                  onClick={onJoin}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
+                >
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>
+                  {t('나도 집중 시작하기')}
+                </button>
+              ) : (
+                <button
+                  onClick={onLeave}
+                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:scale-[1.01]"
+                >
+                  {t('라이브 나가기')}
+                </button>
+              )}
+            </div>
           </div>
         </section>
 
-        <section className="mt-8">
-          {activeSessions.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {activeSessions.map((session) => (
-                <LiveSessionCard key={session.id || `${session.anonymous_name}-${session.task_title}`} session={session} lang={lang} />
-              ))}
+        <section className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <div>
+            {joinedActive && (
+              <div className="mb-4 rounded-[28px] border border-violet-200 bg-violet-50/80 p-5 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-violet-700">{t('내가 참여 중입니다')}</p>
+                    <h2 className="mt-2 text-xl font-semibold text-zinc-900">{joinedSession.anonymous_name}</h2>
+                    <p className="mt-1 text-sm text-zinc-600">{joinedSession.task_title}</p>
+                  </div>
+                  <div className="inline-flex rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
+                    ⏱ {formatRemainingLabel(getRemainingSeconds(joinedSession), lang)}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-violet-700">{t('실시간 집중 보드')}</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{t('지금 참여 중인 사람들')}</h2>
+              </div>
+              <div className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-600 ring-1 ring-zinc-200">
+                {joinedActive ? t('참여 중') : t('구경 중')}
+              </div>
             </div>
-          ) : (
-            <div className="rounded-[28px] border border-dashed border-zinc-200 bg-white/80 px-6 py-14 text-center text-zinc-500 shadow-sm">
-              <p className="text-lg font-medium text-zinc-700">{t('아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?')}</p>
+
+            {mergedSessions.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {mergedSessions.map((session) => (
+                  <LiveSessionCard key={session.id || `${session.anonymous_name}-${session.task_title}`} session={session} lang={lang} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[28px] border border-dashed border-zinc-200 bg-white/80 px-6 py-14 text-center text-zinc-500 shadow-sm">
+                <p className="text-lg font-medium text-zinc-700">{t('아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?')}</p>
+                <button
+                  onClick={onJoin}
+                  className="mt-5 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                >
+                  {t('나도 집중 시작하기')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-[32px] border border-zinc-100 bg-white p-5 shadow-sm">
+            <p className="text-sm font-medium text-violet-700">{t('응원 한마디')}</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">{t('댓글 남기기')}</h2>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={t('메시지 입력')}
+                className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
+              />
               <button
-                onClick={onStartFocus}
-                className="mt-5 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                onClick={submitComment}
+                className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]"
               >
-                {t('앱으로 돌아가기')}
+                {t('보내기')}
               </button>
             </div>
-          )}
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {['화이팅', '같이 집중해요', '끝까지 가요'].map((quick) => (
+                <button
+                  key={quick}
+                  onClick={() => setDraft(quick)}
+                  className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100"
+                >
+                  {tr(lang, quick)}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {comments.length > 0 ? comments.map((comment) => (
+                <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="rounded-2xl bg-zinc-50 p-4">
+                  <p className="text-sm font-semibold text-zinc-900">{comment.anonymous_name || 'Focuser'}</p>
+                  <p className="mt-1 text-sm text-zinc-600">{comment.message}</p>
+                </div>
+              )) : (
+                <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
+                  {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       </div>
     </main>
   );
 }
-
 
 function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
   const t = (value) => tr(lang, value);
