@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
   focusMinutes: 'focus-os-focus-minutes',
   lang: 'focus-os-lang',
+  anonymousName: 'focus-os-anonymous-name',
 };
 
 const TODAY_LIMIT = 5;
@@ -176,11 +177,14 @@ const EN_TEXT = {
   '집중 유지 잘하고 있어요': 'You are maintaining focus well.',
   '좋아요, 계속 작은 완료를 쌓아요': 'Good progress. Keep stacking small wins.',
   '한 단계만 해도 충분해요': 'One small step is enough.',
-  '공유': 'Share',
-  '집중 공유': 'Share Focus',
-  '공유 텍스트가 복사됐어요.': 'Share text copied.',
-  '공유를 지원하지 않는 환경이에요.': 'Sharing is not available on this device.',
-  '집중 공유를 준비하지 못했어요.': 'Could not prepare the share message.',
+  'FocusOS LIVE': 'FocusOS LIVE',
+  '지금 함께 집중 중인 사람들': 'People focusing together right now',
+  '혼자보다 같이 시작하는 게 더 쉬울 때가 있어요.': 'Sometimes it is easier to start together.',
+  '아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?': 'No one is focusing yet. Want to start first?',
+  '나도 집중 시작하기': 'Start Focus',
+  '명 집중 중': 'focusing now',
+  '남음': 'left',
+  '실시간 집중 보드': 'Live focus board',
 };
 
 function tr(lang, value) {
@@ -308,6 +312,33 @@ function playBeep() {
 function getStorage() {
   if (typeof window === 'undefined') return null;
   return window.localStorage;
+}
+
+
+function getPathname() {
+  if (typeof window === 'undefined') return '/';
+  return window.location.pathname || '/';
+}
+
+function getAnonymousName() {
+  const storage = getStorage();
+  if (!storage) return `Focuser #${Math.floor(Math.random() * 900) + 100}`;
+  const saved = storage.getItem(STORAGE_KEYS.anonymousName);
+  if (saved) return saved;
+  const created = `Focuser #${Math.floor(Math.random() * 900) + 100}`;
+  storage.setItem(STORAGE_KEYS.anonymousName, created);
+  return created;
+}
+
+function getRemainingSeconds(session) {
+  const duration = Number(session?.duration_seconds ?? session?.remaining_time ?? 0);
+  const startedAt = session?.started_at ? new Date(session.started_at).getTime() : Date.now();
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  return Math.max(0, duration - elapsed);
+}
+
+function formatRemainingLabel(seconds, lang = 'ko') {
+  return `${formatTimer(seconds)} ${lang === 'en' ? 'left' : '남음'}`;
 }
 
 function getTodayLabel() {
@@ -508,6 +539,9 @@ export default function FocusOS() {
   const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
+  const [pathname, setPathname] = useState(getPathname());
+  const [anonymousName, setAnonymousName] = useState('');
+  const [liveSessions, setLiveSessions] = useState([]);
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -547,6 +581,16 @@ export default function FocusOS() {
     script.setAttribute('data-focus-tailwind', '1');
     script.onload = () => setTailwindReady(true);
     document.head.appendChild(script);
+  }, []);
+
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setAnonymousName(getAnonymousName());
+
+    const syncPath = () => setPathname(getPathname());
+    window.addEventListener('popstate', syncPath);
+    return () => window.removeEventListener('popstate', syncPath);
   }, []);
 
   useEffect(() => {
@@ -592,6 +636,41 @@ export default function FocusOS() {
     script.onerror = () => setAuthReady(true);
     document.head.appendChild(script);
   }, []);
+
+
+  const isLivePage = pathname === '/live';
+
+  useEffect(() => {
+    if (!supabaseClient || !isLivePage) return;
+
+    let cancelled = false;
+
+    const loadLive = async () => {
+      try {
+        const { data } = await supabaseClient
+          .from('focus_live')
+          .select('*')
+          .eq('status', 'focusing')
+          .order('started_at', { ascending: false })
+          .limit(48);
+
+        if (!cancelled) {
+          setLiveSessions(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error(error);
+        if (!cancelled) setLiveSessions([]);
+      }
+    };
+
+    loadLive();
+    const id = window.setInterval(loadLive, 10000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [supabaseClient, isLivePage]);
 
   useEffect(() => {
     const storage = getStorage();
@@ -740,6 +819,7 @@ export default function FocusOS() {
           window.clearInterval(id);
           setTimerRunning(false);
           playBeep();
+          syncLiveStop();
           setToast(tr(lang, '집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.'));
           return 0;
         }
@@ -783,41 +863,41 @@ export default function FocusOS() {
   const rewardMessage = getRewardMessage(focusScore);
 
   const showToastMessage = (message) => setToast(tr(lang, message));
-  const buildFocusShareText = () => {
-    const baseText =
-      lang === 'en'
-        ? `Starting a focus session.\n\nStart small, finish one thing.\n\nFocusOS`
-        : `지금 집중 시작.\n\n작게 시작하고\n하나만 끝내기.\n\nFocusOS`;
 
-    const url = typeof window !== 'undefined' ? window.location.origin : '';
-    return url ? `${baseText}\n${url}` : baseText;
+  const syncLiveStart = async (taskId, durationSeconds = focusMinutes * 60) => {
+    if (!supabaseClient || !session?.user?.id) return;
+    const task = tasks.find((item) => item.id === taskId);
+
+    try {
+      await supabaseClient.from('focus_live').upsert(
+        {
+          user_id: session.user.id,
+          anonymous_name: anonymousName || getAnonymousName(),
+          task_title: task?.title || 'Focus session',
+          duration_seconds: durationSeconds,
+          started_at: new Date().toISOString(),
+          status: 'focusing',
+        },
+        { onConflict: 'user_id' }
+      );
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const shareFocusSession = async () => {
+  const syncLiveStop = async () => {
+    if (!supabaseClient || !session?.user?.id) return;
+
     try {
-      const textToShare = buildFocusShareText();
-
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({
-          title: 'FocusOS',
-          text: textToShare,
-          url: typeof window !== 'undefined' ? window.location.origin : undefined,
-        });
-        return;
-      }
-
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(textToShare);
-        showToastMessage('공유 텍스트가 복사됐어요.');
-        return;
-      }
-
-      showToastMessage('공유를 지원하지 않는 환경이에요.');
+      await supabaseClient.from('focus_live').delete().eq('user_id', session.user.id);
     } catch (error) {
-      if (error?.name === 'AbortError') return;
       console.error(error);
-      showToastMessage('집중 공유를 준비하지 못했어요.');
     }
+  };
+
+  const goToHome = () => {
+    if (typeof window === 'undefined') return;
+    window.location.href = window.location.origin;
   };
 
 
@@ -854,7 +934,7 @@ export default function FocusOS() {
     patchTask(taskId, (task) => ({ ...task, ...patch }));
   };
 
-  const recordStart = (taskId) => {
+  const recordStart = (taskId, durationSeconds = focusMinutes * 60) => {
     const now = formatNow();
     playBeep();
     setTasks((prev) =>
@@ -864,8 +944,9 @@ export default function FocusOS() {
         return task;
       })
     );
-    setTimerSeconds(focusMinutes * 60);
+    setTimerSeconds(durationSeconds);
     setTimerRunning(true);
+    syncLiveStart(taskId, durationSeconds);
     showToastMessage('집중 시작. 한 가지 일만 보면 돼요.');
   };
 
@@ -879,6 +960,7 @@ export default function FocusOS() {
     }
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
+    syncLiveStop();
     setShowCelebrate(true);
     showToastMessage('완료 목록으로 이동했어요.');
   };
@@ -886,6 +968,7 @@ export default function FocusOS() {
   const pauseTask = (taskId) => {
     patchTask(taskId, (task) => (task.id === taskId ? { ...task, status: '대기' } : task));
     setTimerRunning(false);
+    syncLiveStop();
     showToastMessage('작업을 잠깐 멈췄어요. 다시 이어서 할 수 있어요.');
   };
 
@@ -899,6 +982,7 @@ export default function FocusOS() {
     }));
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
+    syncLiveStop();
     showToastMessage('작업을 초기화했어요. 처음부터 다시 시작할 수 있어요.');
   };
 
@@ -1044,7 +1128,7 @@ export default function FocusOS() {
     setTimerRunning(true);
 
     if (focusMode && focusTask) {
-      recordStart(focusTask.id);
+      recordStart(focusTask.id, 5 * 60);
     } else {
       showToastMessage('5분 타이머를 시작했어요.');
     }
@@ -1065,6 +1149,7 @@ export default function FocusOS() {
   const closeFocusMode = () => {
     setFocusMode(false);
     setFocusedTaskId(null);
+    syncLiveStop();
   };
 
   const toggleTimer = () => {
@@ -1086,6 +1171,7 @@ export default function FocusOS() {
         playBeep();
         if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
         setTimerRunning(true);
+        syncLiveStart(focusTask.id, timerSeconds || focusMinutes * 60);
       }
       return;
     }
@@ -1100,6 +1186,7 @@ export default function FocusOS() {
 
   const signOut = async () => {
     if (!supabaseClient) return;
+    await syncLiveStop();
     await supabaseClient.auth.signOut();
     setSession(null);
     setDbReady(false);
@@ -1127,6 +1214,7 @@ export default function FocusOS() {
     setTasks([]);
     setFocusMode(false);
     setFocusedTaskId(null);
+    syncLiveStop();
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
     setSettingsMessage('앱 데이터는 초기화됐어요. 계정 자체 삭제는 보안상 서버 함수 연결 후 활성화할 예정이에요.');
@@ -1177,6 +1265,10 @@ export default function FocusOS() {
         불러오는 중...
       </div>
     );
+  }
+
+  if (isLivePage) {
+    return <FocusLivePage sessions={liveSessions} lang={lang} onStartFocus={goToHome} />;
   }
 
   if (!session) {
@@ -1307,9 +1399,6 @@ export default function FocusOS() {
               </button>
               <button onClick={quickStartFive} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-100">
                 {t("5분만 시작")}
-              </button>
-              <button onClick={shareFocusSession} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
-                {t("공유")}
               </button>
               <button onClick={closeFocusMode} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">
                 {t("Focus Mode 종료")}
@@ -1554,6 +1643,75 @@ export default function FocusOS() {
     </main>
   );
 }
+
+
+function LiveSessionCard({ session, lang = 'ko' }) {
+  const secondsLeft = getRemainingSeconds(session);
+
+  return (
+    <div className="rounded-[28px] border border-zinc-100 bg-white p-5 shadow-sm">
+      <p className="text-sm font-semibold tracking-tight text-zinc-900">{session.anonymous_name || 'Focuser'}</p>
+      <p className="mt-2 text-base text-zinc-700">{session.task_title || 'Focus session'}</p>
+      <div className="mt-4 inline-flex rounded-2xl bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 ring-1 ring-violet-100">
+        ⏱ {formatRemainingLabel(secondsLeft, lang)}
+      </div>
+    </div>
+  );
+}
+
+function FocusLivePage({ sessions = [], lang = 'ko', onStartFocus = () => {} }) {
+  const t = (value) => tr(lang, value);
+  const activeSessions = sessions.filter((session) => getRemainingSeconds(session) > 0);
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
+      <div className="mx-auto max-w-6xl">
+        <section className="overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('실시간 집중 보드')}</p>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
+              <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
+              <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
+                🟢 {activeSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
+              </div>
+              <p className="mt-5 text-base leading-7 text-zinc-300">{t('혼자보다 같이 시작하는 게 더 쉬울 때가 있어요.')}</p>
+              <p className="mt-2 text-sm text-zinc-400">Start small, finish one thing.</p>
+            </div>
+
+            <button
+              onClick={onStartFocus}
+              className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-zinc-900 transition hover:scale-[1.01]"
+            >
+              {t('나도 집중 시작하기')}
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-8">
+          {activeSessions.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {activeSessions.map((session) => (
+                <LiveSessionCard key={session.id || `${session.anonymous_name}-${session.task_title}`} session={session} lang={lang} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[28px] border border-dashed border-zinc-200 bg-white/80 px-6 py-14 text-center text-zinc-500 shadow-sm">
+              <p className="text-lg font-medium text-zinc-700">{t('아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?')}</p>
+              <button
+                onClick={onStartFocus}
+                className="mt-5 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+              >
+                {t('나도 집중 시작하기')}
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
+
 
 function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
   const t = (value) => tr(lang, value);
