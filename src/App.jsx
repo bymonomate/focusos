@@ -185,7 +185,8 @@ const EN_TEXT = {
   '명 집중 중': 'focusing now',
   '남음': 'left',
   '실시간 집중 보드': 'Live focus board',
-};
+
+  '라이브 참여하기': 'Join Live',};
 
 function tr(lang, value) {
   return lang === 'en' && EN_TEXT[value] ? EN_TEXT[value] : value;
