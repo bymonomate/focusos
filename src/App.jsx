@@ -1293,7 +1293,7 @@ export default function FocusOS() {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className={`${expandedReport ? 'grid' : 'hidden'} gap-3 sm:grid-cols-2 lg:grid-cols-4 md:grid`}>
               <ReportCard label={t("완료")} value={`${completedTasks.length}`} sub={t("오늘 끝낸 일")} />
               <ReportCard label={t("시작")} value={`${startedCount}`} sub={t("시도한 일")} />
               <ReportCard label={t("진행률")} value={`${progress}%`} sub={t("전체 흐름")} />
@@ -1357,9 +1357,9 @@ export default function FocusOS() {
           title={`${t("오늘 할 일")} (${todayTasks.length}/${TODAY_LIMIT})`}
           action={
             focusMode ? null : (
-              <div className="flex flex-wrap gap-2">
-                <button onClick={autoPrioritize} className="rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('우선순위 자동정리')}</button>
-                <button onClick={() => addTask('today')} className="inline-flex items-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"><InlineIcon name="add" className="h-4 w-4" />{t('오늘 할 일 추가')}</button>
+              <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:items-center">
+                <button onClick={autoPrioritize} className="w-full max-w-[280px] rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 md:w-auto md:max-w-none">{t('우선순위 자동정리')}</button>
+                <button onClick={() => addTask('today')} className="inline-flex w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 md:w-auto md:max-w-none"><InlineIcon name="add" className="h-4 w-4" />{t('오늘 할 일 추가')}</button>
               </div>
             )
           }
@@ -1822,8 +1822,16 @@ function TaskCard({
       onDragStart={() => onDragStart(task.id)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={() => onDropCard(task.id)}
-      className={`rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
+      className={`relative rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
     >
+      <button
+        onClick={() => deleteTask(task.id)}
+        title={tr(lang, "삭제")}
+        aria-label={tr(lang, "삭제")}
+        className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900"
+      >
+        <InlineIcon name="delete" className="h-4 w-4" />
+      </button>
       <div className="mb-3 hidden items-center gap-2 text-xs text-zinc-400 md:flex">
         <span className="rounded-full bg-zinc-100 px-2 py-1">{tr(lang, "드래그 정렬")}</span>
         <span>{tr(lang, "카드를 길게 잡고 위치를 바꿀 수 있어요")}</span>
@@ -1838,7 +1846,7 @@ function TaskCard({
         <textarea value={lang === "en" ? tr("en", task.note) : task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 md:flex md:items-start md:justify-between md:gap-5">
         <div className="hidden flex-wrap items-start gap-5 md:flex">
           <IconButton lang={lang} title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
           <IconButton lang={lang} title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
@@ -1847,9 +1855,7 @@ function TaskCard({
           <IconButton lang={lang} title="초기화" icon="reset" tone="rose" onClick={() => resetTask(task.id)} />
           <IconButton lang={lang} title={task.list === 'today' ? 'Later로 이동' : 'Today로 이동'} icon="later" onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} />
           <IconButton lang={lang} title="우선순위 추천" icon="priority" onClick={() => recommendPriority(task.id)} />
-          <IconButton lang={lang} title="AI 작업분해" icon="split" onClick={() => splitTask(task.id)} />
-          <IconButton lang={lang} title="삭제" icon="delete" onClick={() => deleteTask(task.id)} />
-        </div>
+          <IconButton lang={lang} title="AI 작업분해" icon="split" onClick={() => splitTask(task.id)} />        </div>
 
         <div className="hidden md:ml-auto md:inline-flex md:items-center md:gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
           <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
@@ -1880,9 +1886,7 @@ function TaskCard({
               <button onClick={() => resetTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "초기화")}</button>
               <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, task.list === 'today' ? '나중' : '오늘')}</button>
               <button onClick={() => recommendPriority(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "추천")}</button>
-              <button onClick={() => splitTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "분해")}</button>
-              <button onClick={() => deleteTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "삭제")}</button>
-            </div>
+              <button onClick={() => splitTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "분해")}</button>            </div>
           )}
         </div>
       </div>
