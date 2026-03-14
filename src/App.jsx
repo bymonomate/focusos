@@ -1635,7 +1635,7 @@ export default function FocusOS() {
                   LIVE
                 </div>
                 <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
-                <p className="mt-1 text-sm text-zinc-600">🟢 {liveSessions.length + ((joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0) ? 1 : 0)} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
+                <p className="mt-1 text-sm text-zinc-600">🟢 {liveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
               </div>
               <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
                 {t('라이브 참여하기')}
@@ -2079,6 +2079,12 @@ function FocusLivePage({
                   <input
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        submitComment();
+                      }
+                    }}
                     placeholder={t('메시지 입력')}
                     className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
                   />
@@ -2499,7 +2505,17 @@ function TaskCard({
           {(task.steps || []).map((step, idx) => (
             <div key={`${task.id}-step-${idx}`} className="flex items-center gap-2 rounded-[20px] bg-white px-3 py-2.5 ring-1 ring-zinc-100">
               <button onClick={() => toggleStep(task.id, idx)} title={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} aria-label={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} className={`flex h-6 w-6 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
-              <input value={lang === "en" ? tr("en", step.text) : step.text} onChange={(e) => updateStep(task.id, idx, e.target.value)} className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`} />
+              <input
+                value={lang === "en" ? tr("en", step.text) : step.text}
+                onChange={(e) => updateStep(task.id, idx, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addStep(task.id);
+                  }
+                }}
+                className={`w-full bg-transparent text-sm outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`}
+              />
               <button onClick={() => deleteStep(task.id, idx)} title={tr(lang, "단계 삭제")} aria-label={tr(lang, "단계 삭제")} className="inline-flex h-7 w-7 items-center justify-center text-zinc-400 transition hover:text-rose-500">
                 <InlineIcon name="delete" className="h-4 w-4" />
               </button>
