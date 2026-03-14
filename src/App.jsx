@@ -737,7 +737,7 @@ export default function FocusOS() {
     loadLive();
 
     const channel = supabaseClient
-      .channel('live-room')
+      .channel(`live-room-${Date.now()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'focus_live' },
@@ -745,9 +745,29 @@ export default function FocusOS() {
       )
       .subscribe();
 
+    const refreshOnResume = () => loadLive();
+    const visibilityHandler = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        loadLive();
+      }
+    };
+    const pollId = typeof window !== 'undefined' ? window.setInterval(loadLive, 5000) : null;
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', refreshOnResume);
+      window.addEventListener('online', refreshOnResume);
+      document.addEventListener('visibilitychange', visibilityHandler);
+    }
+
     return () => {
       cancelled = true;
       supabaseClient.removeChannel(channel);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', refreshOnResume);
+        window.removeEventListener('online', refreshOnResume);
+        document.removeEventListener('visibilitychange', visibilityHandler);
+        if (pollId) window.clearInterval(pollId);
+      }
     };
   }, [supabaseClient]);
 
@@ -1949,9 +1969,9 @@ function FocusLivePage({
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
               <div className="mb-3">
-                <button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
-              </div>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
+<button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
+</div>
+<h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
               <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
               <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
                 🟢 {mergedSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
@@ -1981,7 +2001,7 @@ function FocusLivePage({
           </div>
         </section>
 
-        <section className="mt-8 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <section className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <div>
             {joinedActive && (
               <div className="mb-4 rounded-[28px] border border-violet-200 bg-violet-50/80 p-5 shadow-sm">
@@ -2012,7 +2032,10 @@ function FocusLivePage({
               <div className="overflow-hidden rounded-[28px] border border-zinc-100 bg-white shadow-sm">
                 <div className={`divide-y divide-zinc-100 ${mergedSessions.length > 10 ? 'max-h-[520px] overflow-y-auto' : ''}`}>
                   {mergedSessions.map((session) => {
-                    const isMine = joinedActive && (session.id === joinedSession?.id || session.anonymous_name === joinedSession?.anonymous_name);
+                    const isMine =
+                      joinedActive &&
+                      (session.id === joinedSession?.id || session.anonymous_name === joinedSession?.anonymous_name);
+
                     return (
                       <div
                         key={session.id || `${session.anonymous_name}-${session.started_at}`}
@@ -2021,12 +2044,18 @@ function FocusLivePage({
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className={`inline-block h-2.5 w-2.5 rounded-full ${isMine ? 'bg-violet-600' : 'bg-emerald-500'}`}></span>
-                            <p className="truncate text-sm font-semibold text-zinc-900">{session.anonymous_name || 'Focuser'}</p>
+                            <p className="truncate text-sm font-semibold text-zinc-900">
+                              {session.anonymous_name || 'Focuser'}
+                            </p>
                           </div>
-                          <p className="mt-1 truncate text-xs text-zinc-500">{session.task_title || t('집중 세션')}</p>
+                          <p className="mt-1 truncate text-xs text-zinc-500">
+                            {session.task_title || t('집중 세션')}
+                          </p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <p className={`text-sm font-semibold ${isMine ? 'text-violet-700' : 'text-zinc-700'}`}>{formatRemainingLabel(getRemainingSeconds(session), lang)}</p>
+                          <p className={`text-sm font-semibold ${isMine ? 'text-violet-700' : 'text-zinc-700'}`}>
+                            {formatRemainingLabel(getRemainingSeconds(session), lang)}
+                          </p>
                         </div>
                       </div>
                     );
@@ -2036,7 +2065,12 @@ function FocusLivePage({
             ) : (
               <div className="rounded-[28px] border border-dashed border-zinc-200 bg-white/80 px-6 py-14 text-center text-zinc-500 shadow-sm">
                 <p className="text-lg font-medium text-zinc-700">{t('아직 집중 중인 사람이 없어요. 먼저 시작해볼까요?')}</p>
-                <button onClick={onJoin} className="mt-5 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('나도 집중 시작하기')}</button>
+                <button
+                  onClick={onJoin}
+                  className="mt-5 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                >
+                  {t('나도 집중 시작하기')}
+                </button>
               </div>
             )}
           </div>
@@ -2056,7 +2090,9 @@ function FocusLivePage({
                       <p className="mt-1 text-sm leading-6 text-zinc-600">{comment.message}</p>
                     </div>
                   )) : (
-                    <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">{t('댓글이 아직 없어요. 먼저 남겨보세요.')}</div>
+                    <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
+                      {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
+                    </div>
                   )}
                 </div>
               </div>
@@ -2064,9 +2100,16 @@ function FocusLivePage({
               <div className="border-t border-zinc-100 px-5 py-4">
                 <div className="mb-3 flex flex-wrap gap-2">
                   {['화이팅', '같이 집중해요', '끝까지 가요'].map((quick) => (
-                    <button key={quick} onClick={() => setDraft(quick)} className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100">{tr(lang, quick)}</button>
+                    <button
+                      key={quick}
+                      onClick={() => setDraft(quick)}
+                      className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100"
+                    >
+                      {tr(lang, quick)}
+                    </button>
                   ))}
                 </div>
+
                 <div className="flex gap-2">
                   <input
                     value={draft}
@@ -2080,7 +2123,12 @@ function FocusLivePage({
                     placeholder={t('메시지 입력')}
                     className="min-w-0 flex-1 rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
                   />
-                  <button onClick={submitComment} className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]">{t('보내기')}</button>
+                  <button
+                    onClick={submitComment}
+                    className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white transition hover:scale-[1.01]"
+                  >
+                    {t('보내기')}
+                  </button>
                 </div>
               </div>
             </div>
@@ -2390,23 +2438,30 @@ function TaskCard({
   const doneCount = (task.steps || []).filter((step) => step.done).length;
   const stepProgress = (task.steps || []).length ? Math.round((doneCount / task.steps.length) * 100) : 0;
   const stepRefs = useRef({});
+  const pendingFocusStepRef = useRef(null);
+  const prevStepCountRef = useRef((task.steps || []).length);
 
-  const focusStepAt = (index) => {
-    window.setTimeout(() => {
-      const el = stepRefs.current[index];
-      if (el) {
-        el.focus();
-        const len = el.value?.length || 0;
-        try { el.setSelectionRange(len, len); } catch {}
-      }
-    }, 0);
-  };
-
-  const addStepAndFocus = () => {
-    const nextIndex = (task.steps || []).length;
-    addStep(task.id);
-    focusStepAt(nextIndex);
-  };
+  useEffect(() => {
+    const currentLength = (task.steps || []).length;
+    if (
+      pendingFocusStepRef.current !== null &&
+      currentLength > prevStepCountRef.current
+    ) {
+      const nextIndex = pendingFocusStepRef.current;
+      window.requestAnimationFrame(() => {
+        const nextField = stepRefs.current[nextIndex];
+        if (nextField) {
+          nextField.focus();
+          if (typeof nextField.setSelectionRange === 'function') {
+            const length = nextField.value?.length || 0;
+            nextField.setSelectionRange(length, length);
+          }
+        }
+      });
+      pendingFocusStepRef.current = null;
+    }
+    prevStepCountRef.current = currentLength;
+  }, [task.steps]);
 
   return (
     <article
@@ -2457,7 +2512,7 @@ function TaskCard({
           <IconButton lang={lang} title="초기화" icon="reset" tone="rose" onClick={() => resetTask(task.id)} />
           <IconButton lang={lang} title={task.list === 'today' ? 'Later로 이동' : 'Today로 이동'} icon="later" onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} />
           <IconButton lang={lang} title="우선순위 추천" icon="priority" onClick={() => recommendPriority(task.id)} />
-          <IconButton lang={lang} title="AI 작업분해" icon="split" onClick={() => splitTask(task.id)} />        </div>
+        </div>
 
         <div className="hidden md:ml-auto md:inline-flex md:items-center md:gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
           <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
@@ -2468,33 +2523,35 @@ function TaskCard({
           </select>
         </div>
 
-        <div className="space-y-3 md:hidden">
-          <div className="grid grid-cols-[1fr_auto] gap-2">
-            <div className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5">
-              <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
-              <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="min-w-0 flex-1 bg-transparent text-sm outline-none">
-                <option>{tr(lang, "가장 중요")}</option>
-                <option>{tr(lang, "중요")}</option>
-                <option>{tr(lang, "가벼운 일")}</option>
-              </select>
+        <div className="md:hidden">
+          <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-3 py-2.5">
+                <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
+                <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="bg-transparent text-sm outline-none">
+                  <option>{tr(lang, "가장 중요")}</option>
+                  <option>{tr(lang, "중요")}</option>
+                  <option>{tr(lang, "가벼운 일")}</option>
+                </select>
+              </div>
+
+              <button onClick={() => recommendPriority(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "추천")}</button>
+
+              {task.start && !task.end ? (
+                <>
+                  <button onClick={() => pauseTask(task.id)} className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white">{tr(lang, "멈춤")}</button>
+                  <button onClick={() => recordEnd(task.id)} className="shrink-0 rounded-2xl bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white">{tr(lang, "종료")}</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => recordStart(task.id)} className="shrink-0 rounded-2xl bg-zinc-950 px-4 py-2.5 text-sm font-medium text-white">{tr(lang, "시작")}</button>
+                  <button onClick={() => startFocusMode(task.id)} className="shrink-0 rounded-2xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-medium text-violet-700">{tr(lang, "집중")}</button>
+                </>
+              )}
+
+              <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, task.list === 'today' ? '나중' : '오늘')}</button>
+              <button onClick={() => resetTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "초기화")}</button>
             </div>
-            <button onClick={() => recommendPriority(task.id)} className="rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "추천")}</button>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <button onClick={() => recordStart(task.id)} className="rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white">{tr(lang, "시작")}</button>
-            <button onClick={() => startFocusMode(task.id)} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700">{tr(lang, "집중")}</button>
-            {task.start && !task.end ? (
-              <button onClick={() => recordEnd(task.id)} className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-white">{tr(lang, "종료")}</button>
-            ) : (
-              <button disabled className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-400">{tr(lang, "종료")}</button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, task.list === 'today' ? '나중' : '오늘')}</button>
-            <button onClick={() => resetTask(task.id)} className="rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "초기화")}</button>
-            <button onClick={() => pauseTask(task.id)} disabled={task.status !== '진행 중'} className={`rounded-2xl px-4 py-2.5 text-sm font-medium ${task.status === '진행 중' ? 'border border-zinc-200 bg-white text-zinc-700' : 'border border-zinc-200 bg-zinc-50 text-zinc-400'}`}>{tr(lang, "멈춤")}</button>
           </div>
         </div>
       </div>
@@ -2514,9 +2571,9 @@ function TaskCard({
             <p className="text-sm font-medium text-zinc-700">{tr(lang, "작업 단계")}</p>
             <p className="text-xs text-zinc-500">{tr(lang, "완료")} {doneCount}/{(task.steps || []).length}</p>
           </div>
-          <div className="flex w-full gap-2 sm:w-auto">
-            <button onClick={addStepAndFocus} title={tr(lang, "단계 추가")} aria-label={tr(lang, "단계 추가")} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white sm:flex-none"><InlineIcon name="add-step" className="h-4 w-4" />{tr(lang, "단계 추가")}</button>
-            <button onClick={() => splitTask(task.id)} title={tr(lang, "분해")} aria-label={tr(lang, "분해")} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white sm:flex-none"><InlineIcon name="split" className="h-4 w-4" />{tr(lang, "분해")}</button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <button onClick={() => splitTask(task.id)} title={tr(lang, "분해")} aria-label={tr(lang, "분해")} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white sm:w-auto"><InlineIcon name="split" className="h-4 w-4" />{tr(lang, "분해")}</button>
+            <button onClick={() => addStep(task.id)} title={tr(lang, "단계 추가")} aria-label={tr(lang, "단계 추가")} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-white sm:w-auto"><InlineIcon name="add-step" className="h-4 w-4" />{tr(lang, "단계 추가")}</button>
           </div>
         </div>
 
@@ -2529,7 +2586,9 @@ function TaskCard({
             <div key={`${task.id}-step-${idx}`} className="flex items-start gap-2 rounded-[20px] bg-white px-3 py-3 ring-1 ring-zinc-100">
               <button onClick={() => toggleStep(task.id, idx)} title={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} aria-label={step.done ? tr(lang, '단계 완료 취소') : tr(lang, '단계 완료')} className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${step.done ? 'border-violet-500 bg-violet-500 text-white' : 'border-zinc-300 text-zinc-300'}`}><InlineIcon name="check" className="h-3.5 w-3.5" /></button>
               <textarea
-                ref={(el) => { stepRefs.current[idx] = el; }}
+                ref={(el) => {
+                  stepRefs.current[idx] = el;
+                }}
                 rows={1}
                 value={lang === "en" ? tr("en", step.text) : step.text}
                 onChange={(e) => {
@@ -2540,7 +2599,8 @@ function TaskCard({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    addStepAndFocus();
+                    pendingFocusStepRef.current = idx + 1;
+                    addStep(task.id);
                   }
                 }}
                 className={`min-h-[28px] w-full resize-none bg-transparent text-sm leading-6 outline-none ${step.done ? 'text-zinc-400 line-through' : 'text-zinc-700'}`}
