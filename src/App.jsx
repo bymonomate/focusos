@@ -1451,7 +1451,7 @@ export default function FocusOS() {
   }
 
   if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} />;
+    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} />;
   }
 
   if (!session) {
@@ -1881,6 +1881,7 @@ function FocusLivePage({
   onJoin = () => {},
   onLeave = () => {},
   onSendComment = () => {},
+  onBack = () => {},
 }) {
   const t = (value) => tr(lang, value);
   const [draft, setDraft] = useState('');
@@ -1908,7 +1909,7 @@ function FocusLivePage({
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
               <div className="mb-3">
-<button onClick={goToHome} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
+<button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
 </div>
 <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
               <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
