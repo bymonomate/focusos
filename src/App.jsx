@@ -47,7 +47,7 @@ const EN_TEXT = {
   '인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.': 'Authentication is unavailable right now. Please try again shortly.',
   '이메일과 비밀번호를 입력해 주세요.': 'Please enter your email and password.',
   '회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.': 'Your account was created. Please verify your email and sign in.',
-  '': 'Start small and finish one thing at a time',
+  '작게 시작하고, 한 번에 하나씩 끝내기': 'Start small and finish one thing at a time',
   '설정': 'Settings',
   '로그아웃': 'Log out',
   '계정 및 앱 설정': 'Account & App Settings',
@@ -471,7 +471,7 @@ function sortTasks(tasks) {
   });
 }
 
-export default function FocusOS <button className="md:hidden ml-auto text-xl" onClick={()=>setMenuOpen(!menuOpen)}>☰</button>() {
+export default function FocusOS() {
   const newestTaskRef = useRef(null);
   const hydratingFromDbRef = useRef(false);
 
@@ -501,8 +501,8 @@ export default function FocusOS <button className="md:hidden ml-auto text-xl" on
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
-  const [menuOpen,setMenuOpen] = useState(false);
-const [lang, setLang] = useState(defaultLang);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
 
@@ -1155,11 +1155,20 @@ const [lang, setLang] = useState(defaultLang);
     }`}>
       <div className="sticky top-0 z-30 border-b border-white/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-violet-600">Focus OS</p>
-            <p className="text-sm text-zinc-500">{t('')}</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-violet-600 md:text-[11px] md:uppercase md:tracking-[0.24em]">FocusOS</p>
+            <p className="hidden text-sm text-zinc-500 md:block">{t('작게 시작하고, 한 번에 하나씩 끝내기')}</p>
           </div>
-          <div className="hidden md:flex items-center gap-2">
+
+          <button
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:bg-zinc-50 md:hidden"
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+
+          <div className="hidden items-center gap-2 md:flex">
             <div className="mr-1 flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
               <button onClick={() => setLang('ko')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>KO</button>
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
@@ -1168,6 +1177,24 @@ const [lang, setLang] = useState(defaultLang);
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
           </div>
         </div>
+
+        {menuOpen && (
+          <div className="border-t border-zinc-200 bg-white px-4 py-3 md:hidden">
+            <div className="space-y-3">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Language</p>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => { setLang('ko'); setMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
+                  <button onClick={() => { setLang('en'); setMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
+                <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {settingsOpen && (
@@ -1316,7 +1343,7 @@ const [lang, setLang] = useState(defaultLang);
 
           <Panel>
             <p className="text-sm font-medium text-violet-700">{t("운영 원칙")}</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight">Focus OS</h2>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight">FocusOS</h2>
             <div className="mt-5 grid gap-3">
               <RuleCard title={lang === "en" ? "Limit Today to 5 tasks" : t("Today는 5개 제한")} desc={t("오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.")} />
               <RuleCard title={lang === "en" ? "Later is a backlog" : t("Later는 보관함")} desc={t("지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.")} />
@@ -1432,7 +1459,7 @@ const [lang, setLang] = useState(defaultLang);
         )}
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
-          <p className="font-medium text-zinc-700">Focus OS</p>
+          <p className="font-medium text-zinc-700">FocusOS</p>
           <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다.")}</p>
           <p className="mt-1 text-xs text-zinc-400">Focus • Start Small • Finish One Thing</p>
         </footer>
@@ -1556,7 +1583,7 @@ function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
             <button onClick={() => setLang('ko')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
             <button onClick={() => setLang('en')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">Focus OS</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">FocusOS</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">{t('지금 바로 시작하기')}</h1>
           <p className="mt-4 text-base leading-8 text-zinc-500 sm:text-lg">
             {t('로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.')}
@@ -1797,7 +1824,7 @@ function TaskCard({
       onDrop={() => onDropCard(task.id)}
       className={`rounded-[30px] border p-5 transition ${task.status === '진행 중' ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : isNew ? 'border-violet-400 bg-violet-50/60 shadow-sm' : 'border-zinc-100 bg-white'}`}
     >
-      <div className="mb-3 flex items-center gap-2 text-xs text-zinc-400">
+      <div className="mb-3 hidden items-center gap-2 text-xs text-zinc-400 md:flex">
         <span className="rounded-full bg-zinc-100 px-2 py-1">{tr(lang, "드래그 정렬")}</span>
         <span>{tr(lang, "카드를 길게 잡고 위치를 바꿀 수 있어요")}</span>
       </div>
@@ -1811,8 +1838,8 @@ function TaskCard({
         <textarea value={lang === "en" ? tr("en", task.note) : task.note} onChange={(e) => updateTask(task.id, { note: e.target.value })} rows={2} className="mt-1 w-full resize-none bg-transparent text-sm text-zinc-600 outline-none placeholder:text-zinc-400" />
       </div>
 
-      <div className="mt-5 flex flex-wrap items-start gap-5">
-        <div className="flex flex-wrap items-start gap-5">
+      <div className="mt-5">
+        <div className="hidden flex-wrap items-start gap-5 md:flex">
           <IconButton lang={lang} title="시작" icon="start" tone="primary" onClick={() => recordStart(task.id)} />
           <IconButton lang={lang} title="집중 시작" icon="focus" tone="violet" onClick={() => startFocusMode(task.id)} />
           {task.start && !task.end && <IconButton lang={lang} title="종료" icon="done" tone="emerald" onClick={() => recordEnd(task.id)} />}
@@ -1824,13 +1851,39 @@ function TaskCard({
           <IconButton lang={lang} title="삭제" icon="delete" onClick={() => deleteTask(task.id)} />
         </div>
 
-        <div className="ml-auto inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
+        <div className="hidden md:ml-auto md:inline-flex md:items-center md:gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2">
           <InlineIcon name="priority" className="h-4 w-4 text-zinc-400" />
           <select value={task.priority} onChange={(e) => updateTask(task.id, { priority: e.target.value })} className="bg-transparent text-sm outline-none">
             <option>{tr(lang, "가장 중요")}</option>
             <option>{tr(lang, "중요")}</option>
             <option>{tr(lang, "가벼운 일")}</option>
           </select>
+        </div>
+
+        <div className="space-y-3 md:hidden">
+          <div className="grid grid-cols-2 gap-2">
+            {task.start && !task.end ? (
+              <>
+                <button onClick={() => pauseTask(task.id)} className="rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white">{tr(lang, "멈춤")}</button>
+                <button onClick={() => recordEnd(task.id)} className="rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-white">{tr(lang, "종료")}</button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => recordStart(task.id)} className="rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-medium text-white">{tr(lang, "시작")}</button>
+                <button onClick={() => startFocusMode(task.id)} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700">{tr(lang, "집중")}</button>
+              </>
+            )}
+          </div>
+
+          {task.start && !task.end && (
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              <button onClick={() => resetTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "초기화")}</button>
+              <button onClick={() => moveList(task.id, task.list === 'today' ? 'later' : 'today')} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, task.list === 'today' ? '나중' : '오늘')}</button>
+              <button onClick={() => recommendPriority(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "추천")}</button>
+              <button onClick={() => splitTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "분해")}</button>
+              <button onClick={() => deleteTask(task.id)} className="shrink-0 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700">{tr(lang, "삭제")}</button>
+            </div>
+          )}
         </div>
       </div>
 
