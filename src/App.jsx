@@ -68,7 +68,7 @@ const EN_TEXT = {
   '지금까지 저장된 할 일과 진행 기록을 모두 비울까요? 이 작업은 되돌릴 수 없어요.': 'Clear all saved tasks and progress? This cannot be undone.',
   '오늘의 리포트': "Today's Report",
   '지금 시작하기': 'Start Now',
-  '{t("5분만 시작")}': 'Start with 5 min',
+  '5분만 시작': 'Start with 5 min',
   '하루 리포트': 'Daily Report',
   '보기': 'View',
   '하루 종료 리포트': 'End-of-Day Report',
@@ -79,10 +79,10 @@ const EN_TEXT = {
   '타이머': 'Timer',
   '지금 집중 흐름': 'Current timer',
   'Focus Mode': 'Focus Mode',
-  '{t("포커스 타이머")}': 'Focus Timer',
+  '포커스 타이머': 'Focus Timer',
   '일시정지': 'Pause',
   '타이머 시작': 'Start Timer',
-  '{t("Focus Mode 종료")}': 'Exit Focus Mode',
+  'Focus Mode 종료': 'Exit Focus Mode',
   '오늘 할 일': 'Today',
   '나중에 할 일': 'Later',
   '완료 목록': 'Completed',
@@ -97,10 +97,10 @@ const EN_TEXT = {
   '진행률': 'Progress',
   '전체 흐름': 'Daily Flow',
   '집중 점수': 'Focus Score',
-  '{t("과하게 늘리지 않고 5개 이내 유지")}': 'Keep today within five tasks',
-  '{t("지금 한 가지에만 집중하기")}': 'Focus on one task',
+  '과하게 늘리지 않고 5개 이내 유지': 'Keep today within five tasks',
+  '지금 한 가지에만 집중하기': 'Focus on one task',
   '지금은 이 카드 하나만 보고 끝내면 돼요.': 'Just focus on this one card for now.',
-  '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, {t("Focus Mode 종료")}로 원래 화면으로 돌아가세요.': 'No task selected. Start a task from Today or leave Focus Mode to go back.',
+  '선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.': 'No task selected. Start a task from Today or leave Focus Mode to go back.',
   '시작 시간': 'Started at',
   '종료 시간': 'Finished at',
   '타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.': 'Notifications at start and end. Only one active task at a time.',
@@ -110,11 +110,11 @@ const EN_TEXT = {
   '지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.': 'Move non-urgent work here and bring it back when needed.',
   '작업 분해': 'Task Breakdown',
   '큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.': 'Break big work into steps you can start within 5 minutes.',
-  '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 {t("5분만 시작")}으로 첫 작업을 시작해 보세요.': 'No active task yet. Start one from Today or use Start with 5 min.',
+  '현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.': 'No active task yet. Start one from Today or use Start with 5 min.',
   '오늘의 정리': "Today's Summary",
   '남은 일': 'Remaining',
   '오늘 한마디': "Today's note",
-  '{t("작은 완료 하나가 흐름을 만듭니다")}.': 'One small completion creates momentum.',
+  '작은 완료 하나가 흐름을 만듭니다.': 'One small completion creates momentum.',
   '완료! 잘했어요 ✨': 'Done! Nice work ✨',
   '↑ 위로': '↑ Top',
   '드래그 정렬': 'Drag to sort',
@@ -1217,10 +1217,10 @@ export default function FocusOS() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-violet-700">Focus Mode</p>
                 <h2 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
-                  {focusTask ? (lang === 'en' ? tr('en', focusTask.title) : focusTask.title) : t('{t("지금 한 가지에만 집중하기")}')}
+                  {focusTask ? (lang === 'en' ? tr('en', focusTask.title) : focusTask.title) : t('지금 한 가지에만 집중하기')}
                 </h2>
                 <p className="mt-3 text-base text-zinc-600">
-                  {focusTask ? ((lang === 'en' ? tr('en', focusTask.note) : focusTask.note) || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : t('선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, {t("Focus Mode 종료")}로 원래 화면으로 돌아가세요.')}
+                  {focusTask ? ((lang === 'en' ? tr('en', focusTask.note) : focusTask.note) || t('지금은 이 카드 하나만 보고 끝내면 돼요.')) : t('선택된 작업이 없어요. 오늘 할 일 카드에서 시작 또는 집중 시작을 눌러 작업을 고르거나, Focus Mode 종료로 원래 화면으로 돌아가세요.')}
                 </p>
                 {focusTask?.start ? (
                   <div className="mt-4 inline-flex rounded-2xl bg-white px-4 py-3 text-sm text-zinc-700 ring-1 ring-violet-100">
@@ -1230,7 +1230,7 @@ export default function FocusOS() {
               </div>
 
               <div className="shrink-0 rounded-[28px] bg-zinc-950 px-6 py-5 text-white shadow-sm">
-                <p className="text-sm text-zinc-400">{t("{t("포커스 타이머")}")}</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-2 text-4xl font-bold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
@@ -1259,7 +1259,7 @@ export default function FocusOS() {
               <p className="mt-2 text-zinc-400">{currentDate}</p>
               <div className="mt-5 flex flex-wrap gap-2.5">
                 <button onClick={startNow} className="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 transition hover:scale-[1.01]">{t('지금 시작하기')}</button>
-                <button onClick={quickStartFive} className="rounded-2xl bg-violet-500 px-4 py-2.5 text-sm font-medium text-white transition hover:scale-[1.01]">{t('{t("5분만 시작")}')}</button>
+                <button onClick={quickStartFive} className="rounded-2xl bg-violet-500 px-4 py-2.5 text-sm font-medium text-white transition hover:scale-[1.01]">{t('5분만 시작')}</button>
                 <button onClick={() => setExpandedReport((prev) => !prev)} className="rounded-2xl bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/15">{t('하루 리포트')} {expandedReport ? t('닫기') : t('보기')}</button>
                 <button onClick={() => setDailySummaryOpen(true)} className="rounded-2xl bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/15">{t('하루 종료 리포트')}</button>
               </div>
@@ -1279,7 +1279,7 @@ export default function FocusOS() {
 
           {expandedReport && (
             <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption={t("{t("과하게 늘리지 않고 5개 이내 유지")}")} />
+              <GlassCard title={t("오늘 남은 일")} value={`${todayTasks.length}`} caption={t("과하게 늘리지 않고 5개 이내 유지")} />
               <GlassCard title={t("현재 집중")} value={focusTask ? (lang === "en" ? tr("en", focusTask.title) : focusTask.title) : t('없음')} caption={t("한 번에 하나씩")} compact />
               <GlassCard title={t("타이머")} value={formatTimer(timerSeconds)} caption={t("지금 집중 흐름")} />
             </div>
@@ -1292,10 +1292,10 @@ export default function FocusOS() {
               <div className="max-w-md">
                 <p className="text-sm font-medium text-violet-700">Focus</p>
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight">{t("지금 한 가지에만 집중하기")}</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">{t("타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.")}</p>
               </div>
               <div className="rounded-[28px] bg-zinc-950 px-5 py-4 text-center text-white shadow-sm">
-                <p className="text-sm text-zinc-400">{t("{t("포커스 타이머")}")}</p>
+                <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
                 <p className="mt-1 text-4xl font-semibold tracking-tight">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
@@ -1309,7 +1309,7 @@ export default function FocusOS() {
             <div className="mt-5 flex flex-wrap gap-2.5">
               <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? t("일시정지") : t("타이머 시작")}</button>
               <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">{t("리셋")}</button>
-              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">{t("{t("5분만 시작")}")}</button>
+              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">{t("5분만 시작")}</button>
             </div>
           </Panel>
 
@@ -1317,8 +1317,8 @@ export default function FocusOS() {
             <p className="text-sm font-medium text-violet-700">{t("운영 원칙")}</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight">Focus OS</h2>
             <div className="mt-5 grid gap-3">
-              <RuleCard title={t("{t("Today는 5개 제한")}")} desc={t("오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.")} />
-              <RuleCard title={t("{t("Later는 보관함")}")} desc={t("지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.")} />
+              <RuleCard title={lang === "en" ? "Limit Today to 5 tasks" : t("Today는 5개 제한")} desc={t("오늘 보이는 일이 많아지면 시작 장벽이 커져서 수를 제한해요.")} />
+              <RuleCard title={lang === "en" ? "Later is a backlog" : t("Later는 보관함")} desc={t("지금 안 해도 되는 일은 빼두고, 필요할 때만 Today로 옮겨요.")} />
               <RuleCard title={t("작업 분해")} desc={t("큰 일을 5분 안에 시작 가능한 단계로 잘게 나눠요.")} />
             </div>
           </Panel>
@@ -1361,7 +1361,7 @@ export default function FocusOS() {
                 onDropCard={handleDrop}
                 lang={lang}
               />
-            )) : <EmptyBox text={focusMode ? t("현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 {t("5분만 시작")}으로 첫 작업을 시작해 보세요.") : t("오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.")} />}
+            )) : <EmptyBox text={focusMode ? t("현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.") : t("오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.")} />}
           </div>
         </SectionCard></div>
 
@@ -1432,7 +1432,7 @@ export default function FocusOS() {
 
         <footer className="mt-10 border-t border-zinc-200 pb-10 pt-6 text-center text-sm text-zinc-500">
           <p className="font-medium text-zinc-700">Focus OS</p>
-          <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다")}.</p>
+          <p className="mt-1">{t("작은 완료 하나가 흐름을 만듭니다.")}</p>
           <p className="mt-1 text-xs text-zinc-400">Focus • Start Small • Finish One Thing</p>
         </footer>
 
