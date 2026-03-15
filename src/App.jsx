@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import AuthScreen from './components/AuthScreen';
+import FocusLivePage from './components/FocusLivePage';
+import TaskCard from './components/TaskCard';
+import { InlineIcon } from './components/icons';
 
 const STORAGE_KEYS = {
   tasks: 'focus-os-tasks',
@@ -1675,15 +1679,15 @@ export default function FocusOS() {
     );
   }
 
+  const t = (value) => tr(lang, value);
+
   if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} />;
+    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />;
   }
 
   if (!session) {
-    return <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} />;
+    return <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} t={t} />;
   }
-
-  const t = (value) => tr(lang, value);
 
   return (
     <main className={`min-h-screen text-zinc-900 transition-colors ${
@@ -1970,6 +1974,9 @@ export default function FocusOS() {
           <div className="space-y-4">
             {(focusMode ? (focusTask ? [focusTask] : []) : todayTasks).length > 0 ? (focusMode ? (focusTask ? [focusTask] : []) : todayTasks).map((task) => (
               <TaskCard
+                t={t}
+                priorityBadge={PRIORITY_BADGE}
+                statusBadge={STATUS_BADGE}
                 key={task.id}
                 task={task}
                 isNew={task.id === newTaskId}
@@ -2004,6 +2011,9 @@ export default function FocusOS() {
           <div className="space-y-4">
             {laterTasks.length > 0 ? laterTasks.map((task) => (
               <TaskCard
+                t={t}
+                priorityBadge={PRIORITY_BADGE}
+                statusBadge={STATUS_BADGE}
                 key={task.id}
                 task={task}
                 recordStart={recordStart}
@@ -2118,7 +2128,7 @@ export default function FocusOS() {
 }
 
 
-function LiveSessionCard({ session, lang = 'ko' }) {
+) {
   const secondsLeft = getRemainingSeconds(session);
 
   return (
@@ -2133,18 +2143,7 @@ function LiveSessionCard({ session, lang = 'ko' }) {
 }
 
 
-function FocusLivePage({
-  sessions = [],
-  lang = 'ko',
-  isJoined = false,
-  joinedSession = null,
-  comments = [],
-  currentNickname = '',
-  onJoin = () => {},
-  onLeave = () => {},
-  onSendComment = () => {},
-  onBack = () => {},
-}) {
+) {
   const t = (value) => tr(lang, value);
   const [draft, setDraft] = useState('');
   const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
@@ -2359,7 +2358,7 @@ function FocusLivePage({
   );
 }
 
-function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {} }) {
+) {
   const t = (value) => tr(lang, value);
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
@@ -2511,7 +2510,7 @@ function Panel({ children }) {
   return <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm">{children}</div>;
 }
 
-function InlineIcon({ name, className = 'h-4 w-4' }) {
+) {
   const icon = SVG_ICONS[name];
   if (!icon) return null;
 
@@ -2526,7 +2525,7 @@ function InlineIcon({ name, className = 'h-4 w-4' }) {
   );
 }
 
-function IconButton({ title, icon, onClick, tone = 'default', disabled = false, lang = 'ko' }) {
+) {
   const toneClass =
     tone === 'primary'
       ? 'text-zinc-950 hover:text-zinc-700'
@@ -2633,28 +2632,7 @@ function InfoBox({ label, value }) {
   );
 }
 
-function TaskCard({
-  task,
-  isNew,
-  innerRef,
-  recordStart,
-  recordEnd,
-  pauseTask,
-  resetTask,
-  moveList,
-  deleteTask,
-  updateTask,
-  recommendPriority,
-  splitTask,
-  addStep,
-  updateStep,
-  toggleStep,
-  deleteStep,
-  startFocusMode,
-  onDragStart,
-  onDropCard,
-  lang = 'ko',
-}) {
+) {
   const doneCount = (task.steps || []).filter((step) => step.done).length;
   const stepProgress = (task.steps || []).length ? Math.round((doneCount / task.steps.length) * 100) : 0;
   const stepRefs = useRef({});
