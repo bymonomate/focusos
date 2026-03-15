@@ -62,6 +62,17 @@ const EN_TEXT = {
   '설정': 'Settings',
   '로그아웃': 'Log out',
   '계정 및 앱 설정': 'Account & App Settings',
+  '홈화면에 추가': 'Add to Home Screen',
+  '브라우저보다 앱처럼 바로 열 수 있어요.': 'Open it like an app instead of a browser tab.',
+  '설치 가능': 'Ready to Install',
+  '설치됨': 'Installed',
+  '이미 홈화면에 추가되어 있어요.': 'Already added to the home screen.',
+  '앱처럼 바로 열 수 있게 홈화면에 추가해 보세요.': 'Add it to your home screen for quicker access.',
+  '안드로이드 크롬은 바로 설치할 수 있고, 아이폰 사파리는 공유 버튼에서 홈화면에 추가를 눌러주세요.': 'On Android Chrome you can install directly. On iPhone Safari, tap Share and choose Add to Home Screen.',
+  '이 기기에서 설치하기': 'Install on this device',
+  '설치 안내 보기': 'Show install steps',
+  '사파리에서 하단 공유 버튼 → 홈화면에 추가를 눌러주세요.': 'In Safari, tap Share at the bottom, then Add to Home Screen.',
+  '크롬에서는 설치 팝업이 뜨면 바로 추가할 수 있어요.': 'In Chrome, install as soon as the prompt appears.',
   '로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.': 'Manage sign out, data reset, and account deletion here.',
   '닫기': 'Close',
   '현재 기기에서 로그인 상태만 해제해요.': 'Sign out only on this device.',
@@ -696,6 +707,9 @@ export default function FocusOS() {
   const [liveSessions, setLiveSessions] = useState([]);
   const [liveComments, setLiveComments] = useState([]);
   const [joinedLiveSession, setJoinedLiveSession] = useState(readLocalJoinedSession());
+  const [installPromptEvent, setInstallPromptEvent] = useState(null);
+  const [isStandaloneMode, setIsStandaloneMode] = useState(false);
+  const [installGuideOpen, setInstallGuideOpen] = useState(false);
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -736,6 +750,67 @@ export default function FocusOS() {
     script.onload = () => setTailwindReady(true);
     document.head.appendChild(script);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const mq = window.matchMedia ? window.matchMedia('(display-mode: standalone)') : null;
+    const syncStandalone = () => {
+      const standalone = window.navigator?.standalone === true || (mq ? mq.matches : false);
+      setIsStandaloneMode(Boolean(standalone));
+    };
+
+    syncStandalone();
+
+    const onBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      setInstallPromptEvent(event);
+    };
+
+    const onInstalled = () => {
+      setInstallPromptEvent(null);
+      setIsStandaloneMode(true);
+      setToast('홈화면에 추가됐어요. 이제 앱처럼 바로 열 수 있어요.');
+    };
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    mq?.addEventListener?.('change', syncStandalone);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+      mq?.removeEventListener?.('change', syncStandalone);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (isStandaloneMode) {
+      setSettingsMessage(t('이미 홈화면에 추가되어 있어요.'));
+      return;
+    }
+
+    if (installPromptEvent) {
+      installPromptEvent.prompt();
+      try {
+        await installPromptEvent.userChoice;
+      } catch (error) {
+        // ignore
+      }
+      setInstallPromptEvent(null);
+      return;
+    }
+
+    setInstallGuideOpen(true);
+  };
+
+  const installButtonLabel = isStandaloneMode
+    ? t('설치됨')
+    : installPromptEvent
+      ? t('이 기기에서 설치하기')
+      : t('설치 안내 보기');
+
+  const showInstallCta = !isStandaloneMode;
 
 
   useEffect(() => {
@@ -1773,6 +1848,9 @@ export default function FocusOS() {
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
             </div>
             <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"><span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>LIVE</button>
+            {showInstallCta && (
+              <button onClick={handleInstallApp} className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:bg-violet-100">{t('홈화면에 추가')}</button>
+            )}
             <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
             <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
@@ -1791,6 +1869,9 @@ export default function FocusOS() {
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
+                {showInstallCta && (
+                  <button onClick={() => { handleInstallApp(); setMenuOpen(false); }} className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-700 transition hover:bg-violet-100">{t('홈화면에 추가')}</button>
+                )}
                 <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
                 <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
                 <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
@@ -1846,6 +1927,27 @@ export default function FocusOS() {
             </div>
 
             <div className="mt-6 space-y-4">
+              <div className="rounded-[24px] border border-violet-200 bg-violet-50/70 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-violet-900">{t('홈화면에 추가')}</p>
+                    <p className="mt-1 text-sm text-violet-700">{t('브라우저보다 앱처럼 바로 열 수 있어요.')}</p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${isStandaloneMode ? 'bg-emerald-100 text-emerald-700' : installPromptEvent ? 'bg-violet-100 text-violet-700' : 'bg-zinc-100 text-zinc-600'}`}>
+                    {isStandaloneMode ? t('설치됨') : installPromptEvent ? t('설치 가능') : 'Guide'}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-zinc-600">
+                  {isStandaloneMode ? t('이미 홈화면에 추가되어 있어요.') : t('안드로이드 크롬은 바로 설치할 수 있고, 아이폰 사파리는 공유 버튼에서 홈화면에 추가를 눌러주세요.')}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button onClick={handleInstallApp} className="rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">{installButtonLabel}</button>
+                  {!isStandaloneMode && (
+                    <button onClick={() => setInstallGuideOpen(true)} className="rounded-2xl border border-violet-200 bg-white px-4 py-3 text-sm font-medium text-violet-700 transition hover:bg-violet-50">{t('설치 안내 보기')}</button>
+                  )}
+                </div>
+              </div>
+
               <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-sm font-medium text-zinc-900">{t("로그아웃")}</p>
                 <p className="mt-1 text-sm text-zinc-500">{t('현재 기기에서 로그인 상태만 해제해요.')}</p>
@@ -1870,6 +1972,35 @@ export default function FocusOS() {
                 {settingsMessage}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {installGuideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
+          <div className="w-full max-w-lg rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-violet-700">Install</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{t('홈화면에 추가')}</h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">{t('앱처럼 바로 열 수 있게 홈화면에 추가해 보세요.')}</p>
+              </div>
+              <button onClick={() => setInstallGuideOpen(false)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-sm font-semibold text-zinc-900">iPhone / iPad Safari</p>
+                <p className="mt-1 text-sm text-zinc-600">1. Safari로 FocusOS를 열기</p>
+                <p className="mt-1 text-sm text-zinc-600">2. 하단 공유 버튼 누르기</p>
+                <p className="mt-1 text-sm text-zinc-600">3. 홈화면에 추가 선택</p>
+              </div>
+              <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-sm font-semibold text-zinc-900">Android Chrome</p>
+                <p className="mt-1 text-sm text-zinc-600">{t('크롬에서는 설치 팝업이 뜨면 바로 추가할 수 있어요.')}</p>
+                <p className="mt-1 text-sm text-zinc-600">메뉴(⋮) → 홈 화면에 추가 또는 앱 설치</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
