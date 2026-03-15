@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   liveComments: 'focus-os-live-comments',
   liveJoinedSession: 'focus-os-live-joined-session',
   seededTasksPrefix: 'focus-os-seeded-tasks-',
+  taskRolloverPrefix: 'focus-os-task-rollover-',
 };
 
 const TODAY_LIMIT = 5;
@@ -380,6 +381,21 @@ function getTodayStamp() {
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function getTaskRolloverKey(userId) {
+  return `${STORAGE_KEYS.taskRolloverPrefix}${userId}`;
+}
+
+function rolloverTasksForNewDay(tasks) {
+  return tasks.map((task) => {
+    if (task.list !== 'today' || task.status === '완료') return task;
+    return {
+      ...task,
+      list: 'later',
+      status: task.status === '진행 중' ? '대기' : task.status,
+    };
+  });
 }
 
 function readProfile() {
@@ -947,26 +963,34 @@ export default function FocusOS() {
 
       const storage = getStorage();
       const seededKey = getSeededTasksKey(session.user.id);
+      const rolloverKey = getTaskRolloverKey(session.user.id);
       const hasSeededBefore = storage ? storage.getItem(seededKey) === '1' : false;
+      const today = getTodayStamp();
+
+      let nextTasks = [];
 
       if (Array.isArray(data) && data.length > 0) {
-        setTasks(data.map(mapTaskFromDb).map(normalizeTask));
+        nextTasks = data.map(mapTaskFromDb).map(normalizeTask);
         storage?.setItem(seededKey, '1');
       } else if (!hasSeededBefore) {
-        const seeded = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
-        setTasks(seeded);
+        nextTasks = DEFAULT_TASKS.map((task) => normalizeTask({ ...task, id: createTaskId() }));
 
-        const rows = seeded.map((task) => mapTaskToDb(task, session.user.id));
+        const rows = nextTasks.map((task) => mapTaskToDb(task, session.user.id));
         const { error: seedError } = await supabaseClient.from('tasks').upsert(rows, { onConflict: 'id' });
         if (seedError) {
           console.error('tasks seed error', seedError);
         } else {
           storage?.setItem(seededKey, '1');
         }
-      } else {
-        setTasks([]);
       }
 
+      const lastRolledDate = storage?.getItem(rolloverKey);
+      if (lastRolledDate !== today) {
+        nextTasks = rolloverTasksForNewDay(nextTasks);
+        storage?.setItem(rolloverKey, today);
+      }
+
+      setTasks(nextTasks);
       setDbReady(true);
       window.setTimeout(() => {
         hydratingFromDbRef.current = false;
