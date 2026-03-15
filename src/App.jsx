@@ -711,9 +711,7 @@ export default function FocusOS() {
   const [isStandaloneMode, setIsStandaloneMode] = useState(false);
   const [installGuideOpen, setInstallGuideOpen] = useState(false);
 
-  const [tailwindReady, setTailwindReady] = useState(
-    typeof window !== 'undefined' && !!window.tailwind
-  );
+  const [tailwindReady, setTailwindReady] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -732,7 +730,8 @@ export default function FocusOS() {
     const configScript = document.createElement('script');
     configScript.setAttribute('data-focus-tailwind-config', '1');
     configScript.text = `
-      tailwind.config = {
+      window.tailwind = window.tailwind || {};
+      window.tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
@@ -740,7 +739,7 @@ export default function FocusOS() {
             }
           }
         }
-      }
+      };
     `;
     document.head.appendChild(configScript);
 
@@ -1794,7 +1793,7 @@ export default function FocusOS() {
     return filtered;
   })();
 
-  if (!tailwindReady || !authReady) {
+  if (!authReady) {
     return (
       <div
         style={{
