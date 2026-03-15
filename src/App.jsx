@@ -612,46 +612,6 @@ export default function FocusOS() {
   const [liveComments, setLiveComments] = useState([]);
   const [joinedLiveSession, setJoinedLiveSession] = useState(readLocalJoinedSession());
 
-  const [tailwindReady, setTailwindReady] = useState(
-    typeof window !== 'undefined' && !!window.tailwind
-  );
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (window.tailwind) {
-      setTailwindReady(true);
-      return;
-    }
-
-    const existing = document.querySelector('script[data-focus-tailwind="1"]');
-    if (existing) {
-      existing.addEventListener('load', () => setTailwindReady(true), { once: true });
-      return;
-    }
-
-    const configScript = document.createElement('script');
-    configScript.setAttribute('data-focus-tailwind-config', '1');
-    configScript.text = `
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'system-ui', 'sans-serif']
-            }
-          }
-        }
-      }
-    `;
-    document.head.appendChild(configScript);
-
-    const script = document.createElement('script');
-    script.src = 'https://cdn.tailwindcss.com';
-    script.setAttribute('data-focus-tailwind', '1');
-    script.onload = () => setTailwindReady(true);
-    document.head.appendChild(script);
-  }, []);
-
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1493,7 +1453,7 @@ export default function FocusOS() {
     rewardMessage,
   };
 
-  if (!tailwindReady || !authReady) {
+  if (!authReady) {
     return (
       <div
         style={{
