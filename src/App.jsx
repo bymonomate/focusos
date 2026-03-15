@@ -1890,18 +1890,18 @@ export default function FocusOS() {
             onClick={goToLive}
             className="group w-full rounded-[36px] border border-violet-200 bg-[linear-gradient(135deg,rgba(245,241,255,0.96)_0%,rgba(237,233,254,0.92)_100%)] px-8 py-8 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
-            <div className="flex items-center justify-between gap-8">
+            <div className="flex items-center justify-between gap-8 xl:px-2">
               <div className="min-w-0">
-                <div className="inline-flex items-center gap-3 rounded-full bg-white px-5 py-3 text-sm font-semibold uppercase tracking-[0.22em] text-violet-700 ring-1 ring-violet-100">
-                  <span className="inline-block h-3.5 w-3.5 rounded-full bg-violet-600"></span>
+                <div className="inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
+                  <span className="inline-block h-3 w-3 rounded-full bg-violet-600"></span>
                   LIVE
                 </div>
-                <h2 className="mt-8 text-[42px] font-bold tracking-tight text-zinc-950">{t('지금 함께 집중 중입니다')}</h2>
-                <p className="mt-5 text-2xl font-medium text-zinc-600">🟢 {activeLiveSessions.length} {lang === 'en' ? 'people focusing now' : '명 집중 중'}</p>
+                <h2 className="mt-6 text-2xl font-semibold tracking-tight text-zinc-950 xl:text-[30px]">{t('지금 함께 집중 중입니다')}</h2>
+                <p className="mt-3 text-sm font-medium text-zinc-600 xl:text-base">🟢 {activeLiveSessions.length} {lang === 'en' ? 'people focusing now' : '명 집중 중'}</p>
               </div>
 
               <div className="shrink-0">
-                <div className="rounded-full bg-violet-600 px-10 py-5 text-2xl font-semibold text-white shadow-[0_16px_40px_rgba(124,58,237,0.28)] transition group-hover:bg-violet-500">
+                <div className="rounded-full bg-violet-600 px-8 py-4 text-lg font-semibold text-white shadow-[0_16px_40px_rgba(124,58,237,0.22)] transition group-hover:bg-violet-500 xl:px-10 xl:py-4 xl:text-xl">
                   {t('라이브 참여하기')}
                 </div>
               </div>
