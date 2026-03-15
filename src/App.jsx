@@ -1139,8 +1139,20 @@ export default function FocusOS() {
       writeLocalLiveComments(next);
       return next;
     });
+
+    if (supabaseClient) {
+      supabaseClient.from('focus_live_comments').insert({
+        anonymous_name: 'SYSTEM',
+        message: completionComment.message,
+        user_id: session?.user?.id || null,
+        type: 'system',
+      }).catch((error) => {
+        console.error(error);
+      });
+    }
+
     setToast('집중 완료 🎉 +10P');
-  }, [joinedLiveSession, nickname, anonymousName, currentTime]);
+  }, [joinedLiveSession, nickname, anonymousName, currentTime, supabaseClient, session?.user?.id]);
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks]);
   const todayTasks = sortedTasks.filter((task) => task.list === 'today' && task.status !== '완료');
@@ -1209,6 +1221,20 @@ export default function FocusOS() {
       return [nextSession, ...filtered];
     });
 
+    const joinedComment = {
+      id: `comment-join-${Date.now()}`,
+      anonymous_name: 'SYSTEM',
+      message: `${nextSession.anonymous_name}님이 집중을 시작했습니다 🔥`,
+      created_at: new Date().toISOString(),
+      type: 'system',
+    };
+
+    setLiveComments((prev) => {
+      const next = [joinedComment, ...prev].slice(0, 40);
+      writeLocalLiveComments(next);
+      return next;
+    });
+
     if (supabaseClient) {
       try {
         const { data, error } = await supabaseClient
@@ -1232,6 +1258,13 @@ export default function FocusOS() {
           setJoinedLiveSession(synced);
           writeLocalJoinedSession(synced);
         }
+
+        await supabaseClient.from('focus_live_comments').insert({
+          anonymous_name: 'SYSTEM',
+          message: joinedComment.message,
+          user_id: nextSession.user_id,
+          type: 'system',
+        });
       } catch (error) {
         console.error(error);
       }
