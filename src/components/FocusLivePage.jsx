@@ -194,7 +194,7 @@ export default function FocusLivePage({
                       onClick={() => setDraft(quick)}
                       className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 ring-1 ring-violet-100"
                     >
-                      {tr(lang, quick)}
+                      {t(quick)}
                     </button>
                   ))}
                 </div>
