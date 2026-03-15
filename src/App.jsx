@@ -5,6 +5,8 @@ const STORAGE_KEYS = {
   focusMinutes: 'focus-os-focus-minutes',
   lang: 'focus-os-lang',
   anonymousName: 'focus-os-anonymous-name',
+  nickname: 'focus-os-nickname',
+  profile: 'focus-os-profile',
   liveComments: 'focus-os-live-comments',
   liveJoinedSession: 'focus-os-live-joined-session',
   seededTasksPrefix: 'focus-os-seeded-tasks-',
@@ -354,6 +356,65 @@ function getAnonymousName() {
   return created;
 }
 
+function getNickname() {
+  const storage = getStorage();
+  const fallback = `Focuser #${Math.floor(Math.random() * 900) + 100}`;
+  if (!storage) return fallback;
+  const savedNickname = storage.getItem(STORAGE_KEYS.nickname);
+  if (savedNickname) return savedNickname;
+  const savedAnonymous = storage.getItem(STORAGE_KEYS.anonymousName);
+  if (savedAnonymous) {
+    storage.setItem(STORAGE_KEYS.nickname, savedAnonymous);
+    return savedAnonymous;
+  }
+  storage.setItem(STORAGE_KEYS.nickname, fallback);
+  return fallback;
+}
+
+function getTodayStamp() {
+  const date = new Date();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function readProfile() {
+  const storage = getStorage();
+  const fallback = {
+    points: 0,
+    totalFocusSessions: 0,
+    todayFocusSessions: 0,
+    lastActiveDate: getTodayStamp(),
+  };
+  if (!storage) return fallback;
+  try {
+    const parsed = JSON.parse(storage.getItem(STORAGE_KEYS.profile) || 'null');
+    if (!parsed || typeof parsed !== 'object') return fallback;
+    const today = getTodayStamp();
+    if (parsed.lastActiveDate !== today) {
+      return {
+        ...fallback,
+        ...parsed,
+        todayFocusSessions: 0,
+        lastActiveDate: today,
+      };
+    }
+    return {
+      ...fallback,
+      ...parsed,
+      lastActiveDate: parsed.lastActiveDate || today,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function writeProfile(profile) {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
+}
+
 function readLocalLiveComments() {
   const storage = getStorage();
   if (!storage) return [];
@@ -575,6 +636,7 @@ function sortTasks(tasks) {
 export default function FocusOS() {
   const newestTaskRef = useRef(null);
   const hydratingFromDbRef = useRef(false);
+  const joinedLiveExpiredRef = useRef(false);
 
   const [supabaseClient, setSupabaseClient] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -607,7 +669,10 @@ export default function FocusOS() {
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
   const [pageMode, setPageMode] = useState(getPageMode());
+  const [nickname, setNickname] = useState('');
+  const [profileOpen, setProfileOpen] = useState(false);
   const [anonymousName, setAnonymousName] = useState('');
+  const [profile, setProfile] = useState(readProfile());
   const [liveSessions, setLiveSessions] = useState([]);
   const [liveComments, setLiveComments] = useState([]);
   const [joinedLiveSession, setJoinedLiveSession] = useState(readLocalJoinedSession());
@@ -655,7 +720,9 @@ export default function FocusOS() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setAnonymousName(getAnonymousName());
+    const savedNickname = getNickname();
+    setNickname(savedNickname);
+    setAnonymousName(savedNickname);
     setJoinedLiveSession(readLocalJoinedSession());
     setLiveComments(readLocalLiveComments());
 
@@ -663,6 +730,20 @@ export default function FocusOS() {
     window.addEventListener('popstate', syncPage);
     return () => window.removeEventListener('popstate', syncPage);
   }, []);
+
+
+  useEffect(() => {
+    if (!nickname) return;
+    const storage = getStorage();
+    if (!storage) return;
+    storage.setItem(STORAGE_KEYS.nickname, nickname);
+    storage.setItem(STORAGE_KEYS.anonymousName, nickname);
+    setAnonymousName(nickname);
+  }, [nickname]);
+
+  useEffect(() => {
+    writeProfile(profile);
+  }, [profile]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -970,14 +1051,27 @@ export default function FocusOS() {
           setTimerRunning(false);
           playBeep();
           syncLiveStop();
-          setToast(tr(lang, '집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.'));
+          setProfile((prevProfile) => {
+            const today = getTodayStamp();
+            const base = prevProfile.lastActiveDate === today
+              ? prevProfile
+              : { ...prevProfile, todayFocusSessions: 0, lastActiveDate: today };
+            return {
+              ...base,
+              totalFocusSessions: (base.totalFocusSessions || 0) + 1,
+              todayFocusSessions: (base.todayFocusSessions || 0) + 1,
+              points: (base.points || 0) + 10,
+              lastActiveDate: today,
+            };
+          });
+          setToast(`${tr(lang, '집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.')} +10P`);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [timerRunning]);
+  }, [timerRunning, lang]);
 
   useEffect(() => {
     if (!toast) return;
@@ -997,6 +1091,52 @@ export default function FocusOS() {
     const id = window.setTimeout(() => setShowCelebrate(false), 1400);
     return () => window.clearTimeout(id);
   }, [showCelebrate]);
+
+
+  useEffect(() => {
+    if (!joinedLiveSession) {
+      joinedLiveExpiredRef.current = false;
+      return;
+    }
+
+    const remaining = getRemainingSeconds(joinedLiveSession);
+    if (remaining > 0) {
+      joinedLiveExpiredRef.current = false;
+      return;
+    }
+
+    if (joinedLiveExpiredRef.current) return;
+    joinedLiveExpiredRef.current = true;
+
+    setProfile((prevProfile) => {
+      const today = getTodayStamp();
+      const base = prevProfile.lastActiveDate === today
+        ? prevProfile
+        : { ...prevProfile, todayFocusSessions: 0, lastActiveDate: today };
+      return {
+        ...base,
+        totalFocusSessions: (base.totalFocusSessions || 0) + 1,
+        todayFocusSessions: (base.todayFocusSessions || 0) + 1,
+        points: (base.points || 0) + 10,
+        lastActiveDate: today,
+      };
+    });
+
+    const completionComment = {
+      id: `comment-complete-${Date.now()}`,
+      anonymous_name: 'SYSTEM',
+      message: `${nickname || anonymousName || 'Focuser'}님이 집중을 완료했습니다 (+10P)`,
+      created_at: new Date().toISOString(),
+      type: 'system',
+    };
+
+    setLiveComments((prev) => {
+      const next = [completionComment, ...prev].slice(0, 40);
+      writeLocalLiveComments(next);
+      return next;
+    });
+    setToast('집중 완료 🎉 +10P');
+  }, [joinedLiveSession, nickname, anonymousName, currentTime]);
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks]);
   const todayTasks = sortedTasks.filter((task) => task.list === 'today' && task.status !== '완료');
@@ -1042,8 +1182,8 @@ export default function FocusOS() {
           ? crypto.randomUUID()
           : `live-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       user_id: session?.user?.id || null,
-      anonymous_name: anonymousName || getAnonymousName(),
-      task_title: lang === 'en' ? 'Focus session' : '집중 세션',
+      anonymous_name: nickname || anonymousName || getNickname(),
+      task_title: lang === 'en' ? 'Live focus session' : '라이브 집중 세션',
       duration_seconds: 25 * 60,
       started_at: new Date().toISOString(),
       status: 'focusing',
@@ -1119,7 +1259,7 @@ export default function FocusOS() {
 
     const nextComment = {
       id: `comment-${Date.now()}`,
-      anonymous_name: anonymousName || getAnonymousName(),
+      anonymous_name: nickname || anonymousName || getNickname(),
       message: value,
       created_at: new Date().toISOString(),
     };
@@ -1455,6 +1595,7 @@ export default function FocusOS() {
     }
 
     setTasks([]);
+    setProfile({ points: 0, totalFocusSessions: 0, todayFocusSessions: 0, lastActiveDate: getTodayStamp() });
     setFocusMode(false);
     setFocusedTaskId(null);
     syncLiveStop();
@@ -1511,7 +1652,7 @@ export default function FocusOS() {
   }
 
   if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} />;
+    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} />;
   }
 
   if (!session) {
@@ -1547,6 +1688,7 @@ export default function FocusOS() {
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
             </div>
             <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"><span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>LIVE</button>
+            <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
             <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
             <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
           </div>
@@ -1564,6 +1706,7 @@ export default function FocusOS() {
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
+                <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
                 <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
                 <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
               </div>
@@ -1571,6 +1714,39 @@ export default function FocusOS() {
           </div>
         )}
       </div>
+
+      {profileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
+          <div className="w-full max-w-xl rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-violet-700">My Profile</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">프로필</h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">닉네임, 포인트, 집중 기록을 여기서 확인해요.</p>
+              </div>
+              <button onClick={() => setProfileOpen(false)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <SummaryTile label="오늘 집중" value={String(profile.todayFocusSessions || 0)} />
+              <SummaryTile label="총 집중" value={String(profile.totalFocusSessions || 0)} />
+              <SummaryTile label="포인트" value={`${profile.points || 0}P`} />
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
+              <label className="text-sm font-medium text-zinc-900">닉네임</label>
+              <input
+                value={nickname}
+                maxLength={24}
+                onChange={(e) => setNickname(e.target.value.replace(/\s+/g, ' ').trimStart())}
+                placeholder="닉네임을 입력해 주세요"
+                className="mt-3 w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-violet-300"
+              />
+              <p className="mt-2 text-xs text-zinc-500">라이브 참여, 채팅, 완료 메시지에 이 닉네임이 표시돼요.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {settingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
@@ -1718,28 +1894,29 @@ export default function FocusOS() {
 
         <section className={`mb-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] transition ${focusMode ? "hidden" : ""}`}>
           <Panel>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="max-w-md">
-                <p className="text-sm font-medium text-violet-700">Focus</p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight">{t("지금 한 가지에만 집중하기")}</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">{t("타이머 시작과 종료에 알림음이 들어가고, 진행 중 작업은 하나만 유지돼.")}</p>
-              </div>
-              <div className="rounded-[28px] bg-zinc-950 px-5 py-4 text-center text-white shadow-sm">
+            <div className="text-center">
+              <p className="text-sm font-medium text-violet-700">Focus Timer</p>
+              <h2 className="mt-1 text-2xl font-semibold tracking-tight">{t("포커스 타이머")}</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">개인용 뽀모도로 타이머예요. 할 일과 별개로 바로 집중할 때 사용해요.</p>
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <div className="w-full max-w-[420px] rounded-[32px] bg-zinc-950 px-6 py-8 text-center text-white shadow-sm">
                 <p className="text-sm text-zinc-400">{t("포커스 타이머")}</p>
-                <p className="mt-1 text-4xl font-semibold tracking-tight">{formatTimer(timerSeconds)}</p>
+                <p className="mt-3 text-6xl font-semibold tracking-tight md:text-7xl">{formatTimer(timerSeconds)}</p>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
               {FOCUS_PRESETS.map((minutes) => (
-                <button key={minutes} onClick={() => setFocusMinutes(minutes)} className={`rounded-full px-3.5 py-2.5 text-sm transition ${focusMinutes === minutes ? 'bg-violet-600 text-white shadow-sm' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>{lang === "en" ? `${minutes} min` : `${minutes}분`}</button>
+                <button key={minutes} onClick={() => { setFocusMinutes(minutes); setTimerSeconds(minutes * 60); }} className={`rounded-full px-4 py-2.5 text-sm transition ${focusMinutes === minutes ? 'bg-violet-600 text-white shadow-sm' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>{lang === "en" ? `${minutes} min` : `${minutes}분`}</button>
               ))}
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2.5">
-              <button onClick={toggleTimer} className="rounded-xl bg-black px-4 py-3 text-sm text-white transition hover:scale-[1.01]">{timerRunning ? t("일시정지") : t("타이머 시작")}</button>
-              <button onClick={resetTimer} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm transition hover:bg-zinc-50">{t("리셋")}</button>
-              <button onClick={quickStartFive} className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700 transition hover:bg-violet-100">{t("5분만 시작")}</button>
+            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <button onClick={toggleTimer} className="w-full rounded-2xl bg-black px-5 py-3.5 text-sm font-medium text-white transition hover:scale-[1.01] sm:w-auto">{timerRunning ? t("일시정지") : t("타이머 시작")}</button>
+              <button onClick={resetTimer} className="w-full rounded-2xl border border-zinc-200 px-5 py-3.5 text-sm transition hover:bg-zinc-50 sm:w-auto">{t("리셋")}</button>
+              <button onClick={quickStartFive} className="w-full rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3.5 text-sm text-violet-700 transition hover:bg-violet-100 sm:w-auto">{t("5분만 시작")}</button>
             </div>
           </Panel>
 
@@ -1938,6 +2115,7 @@ function FocusLivePage({
   isJoined = false,
   joinedSession = null,
   comments = [],
+  currentNickname = '',
   onJoin = () => {},
   onLeave = () => {},
   onSendComment = () => {},
@@ -2084,12 +2262,30 @@ function FocusLivePage({
             <div className="flex h-[520px] flex-col">
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 <div className="space-y-3">
-                  {comments.length > 0 ? comments.map((comment) => (
-                    <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="max-w-[92%] rounded-2xl bg-zinc-50 px-4 py-3">
-                      <p className="text-sm font-semibold text-zinc-900">{comment.anonymous_name || 'Focuser'}</p>
-                      <p className="mt-1 text-sm leading-6 text-zinc-600">{comment.message}</p>
-                    </div>
-                  )) : (
+                  {comments.length > 0 ? comments.map((comment) => {
+                    const name = comment.anonymous_name || 'Focuser';
+                    const isSystem = comment.type === 'system' || name === 'SYSTEM';
+                    const isMine = !isSystem && currentNickname && name === currentNickname;
+
+                    if (isSystem) {
+                      return (
+                        <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="py-1 text-center">
+                          <span className="inline-flex rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600">
+                            {comment.message}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[92%] rounded-2xl px-4 py-3 ${isMine ? 'bg-violet-600 text-white' : 'bg-zinc-50'}`}>
+                          <p className={`text-sm font-semibold ${isMine ? 'text-white' : 'text-zinc-900'}`}>{name}</p>
+                          <p className={`mt-1 text-sm leading-6 ${isMine ? 'text-white/90' : 'text-zinc-600'}`}>{comment.message}</p>
+                        </div>
+                      </div>
+                    );
+                  }) : (
                     <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
                       {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
                     </div>
