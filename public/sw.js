@@ -1,11 +1,16 @@
-self.addEventListener('install', () => {
+// Safety-first service worker: clear old caches and do not cache requests.
+self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys()
+      .then((names) => Promise.all(names.map((name) => caches.delete(name))))
+      .then(() => self.clients.claim())
+  );
 });
 
-// Intentionally no caching for now.
-// This avoids stale assets causing blank screens during rapid iteration.
-self.addEventListener('fetch', () => {});
+self.addEventListener('fetch', () => {
+  // Intentionally no caching.
+});
