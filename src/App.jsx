@@ -1176,6 +1176,11 @@ export default function FocusOS() {
 
 
   const joinLiveFocus = async () => {
+    const selectedLiveTaskTitle =
+      (focusTask && (lang === 'en' ? tr('en', focusTask.title) : focusTask.title)) ||
+      (activeTask && (lang === 'en' ? tr('en', activeTask.title) : activeTask.title)) ||
+      (lang === 'en' ? 'Live focus session' : '라이브 집중 세션');
+
     const nextSession = {
       id:
         typeof crypto !== 'undefined' && crypto.randomUUID
@@ -1183,8 +1188,8 @@ export default function FocusOS() {
           : `live-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       user_id: session?.user?.id || null,
       anonymous_name: nickname || anonymousName || getNickname(),
-      task_title: lang === 'en' ? 'Live focus session' : '라이브 집중 세션',
-      duration_seconds: 25 * 60,
+      task_title: selectedLiveTaskTitle,
+      duration_seconds: timerSeconds > 0 ? timerSeconds : 25 * 60,
       started_at: new Date().toISOString(),
       status: 'focusing',
     };
