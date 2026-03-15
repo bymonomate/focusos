@@ -6,6 +6,6 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-self.addEventListener('fetch', () => {
-  // network-first placeholder service worker
-});
+// Intentionally no caching for now.
+// This avoids stale assets causing blank screens during rapid iteration.
+self.addEventListener('fetch', () => {});
