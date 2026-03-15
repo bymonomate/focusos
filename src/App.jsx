@@ -1639,6 +1639,25 @@ export default function FocusOS() {
     rewardMessage,
   };
 
+  const activeLiveSessions = (() => {
+    const filtered = liveSessions.filter((session) => getRemainingSeconds(session) > 0);
+    const joinedActive = joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0;
+
+    if (
+      joinedActive &&
+      !filtered.some(
+        (session) =>
+          session.id === joinedLiveSession.id ||
+          session.user_id === joinedLiveSession.user_id ||
+          session.anonymous_name === joinedLiveSession.anonymous_name
+      )
+    ) {
+      return [joinedLiveSession, ...filtered];
+    }
+
+    return filtered;
+  })();
+
   if (!tailwindReady || !authReady) {
     return (
       <div
@@ -1851,7 +1870,7 @@ export default function FocusOS() {
                   LIVE
                 </div>
                 <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
-                <p className="mt-1 text-sm text-zinc-600">🟢 {liveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
+                <p className="mt-1 text-sm text-zinc-600">🟢 {activeLiveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
               </div>
               <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
                 {t('라이브 참여하기')}
