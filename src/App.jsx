@@ -41,6 +41,12 @@ const STATUS_BADGE = {
   완료: 'bg-blue-50 text-blue-700 border border-blue-100',
 };
 
+const REMOVED_LOGIN_COPY = new Set([
+  '',
+  '가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.',
+  '로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.',
+]);
+
 const EN_TEXT = {
   '지금 바로 시작하기': 'Start Now',
   '로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.': 'Your tasks, focus sessions, and daily flow are saved to this account.',
@@ -218,6 +224,7 @@ const EN_TEXT = {
 };
 
 function tr(lang, value) {
+  if (REMOVED_LOGIN_COPY.has(value)) return '';
   return lang === 'en' && EN_TEXT[value] ? EN_TEXT[value] : value;
 }
 
@@ -1186,14 +1193,16 @@ export default function FocusOS() {
     });
 
     if (supabaseClient) {
-      supabaseClient.from('focus_live_comments').insert({
-        anonymous_name: 'SYSTEM',
-        message: completionComment.message,
-        user_id: session?.user?.id || null,
-        type: 'system',
-      }).catch((error) => {
+      try {
+        await supabaseClient.from('focus_live_comments').insert({
+          anonymous_name: 'SYSTEM',
+          message: completionComment.message,
+          user_id: session?.user?.id || null,
+          type: 'system',
+        });
+      } catch (error) {
         console.error(error);
-      });
+      }
     }
 
     setToast('집중 완료 🎉 +10P');
@@ -1836,7 +1845,6 @@ export default function FocusOS() {
           >
             ← FocusOS
           </button>
-          <div className="text-sm text-zinc-500">{t('로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.')}</div>
         </div>
         <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} t={t} />
       </div>
