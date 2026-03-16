@@ -348,7 +348,7 @@ function getStorage() {
 function getPageMode() {
   if (typeof window === 'undefined') return 'home';
   const params = new URLSearchParams(window.location.search || '');
-  return params.get('page') === 'live' ? 'live' : 'home';
+  return params.get('page') === 'home' ? 'home' : 'live';
 }
 
 function getAnonymousName() {
@@ -433,6 +433,14 @@ function writeProfile(profile) {
   const storage = getStorage();
   if (!storage) return;
   storage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
+}
+
+
+function getLevelFromPoints(points = 0) {
+  if (points >= 200) return 4;
+  if (points >= 100) return 3;
+  if (points >= 40) return 2;
+  return 1;
 }
 
 function readLocalLiveComments() {
@@ -1214,6 +1222,28 @@ export default function FocusOS() {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const openPlannerFromLive = () => {
+    goToHome();
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        const target = document.querySelector('[data-planner-anchor]');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 80);
+    }
+  };
+
+  const liveRoomLevel = getLevelFromPoints(profile?.points || 0);
+
+  const handleCreateLiveRoom = () => {
+    if (liveRoomLevel < 2) {
+      showToastMessage(lang === 'en' ? 'Live room creation unlocks at level 2.' : '라이브 집중방 만들기는 레벨 2부터 열려요.');
+      return;
+    }
+    showToastMessage(lang === 'en' ? 'Create room is coming soon.' : '라이브 집중방 만들기는 다음 업데이트에서 열려요.');
+  };
+
   const requestWakeLock = async () => {
     try {
       if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
@@ -1800,7 +1830,59 @@ export default function FocusOS() {
   const t = (value) => tr(lang, value);
 
   if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />;
+    return (
+      <>
+        <FocusLivePage
+          sessions={liveSessions}
+          lang={lang}
+          isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)}
+          joinedSession={joinedLiveSession}
+          comments={liveComments}
+          currentNickname={nickname || anonymousName}
+          onJoin={joinLiveFocus}
+          onLeave={leaveLiveFocus}
+          onSendComment={sendLiveComment}
+          onBack={goToHome}
+          t={t}
+          getRemainingSeconds={getRemainingSeconds}
+          formatRemainingLabel={formatRemainingLabel}
+        />
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:px-6">
+          <div className="pointer-events-auto mx-auto max-w-5xl rounded-[28px] border border-white/10 bg-zinc-950/88 p-4 text-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] backdrop-blur-xl md:flex md:items-center md:justify-between md:gap-6 md:p-5">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-300">
+                {lang === 'en' ? 'Next step' : '다음 행동'}
+              </p>
+              <p className="mt-2 text-base font-semibold tracking-tight md:text-lg">
+                {lang === 'en' ? 'Start now, or organize today first.' : '바로 시작하거나, 오늘 할 일을 먼저 정리해보세요.'}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-zinc-300">
+                {lang === 'en'
+                  ? 'FocusOS keeps Today within five tasks so you can start and finish.'
+                  : 'FocusOS는 Today를 5개 이내로 유지해서 시작하고 끝내는 흐름을 만듭니다.'}
+              </p>
+            </div>
+            <div className="mt-4 flex flex-col gap-2 md:mt-0 md:min-w-[320px]">
+              <button
+                onClick={openPlannerFromLive}
+                className="inline-flex items-center justify-center rounded-2xl bg-violet-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-400"
+              >
+                {lang === 'en' ? 'Set today priorities' : '우선순위 할 일 정하기'}
+              </button>
+              <button
+                onClick={handleCreateLiveRoom}
+                className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
+              >
+                {lang === 'en' ? 'Create LIVE room' : '라이브 집중방 만들기'}
+                <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-zinc-200">
+                  {liveRoomLevel >= 2 ? (lang === 'en' ? 'Soon' : '곧 열림') : (lang === 'en' ? 'Lv.2' : 'Lv.2')}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
 
 
