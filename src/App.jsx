@@ -346,9 +346,9 @@ function getStorage() {
 
 
 function getPageMode() {
-  if (typeof window === 'undefined') return 'live';
+  if (typeof window === 'undefined') return 'home';
   const params = new URLSearchParams(window.location.search || '');
-  return params.get('page') === 'home' ? 'home' : 'live';
+  return params.get('page') === 'live' ? 'live' : 'home';
 }
 
 function getAnonymousName() {
@@ -686,6 +686,7 @@ export default function FocusOS() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
+  const [authScreenOpen, setAuthScreenOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
@@ -1804,6 +1805,21 @@ export default function FocusOS() {
 
   const t = (value) => tr(lang, value);
 
+  useEffect(() => {
+    if (session) setAuthScreenOpen(false);
+  }, [session]);
+
+  const openAuth = () => {
+    setMenuOpen(false);
+    setProfileOpen(false);
+    setSettingsOpen(false);
+    setAuthScreenOpen(true);
+  };
+
+  if (authScreenOpen) {
+    return <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} t={t} onClose={() => setAuthScreenOpen(false)} />;
+  }
+
   if (isLivePage) {
     return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />;
   }
@@ -1841,7 +1857,9 @@ export default function FocusOS() {
               <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
               <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
               <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
-            </>) : null}
+            </>) : (
+              <button onClick={openAuth} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그인')}</button>
+            )}
           </div>
         </div>
 
@@ -1857,9 +1875,16 @@ export default function FocusOS() {
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
-                <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
-                <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
-                <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
+                <button onClick={() => { goToPlanner(); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
+                {session ? (
+                  <>
+                    <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
+                    <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
+                    <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
+                  </>
+                ) : (
+                  <button onClick={openAuth} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그인')}</button>
+                )}
               </div>
             </div>
           </div>
