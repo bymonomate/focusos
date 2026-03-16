@@ -1852,9 +1852,12 @@ export default function FocusOS() {
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
-                <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
-                <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
-                <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
+                <button onClick={() => { goToPlanner(); setMenuOpen(false); }} className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-700 transition hover:bg-violet-100">{lang === 'en' ? 'Open planner' : '우선순위 정리하기'}</button>
+                {session ? (<>
+                  <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
+                  <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
+                  <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
+                </>) : null}
               </div>
             </div>
           </div>
@@ -1979,88 +1982,72 @@ export default function FocusOS() {
         </section>
       )}
 
-      <section className="mx-auto max-w-6xl px-4 pt-4 md:hidden">
+      <section className="mx-auto max-w-6xl px-4 pt-4 md:px-6 md:pt-6">
         {!focusMode && !isLivePage && (
-          <button
-            onClick={goToLive}
-            className="w-full rounded-[28px] border border-violet-300 bg-[linear-gradient(135deg,#f5f1ff_0%,#ede9fe_100%)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
-                  LIVE
+          <div className="grid gap-3 md:grid-cols-[1.5fr_1fr] md:gap-4">
+            <button
+              onClick={goToLive}
+              className="group w-full rounded-[32px] border border-violet-300 bg-[linear-gradient(135deg,#f5f1ff_0%,#ede9fe_100%)] p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:min-h-[248px] md:px-8 md:py-8"
+            >
+              <div className="flex h-full flex-col justify-between gap-6">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100 md:px-4 md:py-2 md:text-xs">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600 md:h-3 md:w-3"></span>
+                    LIVE
+                  </div>
+                  <h2 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-950 md:mt-6 md:text-[30px]">
+                    {lang === 'en' ? 'Start with live focus now' : '지금 바로 라이브 집중 시작하기'}
+                  </h2>
+                  <p className="mt-3 text-sm leading-6 text-zinc-600 md:max-w-xl md:text-base">
+                    {lang === 'en'
+                      ? 'Jump in immediately and focus with everyone else. You can sort tasks first or join live right away.'
+                      : '생각이 많아도 괜찮아요. 지금 바로 같이 시작하거나, 아래에서 오늘 할 일을 먼저 정리한 뒤 들어갈 수 있어요.'}
+                  </p>
                 </div>
-                <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
-                <p className="mt-1 text-sm text-zinc-600">🟢 {activeLiveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
-              </div>
-              <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-                {t('라이브 참여하기')}
-              </div>
-            </div>
-          </button>
-        )}
-      </section>
 
-      <section className="mx-auto max-w-6xl px-4 pt-3 md:hidden">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToPlanner}
-            className="w-full rounded-[28px] border border-zinc-200 bg-white px-5 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
-            <h3 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Organize today first' : '오늘 할 일 먼저 정리하기'}</h3>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'If live focus feels too fast, sort your top priorities first.' : '라이브 집중이 바로 어렵다면, 먼저 우선순위를 정리하고 시작해보세요.'}</p>
-            <div className="mt-4 inline-flex items-center rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
-              {lang === 'en' ? 'Go to planner' : '우선순위 정리하러 가기'}
-            </div>
-          </button>
-        )}
-      </section>
-
-      <section className="mx-auto hidden max-w-6xl px-6 pt-6 md:block">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToLive}
-            className="group w-full rounded-[36px] border border-violet-200 bg-[linear-gradient(135deg,rgba(245,241,255,0.96)_0%,rgba(237,233,254,0.92)_100%)] px-8 py-8 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="flex items-center justify-between gap-8 xl:px-2">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
-                  <span className="inline-block h-3 w-3 rounded-full bg-violet-600"></span>
-                  LIVE
-                </div>
-                <h2 className="mt-6 text-2xl font-semibold tracking-tight text-zinc-950 xl:text-[30px]">{t('지금 함께 집중 중입니다')}</h2>
-                <p className="mt-3 text-sm font-medium text-zinc-600 xl:text-base">🟢 {activeLiveSessions.length} {lang === 'en' ? 'people focusing now' : '명 집중 중'}</p>
-              </div>
-
-              <div className="shrink-0">
-                <div className="rounded-full bg-violet-600 px-8 py-4 text-lg font-semibold text-white shadow-[0_16px_40px_rgba(124,58,237,0.22)] transition group-hover:bg-violet-500 xl:px-10 xl:py-4 xl:text-xl">
-                  {t('라이브 참여하기')}
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-700">🟢 {activeLiveSessions.length} {lang === 'en' ? 'people focusing now' : '명 집중 중'}</p>
+                    <p className="mt-1 text-xs text-zinc-500 md:text-sm">
+                      {lang === 'en' ? 'Live room for starting without overthinking.' : '고민 길어질 때 바로 들어갈 수 있는 라이브 집중방'}
+                    </p>
+                  </div>
+                  <div className="shrink-0 rounded-full bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(124,58,237,0.22)] transition group-hover:bg-violet-500 md:px-8 md:py-4 md:text-lg">
+                    {t('라이브 참여하기')}
+                  </div>
                 </div>
               </div>
-            </div>
-          </button>
-        )}
-      </section>
+            </button>
 
-      <section className="mx-auto hidden max-w-6xl px-6 pt-4 md:block">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToPlanner}
-            className="w-full rounded-[32px] border border-zinc-200 bg-white px-8 py-7 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="flex items-center justify-between gap-8">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
-                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Not sure what to do first?' : '무엇부터 해야 할지 막막한가요?'} </h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Sort your top priorities, then come back to live focus.' : '오늘 할 일을 먼저 정리한 뒤 라이브 집중으로 돌아오세요.'}</p>
+            <button
+              onClick={goToPlanner}
+              className="w-full rounded-[32px] border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:min-h-[248px] md:px-7 md:py-7"
+            >
+              <div className="flex h-full flex-col justify-between gap-5">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
+                  <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">
+                    {lang === 'en' ? 'Organize your priorities first' : '오늘 할 일 먼저 정리하기'}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-zinc-600">
+                    {lang === 'en'
+                      ? 'If you are not sure what to start, choose your top 3 first and then move into live focus.'
+                      : '무엇부터 해야 할지 막막하면 가장 중요한 일 3개만 먼저 정리하고 라이브 집중으로 넘어가세요.'}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-700 ring-1 ring-violet-100">{lang === 'en' ? 'Top 3 today' : '오늘의 우선순위 3개'}</span>
+                    <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">{lang === 'en' ? 'Before live focus' : '집중 전에 정리'}</span>
+                  </div>
+                  <div className="inline-flex items-center rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
+                    {lang === 'en' ? 'Open planner' : '우선순위 정리하기'}
+                  </div>
+                </div>
               </div>
-              <div className="shrink-0 rounded-full bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
-                {lang === 'en' ? 'Open planner' : '우선순위 정리하기'}
-              </div>
-            </div>
-          </button>
+            </button>
+          </div>
         )}
       </section>
 
@@ -2071,6 +2058,7 @@ export default function FocusOS() {
               <p className="text-sm text-zinc-400">{t('오늘의 리포트')}</p>
               <h1 className="mt-2 text-4xl font-bold tracking-tight md:text-5xl">{currentTime}</h1>
               <p className="mt-2 text-zinc-400">{currentDate}</p>
+              {!focusMode && !isLivePage ? (<p className="mt-4 max-w-xl text-sm leading-6 text-zinc-400">{lang === 'en' ? 'You can jump straight into LIVE or sort today's priorities first.' : '바로 라이브 집중에 들어가거나, 오늘의 우선순위를 먼저 정리한 뒤 시작할 수 있어요.'}</p>) : null}
               <div className="mt-5 flex flex-wrap gap-2.5">
                 <button onClick={startNow} className="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 transition hover:scale-[1.01]">{t('지금 시작하기')}</button>
                 <button onClick={quickStartFive} className="rounded-2xl bg-violet-500 px-4 py-2.5 text-sm font-medium text-white transition hover:scale-[1.01]">{t('5분만 시작')}</button>
