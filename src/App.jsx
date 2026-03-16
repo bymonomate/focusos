@@ -2049,7 +2049,6 @@ export default function FocusOS() {
             focusMode ? null : (
               <div className="flex w-full flex-col items-center gap-2 md:w-auto md:flex-row md:items-center">
                 <button onClick={autoPrioritize} className="w-full max-w-[280px] rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 md:w-auto md:max-w-none">{t('우선순위 자동정리')}</button>
-                <button onClick={() => addTask('today')} className="inline-flex w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 md:w-auto md:max-w-none"><InlineIcon name="add" className="h-4 w-4" />{t('오늘 할 일 추가')}</button>
               </div>
             )
           }
@@ -2083,6 +2082,15 @@ export default function FocusOS() {
                 lang={lang}
               />
             )) : <EmptyBox text={focusMode ? t("현재 진행 중인 작업이 없어요. 오늘 할 일에서 시작 버튼을 누르거나 5분만 시작으로 첫 작업을 시작해 보세요.") : t("오늘 할 일이 비어 있어요. 가장 먼저 시작할 한 가지만 넣어보세요.")} />}
+
+            {!focusMode && (
+              <div className="pt-2">
+                <button onClick={() => addTask('today')} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-zinc-300 px-4 py-3 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50">
+                  <InlineIcon name="add" className="h-4 w-4" />
+                  {t('오늘 할 일 추가')}
+                </button>
+              </div>
+            )}
           </div>
         </SectionCard></div>
 
