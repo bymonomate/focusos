@@ -11,6 +11,8 @@ export default function FocusLivePage({
   onLeave = () => {},
   onSendComment = () => {},
   onBack = () => {},
+  onOpenPlanner = () => {},
+  onGoLogin = () => {},
   t = (value) => value,
   getRemainingSeconds = (session) => 0,
   formatRemainingLabel = (seconds) => `${seconds}`,
@@ -51,7 +53,7 @@ export default function FocusLivePage({
               <p className="mt-2 text-sm text-zinc-400">Start small, finish one thing.</p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:min-w-[280px]">
               {!joinedActive ? (
                 <button
                   onClick={onJoin}
@@ -68,7 +70,45 @@ export default function FocusLivePage({
                   {t('라이브 나가기')}
                 </button>
               )}
+
+              <button
+                onClick={onOpenPlanner}
+                className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                {lang === 'en' ? 'Organize priorities first' : '우선순위 정리하기'}
+              </button>
+
+              <button
+                onClick={onGoLogin}
+                className="rounded-2xl border border-white/10 bg-transparent px-5 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/5"
+              >
+                {lang === 'en' ? 'Save records with login' : '로그인하고 기록 저장하기'}
+              </button>
             </div>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <button
+            onClick={onOpenPlanner}
+            className="group rounded-[28px] border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <p className="text-sm font-semibold text-violet-700">Planner</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">{lang === 'en' ? 'Not sure what to do first?' : '무엇부터 해야 할지 막막한가요?'}</h2>
+            <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Go to the priority board, sort today's tasks, and come back to LIVE.' : '우선순위 할 일 정리 화면에서 오늘 할 일을 정리한 뒤 다시 LIVE로 돌아올 수 있어요.'}</p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
+              {lang === 'en' ? 'Open planner' : '할 일 정리하러 가기'}
+            </div>
+          </button>
+
+          <div className="rounded-[28px] border border-zinc-200 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-violet-700">Flow</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">{lang === 'en' ? 'FocusOS is not only LIVE' : 'FocusOS는 LIVE만 있는 앱이 아니에요'}</h2>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-zinc-600">
+              <li>1. {lang === 'en' ? 'Join LIVE right away when you know what to do.' : '할 일이 정해져 있으면 바로 LIVE 집중 참여'}</li>
+              <li>2. {lang === 'en' ? 'Open the planner first when your mind feels messy.' : '머리가 복잡하면 우선순위 정리부터 시작'}</li>
+              <li>3. {lang === 'en' ? 'Log in later only if you want to save points and records.' : '포인트와 기록 저장은 나중에 로그인'} </li>
+            </ul>
           </div>
         </section>
 
