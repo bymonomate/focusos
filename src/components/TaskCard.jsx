@@ -1,6 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { InlineIcon } from './icons';
 
+function InfoBox({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-3">
+      <p className="text-xs text-zinc-500">{label}</p>
+      <p className="mt-1 text-sm font-medium text-zinc-800">{value}</p>
+    </div>
+  );
+}
+
+
 function IconButton({ title, icon, onClick, tone = 'default', disabled = false, t = (value) => value }) {
   const toneClass =
     tone === 'primary'
