@@ -345,7 +345,7 @@ function getStorage() {
 function getPageMode() {
   if (typeof window === 'undefined') return 'home';
   const params = new URLSearchParams(window.location.search || '');
-  return params.get('page') === 'home' ? 'home' : 'live';
+  return params.get('page') === 'live' ? 'live' : 'home';
 }
 
 function getAnonymousName() {
@@ -683,7 +683,6 @@ export default function FocusOS() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
-  const [authScreenOpen, setAuthScreenOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [lang, setLang] = useState(defaultLang);
   const [focusMode, setFocusMode] = useState(false);
@@ -809,17 +808,6 @@ export default function FocusOS() {
     document.head.appendChild(script);
   }, []);
 
-
-  useEffect(() => {
-    if (session) setAuthScreenOpen(false);
-  }, [session]);
-
-  const openAuth = () => {
-    setMenuOpen(false);
-    setProfileOpen(false);
-    setSettingsOpen(false);
-    setAuthScreenOpen(true);
-  };
 
   const isLivePage = pageMode === 'live';
 
@@ -1183,18 +1171,14 @@ export default function FocusOS() {
     });
 
     if (supabaseClient) {
-      void (async () => {
-        try {
-          await supabaseClient.from('focus_live_comments').insert({
-            anonymous_name: 'SYSTEM',
-            message: completionComment.message,
-            user_id: session?.user?.id || null,
-            type: 'system',
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      })();
+      supabaseClient.from('focus_live_comments').insert({
+        anonymous_name: 'SYSTEM',
+        message: completionComment.message,
+        user_id: session?.user?.id || null,
+        type: 'system',
+      }).catch((error) => {
+        console.error(error);
+      });
     }
 
     setToast('집중 완료 🎉 +10P');
@@ -1222,24 +1206,9 @@ export default function FocusOS() {
 
   const goToPlanner = () => {
     if (typeof window === 'undefined') return;
-    const scrollToPlanner = () => {
-      const target = document.querySelector('[data-planner-anchor]');
-      if (!target) return;
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    if (pageMode === 'live') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('page', 'home');
-      window.history.pushState({}, '', url.toString());
-      setPageMode('home');
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(scrollToPlanner);
-      });
-      return;
-    }
-
-    scrollToPlanner();
+    const target = document.querySelector('[data-planner-anchor]');
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const requestWakeLock = async () => {
@@ -1827,175 +1796,8 @@ export default function FocusOS() {
 
   const t = (value) => tr(lang, value);
 
-  if (authScreenOpen && !session) {
-    return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
-          <button
-            onClick={() => setAuthScreenOpen(false)}
-            className="rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
-          >
-            ← FocusOS
-          </button>
-        </div>
-        <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} t={t} />
-      </div>
-    );
-  }
-
   if (isLivePage) {
-    return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] text-zinc-900 transition-colors">
-        <div className="sticky top-0 z-30 border-b border-white/70 bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-violet-600 md:text-[11px] md:uppercase md:tracking-[0.24em]">FocusOS</p>
-              <p className="hidden text-sm text-zinc-500 md:block">{t('작게 시작하고, 한 번에 하나씩 끝내기')}</p>
-            </div>
-
-            <button
-              onClick={() => setMenuOpen((prev) => !prev)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:bg-zinc-50 md:hidden"
-              aria-label="Open menu"
-            >
-              ☰
-            </button>
-
-            <div className="hidden items-center gap-2 md:flex">
-              <div className="mr-1 flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
-                <button onClick={() => setLang('ko')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>KO</button>
-                <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
-              </div>
-              <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"><span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>LIVE</button>
-              <button onClick={goToPlanner} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
-              {session ? (<>
-                <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
-                <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
-                <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
-              </>) : (
-                <button onClick={openAuth} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그인')}</button>
-              )}
-            </div>
-          </div>
-
-          {menuOpen && (
-            <div className="border-t border-zinc-200 bg-white px-4 py-3 md:hidden">
-              <div className="space-y-3">
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Language</p>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => { setLang('ko'); setMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
-                    <button onClick={() => { setLang('en'); setMenuOpen(false); }} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
-                  <button onClick={() => { goToPlanner(); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
-                  {session ? (<>
-                    <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
-                    <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
-                    <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
-                  </>) : (
-                    <button onClick={openAuth} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그인')}</button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {profileOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
-            <div className="w-full max-w-xl rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-violet-700">My Profile</p>
-                  <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">프로필</h2>
-                  <p className="mt-2 text-sm leading-6 text-zinc-500">닉네임, 포인트, 집중 기록을 여기서 확인해요.</p>
-                </div>
-                <button onClick={() => setProfileOpen(false)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <SummaryTile label="오늘 집중" value={String(profile.todayFocusSessions || 0)} />
-                <SummaryTile label="총 집중" value={String(profile.totalFocusSessions || 0)} />
-                <SummaryTile label="포인트" value={`${profile.points || 0}P`} />
-              </div>
-
-              <div className="mt-5 rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                <label className="text-sm font-medium text-zinc-900">닉네임</label>
-                <input
-                  value={nickname}
-                  maxLength={24}
-                  onChange={(e) => setNickname(e.target.value.replace(/\s+/g, ' ').trimStart())}
-                  placeholder="닉네임을 입력해 주세요"
-                  className="mt-3 w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-violet-300"
-                />
-                <p className="mt-2 text-xs text-zinc-500">라이브 참여, 채팅, 완료 메시지에 이 닉네임이 표시돼요.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {settingsOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/30 px-4">
-            <div className="w-full max-w-xl rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-violet-700">Settings</p>
-                  <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{t('계정 및 앱 설정')}</h2>
-                  <p className="mt-2 text-sm leading-6 text-zinc-500">{t('로그아웃, 데이터 초기화, 계정 삭제를 여기서 관리할 수 있어요.')}</p>
-                </div>
-                <button onClick={() => { setSettingsOpen(false); setSettingsMessage(''); }} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-sm font-medium text-zinc-900">{t('로그아웃')}</p>
-                  <p className="mt-1 text-sm text-zinc-500">{t('현재 기기에서 로그인 상태만 해제해요.')}</p>
-                  <button onClick={signOut} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">{t('로그아웃')}</button>
-                </div>
-
-                <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-sm font-medium text-zinc-900">{t('앱 데이터 초기화')}</p>
-                  <p className="mt-1 text-sm text-zinc-500">{t('오늘 할 일, 나중에 할 일, 진행 기록을 모두 비워요.')}</p>
-                  <button onClick={resetAllTasks} className="mt-4 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-50">{t('데이터 초기화')}</button>
-                </div>
-
-                <div className="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-                  <p className="text-sm font-medium text-zinc-900">{t('계정 삭제')}</p>
-                  <p className="mt-1 text-sm text-zinc-500">{t('관리자 확인 후 삭제돼요.')}</p>
-                  <button onClick={requestAccountDelete} className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">{t('삭제 요청')}</button>
-                </div>
-              </div>
-
-              {settingsMessage && (
-                <div className="mt-5 rounded-[22px] bg-violet-50 px-4 py-3 text-sm leading-6 text-violet-700 ring-1 ring-violet-100">
-                  {settingsMessage}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />
-
-        <section className="mx-auto max-w-6xl px-4 pb-8 md:px-6 md:pb-10">
-          <div className="rounded-[32px] border border-zinc-200 bg-white px-6 py-6 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-violet-700">Planner</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Sort today before you start' : '우선순위 할 일 정하기'}</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Keep Today under five tasks so you can start and finish.' : 'FocusOS는 Today를 5개 이내로 유지해서 시작하고 끝내는 흐름을 만듭니다.'}</p>
-              </div>
-              <div className="shrink-0">
-                <button onClick={goToPlanner} className="rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500">{lang === 'en' ? 'Open planner' : '우선순위 할 일 정하기'}</button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
+    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />;
   }
 
 
@@ -2031,9 +1833,7 @@ export default function FocusOS() {
               <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
               <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
               <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
-            </>) : (
-              <button onClick={openAuth} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그인')}</button>
-            )}
+            </>) : null}
           </div>
         </div>
 
@@ -2049,14 +1849,9 @@ export default function FocusOS() {
               </div>
               <div className="flex flex-col gap-2">
                 <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
-                <button onClick={() => { goToPlanner(); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
-                {session ? (<>
-                  <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
-                  <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
-                  <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
-                </>) : (
-                  <button onClick={openAuth} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그인')}</button>
-                )}
+                <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
+                <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
+                <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
               </div>
             </div>
           </div>
