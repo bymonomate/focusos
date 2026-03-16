@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AuthScreen from './components/AuthScreen';
 import FocusLivePage from './components/FocusLivePage';
 import TaskCard from './components/TaskCard';
@@ -346,9 +346,9 @@ function getStorage() {
 
 
 function getPageMode() {
-  if (typeof window === 'undefined') return 'live';
+  if (typeof window === 'undefined') return 'home';
   const params = new URLSearchParams(window.location.search || '');
-  return params.get('page') === 'home' ? 'home' : 'live';
+  return params.get('page') === 'live' ? 'live' : 'home';
 }
 
 function getAnonymousName() {
@@ -657,6 +657,7 @@ export default function FocusOS() {
   const newestTaskRef = useRef(null);
   const hydratingFromDbRef = useRef(false);
   const joinedLiveExpiredRef = useRef(false);
+  const wakeLockRef = useRef(null);
 
   const [supabaseClient, setSupabaseClient] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -679,6 +680,7 @@ export default function FocusOS() {
   const [toast, setToast] = useState('');
   const [expandedReport, setExpandedReport] = useState(false);
   const [dailySummaryOpen, setDailySummaryOpen] = useState(false);
+  const [showTimerDone, setShowTimerDone] = useState(false);
 
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -696,8 +698,6 @@ export default function FocusOS() {
   const [liveSessions, setLiveSessions] = useState([]);
   const [liveComments, setLiveComments] = useState([]);
   const [joinedLiveSession, setJoinedLiveSession] = useState(readLocalJoinedSession());
-  const [wakeLockStatus, setWakeLockStatus] = useState('idle');
-  const [showTimerCompleteModal, setShowTimerCompleteModal] = useState(false);
 
   const [tailwindReady, setTailwindReady] = useState(
     typeof window !== 'undefined' && !!window.tailwind
@@ -766,50 +766,6 @@ export default function FocusOS() {
   useEffect(() => {
     writeProfile(profile);
   }, [profile]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !timerRunning) return;
-
-    let activeLock = null;
-    let released = false;
-
-    const requestWakeLock = async () => {
-      try {
-        if ('wakeLock' in navigator && navigator.wakeLock?.request) {
-          activeLock = await navigator.wakeLock.request('screen');
-          setWakeLockStatus('active');
-          activeLock.addEventListener?.('release', () => {
-            if (!released) setWakeLockStatus('released');
-          });
-        } else {
-          setWakeLockStatus('unsupported');
-        }
-      } catch (error) {
-        console.error('Wake lock request failed', error);
-        setWakeLockStatus('failed');
-      }
-    };
-
-    requestWakeLock();
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && timerRunning && !activeLock && 'wakeLock' in navigator && navigator.wakeLock?.request) {
-        requestWakeLock();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      released = true;
-      document.removeEventListener('visibilitychange', handleVisibility);
-      if (activeLock) {
-        activeLock.release().catch(() => {});
-        activeLock = null;
-      }
-      setWakeLockStatus((prev) => (prev === 'active' ? 'idle' : prev));
-    };
-  }, [timerRunning]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1117,23 +1073,21 @@ export default function FocusOS() {
   }, [newTaskId]);
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerRunning) {
+      releaseWakeLock();
+      return;
+    }
+
+    requestWakeLock();
     const id = window.setInterval(() => {
       setTimerSeconds((prev) => {
         if (prev <= 1) {
           window.clearInterval(id);
           setTimerRunning(false);
           playBeep();
-          try {
-            if ('vibrate' in navigator) navigator.vibrate([220, 100, 220, 100, 300]);
-          } catch {}
-          try {
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('FocusOS', { body: tr(lang, '집중 시간이 끝났어요. 체크하고 잠깐 쉬어요.') });
-            }
-          } catch {}
+          notifyTimerDone();
+          setShowTimerDone(true);
           syncLiveStop();
-          setShowTimerCompleteModal(true);
           setProfile((prevProfile) => {
             const today = getTodayStamp();
             const base = prevProfile.lastActiveDate === today
@@ -1252,6 +1206,58 @@ export default function FocusOS() {
   const syncLiveStart = async () => {};
 
   const syncLiveStop = async () => {};
+
+  const goToPlanner = () => {
+    if (typeof window === 'undefined') return;
+    const target = document.querySelector('[data-planner-anchor]');
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const requestWakeLock = async () => {
+    try {
+      if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
+      if (wakeLockRef.current) return;
+      wakeLockRef.current = await navigator.wakeLock.request('screen');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    try {
+      if (!wakeLockRef.current) return;
+      await wakeLockRef.current.release();
+      wakeLockRef.current = null;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const notifyTimerDone = () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([220, 120, 220]);
+      }
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('FocusOS', {
+            body: lang === 'en' ? 'Your focus session is complete.' : '집중 시간이 끝났어요.'
+          });
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              new Notification('FocusOS', {
+                body: lang === 'en' ? 'Your focus session is complete.' : '집중 시간이 끝났어요.'
+              });
+            }
+          }).catch(() => {});
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const goToHome = () => {
     if (typeof window === 'undefined') return;
@@ -1441,7 +1447,6 @@ export default function FocusOS() {
   const recordStart = (taskId, durationSeconds = focusMinutes * 60) => {
     const now = formatNow();
     playBeep();
-    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch {}
     setTasks((prev) =>
       prev.map((task) => {
         if (task.id === taskId) return { ...task, start: task.start || now, status: '진행 중' };
@@ -1628,7 +1633,6 @@ export default function FocusOS() {
 
   const quickStartFive = () => {
     playBeep();
-    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch {}
     setFocusMinutes(5);
     setTimerSeconds(5 * 60);
     setTimerRunning(true);
@@ -1795,37 +1799,10 @@ export default function FocusOS() {
 
   const t = (value) => tr(lang, value);
 
-  const openPlanner = () => {
-    goToHome();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const closeTimerCompleteModal = () => setShowTimerCompleteModal(false);
-
-  const handleTimerCompleteActions = async (mode) => {
-    setShowTimerCompleteModal(false);
-    if (mode === 'break') {
-      setFocusMinutes(5);
-      setTimerSeconds(5 * 60);
-      setTimerRunning(true);
-      showToastMessage('5분 휴식 타이머를 시작했어요.');
-      return;
-    }
-
-    if (mode === 'restart') {
-      const duration = (focusMinutes || 25) * 60;
-      setTimerSeconds(duration);
-      setTimerRunning(true);
-      if (focusMode && focusTask) {
-        syncLiveStart(focusTask.id, duration);
-      }
-      showToastMessage('다시 집중을 시작했어요.');
-    }
-  };
-
   if (isLivePage) {
-    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} onOpenPlanner={openPlanner} onGoLogin={() => setProfileOpen(true)} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />;
+    return <FocusLivePage sessions={liveSessions} lang={lang} isJoined={Boolean(joinedLiveSession && getRemainingSeconds(joinedLiveSession) > 0)} joinedSession={joinedLiveSession} comments={liveComments} currentNickname={nickname || anonymousName} onJoin={joinLiveFocus} onLeave={leaveLiveFocus} onSendComment={sendLiveComment} onBack={goToHome} t={t} getRemainingSeconds={getRemainingSeconds} formatRemainingLabel={formatRemainingLabel} />;
   }
+
 
   return (
     <main className={`min-h-screen text-zinc-900 transition-colors ${
@@ -1854,9 +1831,12 @@ export default function FocusOS() {
               <button onClick={() => setLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
             </div>
             <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"><span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>LIVE</button>
-            <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{session ? '프로필' : '로그인'}</button>
-            <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
-            {session ? <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button> : null}
+            <button onClick={goToPlanner} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
+            {session ? (<>
+              <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
+              <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
+              <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
+            </>) : null}
           </div>
         </div>
 
@@ -2022,6 +2002,22 @@ export default function FocusOS() {
         )}
       </section>
 
+      <section className="mx-auto max-w-6xl px-4 pt-3 md:hidden">
+        {!focusMode && !isLivePage && (
+          <button
+            onClick={goToPlanner}
+            className="w-full rounded-[28px] border border-zinc-200 bg-white px-5 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
+            <h3 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Organize today first' : '오늘 할 일 먼저 정리하기'}</h3>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'If live focus feels too fast, sort your top priorities first.' : '라이브 집중이 바로 어렵다면, 먼저 우선순위를 정리하고 시작해보세요.'}</p>
+            <div className="mt-4 inline-flex items-center rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
+              {lang === 'en' ? 'Go to planner' : '우선순위 정리하러 가기'}
+            </div>
+          </button>
+        )}
+      </section>
+
       <section className="mx-auto hidden max-w-6xl px-6 pt-6 md:block">
         {!focusMode && !isLivePage && (
           <button
@@ -2048,36 +2044,27 @@ export default function FocusOS() {
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
-        {!focusMode && (
-          <section className="mb-8 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-            <button
-              onClick={goToLive}
-              className="group overflow-hidden rounded-[32px] border border-violet-100 bg-gradient-to-br from-zinc-950 via-zinc-950 to-violet-950 p-6 text-left text-white shadow-[0_18px_60px_rgba(17,24,39,0.18)] transition hover:-translate-y-0.5"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">FocusOS LIVE</p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">🔥 {activeLiveSessions.length}{lang === 'en' ? ' people focusing now' : '명 함께 집중 중'}</h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-300">{lang === 'en' ? 'Join the live room right away, or come back after planning your top priorities.' : '바로 라이브 집중에 들어가도 되고, 우선순위를 정리한 뒤 다시 와도 돼요.'}</p>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-zinc-900">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
-                {t('라이브 참여하기')}
+      <section className="mx-auto hidden max-w-6xl px-6 pt-4 md:block">
+        {!focusMode && !isLivePage && (
+          <button
+            onClick={goToPlanner}
+            className="w-full rounded-[32px] border border-zinc-200 bg-white px-8 py-7 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between gap-8">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
+                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Not sure what to do first?' : '무엇부터 해야 할지 막막한가요?'} </h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Sort your top priorities, then come back to live focus.' : '오늘 할 일을 먼저 정리한 뒤 라이브 집중으로 돌아오세요.'}</p>
               </div>
-            </button>
-
-            <button
-              onClick={() => window.scrollTo({ top: document.body.scrollHeight > 0 ? Math.max(document.querySelector('[data-planner-anchor]')?.getBoundingClientRect().top + window.scrollY - 96 || 0, 0) : 0, behavior: 'smooth' })}
-              className="group rounded-[32px] border border-zinc-200 bg-white p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <p className="text-sm font-semibold text-violet-700">Planner</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-950 md:text-3xl">{lang === 'en' ? 'Organize your top priorities' : '우선순위 정리하기'}</h2>
-              <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'If you are not sure what to do first, sort today's tasks and start from one card.' : '무엇부터 해야 할지 막막하면, 오늘 할 일을 먼저 정리하고 한 장만 골라 시작해보세요.'}</p>
-              <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
-                {lang === 'en' ? 'Go to planner' : '할 일 정리하러 가기'}
+              <div className="shrink-0 rounded-full bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
+                {lang === 'en' ? 'Open planner' : '우선순위 정리하기'}
               </div>
-            </button>
-          </section>
+            </div>
+          </button>
         )}
+      </section>
 
+      <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
         <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "hidden" : ""}`}>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl">
@@ -2119,7 +2106,6 @@ export default function FocusOS() {
               <p className="text-sm font-medium text-violet-700">Focus Timer</p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight">{t("포커스 타이머")}</h2>
               <p className="mt-2 text-sm leading-6 text-zinc-500">개인용 뽀모도로 타이머예요. 할 일과 별개로 바로 집중할 때 사용해요.</p>
-              <p className="mt-3 text-xs font-medium text-zinc-500">{timerRunning ? (wakeLockStatus === 'active' ? '화면 꺼짐 방지 활성화됨' : wakeLockStatus === 'unsupported' ? '현재 브라우저는 화면 꺼짐 방지를 지원하지 않아요' : '집중 중 화면 꺼짐 방지를 시도하고 있어요') : '집중을 시작하면 가능한 환경에서 화면 꺼짐 방지를 시도해요.'}</p>
             </div>
 
             <div className="mt-6 flex justify-center">
@@ -2153,7 +2139,7 @@ export default function FocusOS() {
           </Panel>
         </section>
 
-        <div data-planner-anchor="1" className={focusMode ? "ring-2 ring-violet-200 rounded-[36px]" : ""}><SectionCard
+        <div data-planner-anchor className={focusMode ? "ring-2 ring-violet-200 rounded-[36px]" : ""}><SectionCard
           eyebrow="Today"
           title={`${t("오늘 할 일")} (${todayTasks.length}/${TODAY_LIMIT})`}
           action={
@@ -2283,6 +2269,20 @@ export default function FocusOS() {
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-40 rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-lg transition hover:scale-105">{t("↑ 위로")}</button>
         )}
 
+        {showTimerDone && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 px-4">
+            <div className="w-full max-w-md rounded-[32px] border border-zinc-200 bg-white p-6 shadow-[0_30px_100px_rgba(24,24,27,0.18)]">
+              <p className="text-sm font-semibold text-violet-700">Focus complete</p>
+              <h3 className="mt-2 text-2xl font-bold tracking-tight text-zinc-950">{lang === 'en' ? 'Your focus session is done' : '집중이 완료됐어요'}</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? `You finished a session with ${activeLiveSessions.length} people in live focus.` : `라이브에서 ${activeLiveSessions.length}명과 함께 집중을 마쳤어요.`}</p>
+              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+                <button onClick={() => { setShowTimerDone(false); if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60); setTimerRunning(true); }} className="flex-1 rounded-2xl bg-zinc-950 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90">{lang === 'en' ? 'Start again' : '다시 집중하기'}</button>
+                <button onClick={() => { setShowTimerDone(false); setTimerSeconds(5 * 60); }} className="flex-1 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50">{lang === 'en' ? 'Take 5 min break' : '5분 쉬기'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {dailySummaryOpen && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/35 px-4">
             <div className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl">
@@ -2309,31 +2309,6 @@ export default function FocusOS() {
         {showCelebrate && (
           <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
             <div className="absolute left-1/2 top-24 -translate-x-1/2 rounded-full bg-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-xl animate-[celebrate_1.2s_ease-out]">{t("완료! 잘했어요 ✨")}</div>
-          </div>
-        )}
-
-        {showTimerCompleteModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 px-4">
-            <div className="w-full max-w-md rounded-[28px] bg-white p-6 shadow-2xl">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-violet-700">FocusOS</p>
-                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900">{t('집중 완료')}</h3>
-                  <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Your session ended. Choose your next step.' : '집중 시간이 끝났어요. 다음 흐름을 선택해보세요.'}</p>
-                </div>
-                <button onClick={closeTimerCompleteModal} className="rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-600">{t('닫기')}</button>
-              </div>
-
-              <div className="mt-5 rounded-[24px] bg-violet-50 p-4 text-sm text-violet-800 ring-1 ring-violet-100">
-                {lang === 'en' ? `${activeLiveSessions.length} people are focusing live right now.` : `지금 ${activeLiveSessions.length}명이 함께 집중 중이에요.`}
-              </div>
-
-              <div className="mt-5 grid gap-3">
-                <button onClick={() => handleTimerCompleteActions('restart')} className="rounded-2xl bg-zinc-950 px-5 py-4 text-sm font-semibold text-white transition hover:scale-[1.01]">{lang === 'en' ? 'Start again' : '다시 집중하기'}</button>
-                <button onClick={() => handleTimerCompleteActions('break')} className="rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 text-sm font-semibold text-violet-700 transition hover:bg-violet-100">{lang === 'en' ? 'Take a 5 min break' : '5분 휴식하기'}</button>
-                <button onClick={goToLive} className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{lang === 'en' ? 'Go to LIVE room' : '라이브 집중방 보기'}</button>
-              </div>
-            </div>
           </div>
         )}
 
