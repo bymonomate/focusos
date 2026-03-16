@@ -69,9 +69,6 @@ export default function AuthScreen({ supabaseClient, lang = 'ko', setLang = () =
           </div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">FocusOS</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">{t('지금 바로 시작하기')}</h1>
-          <p className="mt-4 text-base leading-8 text-zinc-500 sm:text-lg">
-            {t('로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.')}
-          </p>
 
           <div className="mt-8 grid grid-cols-2 gap-2 rounded-[28px] bg-zinc-100 p-2">
             <button
