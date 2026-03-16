@@ -41,15 +41,8 @@ const STATUS_BADGE = {
   완료: 'bg-blue-50 text-blue-700 border border-blue-100',
 };
 
-const REMOVED_LOGIN_COPY = new Set([
-  '',
-  '가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.',
-  '로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.',
-]);
-
 const EN_TEXT = {
   '지금 바로 시작하기': 'Start Now',
-  '로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.': 'Your tasks, focus sessions, and daily flow are saved to this account.',
   '로그인': 'Log In',
   '회원가입': 'Sign Up',
   '이메일': 'Email',
@@ -59,8 +52,6 @@ const EN_TEXT = {
   '간편 로그인': 'Quick sign-in',
   '구글로 계속하기': 'Continue with Google',
   '처리 중...': 'Processing...',
-  '': '7-Day Free Trial',
-  '가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.': 'Start using the app right away and see if the Focus OS flow works for you.',
   '인증 시스템을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.': 'Authentication is unavailable right now. Please try again shortly.',
   '이메일과 비밀번호를 입력해 주세요.': 'Please enter your email and password.',
   '회원가입이 완료됐어요. 이메일 인증 후 로그인해 주세요.': 'Your account was created. Please verify your email and sign in.',
@@ -224,7 +215,6 @@ const EN_TEXT = {
 };
 
 function tr(lang, value) {
-  if (REMOVED_LOGIN_COPY.has(value)) return '';
   return lang === 'en' && EN_TEXT[value] ? EN_TEXT[value] : value;
 }
 
@@ -1193,16 +1183,18 @@ export default function FocusOS() {
     });
 
     if (supabaseClient) {
-      try {
-        await supabaseClient.from('focus_live_comments').insert({
-          anonymous_name: 'SYSTEM',
-          message: completionComment.message,
-          user_id: session?.user?.id || null,
-          type: 'system',
-        });
-      } catch (error) {
-        console.error(error);
-      }
+      void (async () => {
+        try {
+          await supabaseClient.from('focus_live_comments').insert({
+            anonymous_name: 'SYSTEM',
+            message: completionComment.message,
+            user_id: session?.user?.id || null,
+            type: 'system',
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      })();
     }
 
     setToast('집중 완료 🎉 +10P');
