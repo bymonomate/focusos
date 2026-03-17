@@ -1948,7 +1948,7 @@ export default function FocusOS() {
         ? 'bg-[radial-gradient(circle_at_top,#ede9fe_0%,#f8f7ff_40%,#ffffff_100%)]'
         : 'bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)]'
     }`}>
-      <div className="sticky top-0 z-30 border-b border-white/70 bg-white/80 backdrop-blur-xl">
+      <div className="border-b border-white/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-violet-600 md:text-[11px] md:uppercase md:tracking-[0.24em]">FocusOS</p>

@@ -86,7 +86,7 @@ export default function FocusLivePage({
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-6 text-zinc-900 md:py-8">
       <div className="mx-auto max-w-6xl">
-        <section className="sticky top-4 z-20 mb-6 overflow-hidden rounded-[30px] border border-white/70 bg-white/85 shadow-[0_18px_50px_rgba(24,24,27,0.08)] backdrop-blur-xl">
+        <section className="mb-6 overflow-hidden rounded-[30px] border border-white/70 bg-white/85 shadow-[0_18px_50px_rgba(24,24,27,0.08)] backdrop-blur-xl">
           <div className="flex flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-5">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
