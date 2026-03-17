@@ -7,10 +7,17 @@ export default function FocusLivePage({
   joinedSession = null,
   comments = [],
   currentNickname = '',
+  currentUser = null,
   onJoin = () => {},
   onLeave = () => {},
   onSendComment = () => {},
   onBack = () => {},
+  onGoPlanner = () => {},
+  onOpenAuth = () => {},
+  onOpenProfile = () => {},
+  onOpenSettings = () => {},
+  onSignOut = () => {},
+  onSetLang = () => {},
   t = (value) => value,
   getRemainingSeconds = (session) => 0,
   formatRemainingLabel = (seconds) => `${seconds}`,
@@ -33,16 +40,46 @@ export default function FocusLivePage({
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-6 text-zinc-900 md:py-8">
       <div className="mx-auto max-w-6xl">
+        <section className="sticky top-4 z-20 mb-6 overflow-hidden rounded-[30px] border border-white/70 bg-white/85 shadow-[0_18px_50px_rgba(24,24,27,0.08)] backdrop-blur-xl">
+          <div className="flex flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-violet-600 md:text-[11px] md:uppercase md:tracking-[0.24em]">FocusOS</p>
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-700 ring-1 ring-violet-100">
+                  <span className="inline-block h-2 w-2 rounded-full bg-violet-600"></span>
+                  LIVE HOME
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-zinc-500">{currentUser ? (currentUser.email || currentNickname || 'FocusOS member') : t('로그인하면 할 일과 집중 기록이 저장돼요.')}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="mr-1 flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm">
+                <button onClick={() => onSetLang('ko')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>KO</button>
+                <button onClick={() => onSetLang('en')} className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'text-zinc-500'}`}>EN</button>
+              </div>
+              <button onClick={onGoPlanner} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
+              <button onClick={onBack} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{lang === 'en' ? 'Dashboard' : '대시보드'}</button>
+              {currentUser ? (
+                <>
+                  <button onClick={onOpenProfile} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{lang === 'en' ? 'Profile' : '프로필'}</button>
+                  <button onClick={onOpenSettings} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
+                  <button onClick={onSignOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
+                </>
+              ) : (
+                <button onClick={onOpenAuth} className="rounded-full bg-zinc-950 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-zinc-800">{t('로그인')}</button>
+              )}
+            </div>
+          </div>
+        </section>
+
         <section className="overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">{t('라이브 집중방')}</p>
-              <div className="mb-3">
-<button onClick={onBack} className="text-sm text-zinc-500 hover:text-zinc-900">← FocusOS</button>
-</div>
-<h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">{t('FocusOS LIVE')}</h1>
               <p className="mt-4 text-lg text-zinc-300">{t('지금 함께 집중 중인 사람들')}</p>
               <div className="mt-4 inline-flex items-center rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white ring-1 ring-white/10">
                 🟢 {mergedSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}
@@ -70,6 +107,24 @@ export default function FocusLivePage({
               )}
             </div>
           </div>
+        </section>
+
+        <section className="mt-6">
+          <button
+            onClick={onGoPlanner}
+            className="w-full rounded-[32px] border border-zinc-200 bg-white px-6 py-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md md:px-8 md:py-7"
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
+                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Not sure what to do first?' : '무엇부터 해야 할지 막막한가요?'}</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Sort your top priorities first, then come back to live focus.' : '우선순위를 먼저 정리한 뒤 라이브 집중으로 돌아오세요.'}</p>
+              </div>
+              <div className="shrink-0 rounded-full bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
+                {lang === 'en' ? 'Open planner' : '우선순위 정리하기'}
+              </div>
+            </div>
+          </button>
         </section>
 
         <section className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -227,4 +282,3 @@ export default function FocusLivePage({
     </main>
   );
 }
-
