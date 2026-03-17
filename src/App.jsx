@@ -891,7 +891,7 @@ export default function FocusOS() {
         const { data } = await supabaseClient
           .from('focus_live_comments')
           .select('*')
-          .order('created_at', { ascending: false })
+          .order('created_at', { ascending: true })
           .limit(40);
 
         if (!cancelled) {
@@ -1409,7 +1409,7 @@ export default function FocusOS() {
       created_at: new Date().toISOString(),
     };
 
-    const localComments = [nextComment, ...liveComments].slice(0, 40);
+    const localComments = [...liveComments, nextComment].slice(-40);
     setLiveComments(localComments);
     writeLocalLiveComments(localComments);
 
@@ -2081,22 +2081,6 @@ export default function FocusOS() {
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pt-3 md:hidden">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToPlanner}
-            className="w-full rounded-[28px] border border-zinc-200 bg-white px-5 py-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
-            <h3 className="mt-2 text-xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Organize today first' : '오늘 할 일 먼저 정리하기'}</h3>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'If live focus feels too fast, sort your top priorities first.' : '라이브 집중이 바로 어렵다면, 먼저 우선순위를 정리하고 시작해보세요.'}</p>
-            <div className="mt-4 inline-flex items-center rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
-              {lang === 'en' ? 'Go to planner' : '우선순위 정리하러 가기'}
-            </div>
-          </button>
-        )}
-      </section>
-
       <section className="mx-auto hidden max-w-6xl px-6 pt-6 md:block">
         {!focusMode && !isLivePage && (
           <button
@@ -2117,26 +2101,6 @@ export default function FocusOS() {
                 <div className="rounded-full bg-violet-600 px-8 py-4 text-lg font-semibold text-white shadow-[0_16px_40px_rgba(124,58,237,0.22)] transition group-hover:bg-violet-500 xl:px-10 xl:py-4 xl:text-xl">
                   {t('라이브 참여하기')}
                 </div>
-              </div>
-            </div>
-          </button>
-        )}
-      </section>
-
-      <section className="mx-auto hidden max-w-6xl px-6 pt-4 md:block">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToPlanner}
-            className="w-full rounded-[32px] border border-zinc-200 bg-white px-8 py-7 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="flex items-center justify-between gap-8">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
-                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Not sure what to do first?' : '무엇부터 해야 할지 막막한가요?'} </h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Sort your top priorities, then come back to live focus.' : '오늘 할 일을 먼저 정리한 뒤 라이브 집중으로 돌아오세요.'}</p>
-              </div>
-              <div className="shrink-0 rounded-full bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
-                {lang === 'en' ? 'Open planner' : '우선순위 정리하기'}
               </div>
             </div>
           </button>

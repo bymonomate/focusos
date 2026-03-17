@@ -134,13 +134,6 @@ export default function AuthScreen({ supabaseClient, lang = 'ko', setLang = () =
               {message}
             </div>
           ) : null}
-
-          <div className="mt-8 rounded-[28px] bg-violet-50 p-5">
-            <p className="text-lg font-semibold text-violet-700">{t('')}</p>
-            <p className="mt-3 text-lg leading-9 text-zinc-600">
-              {t('가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.')}
-            </p>
-          </div>
         </div>
       </div>
     </main>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export default function FocusLivePage({
   sessions = [],
@@ -23,6 +23,7 @@ export default function FocusLivePage({
   formatRemainingLabel = (seconds) => `${seconds}`,
 }) {
   const [draft, setDraft] = useState('');
+  const commentsEndRef = useRef(null);
   const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
   const mergedSessions = (() => {
     const filtered = sessions.filter((session) => getRemainingSeconds(session) > 0);
@@ -31,6 +32,11 @@ export default function FocusLivePage({
     }
     return filtered;
   })();
+
+
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [comments]);
 
   const submitComment = async () => {
     const value = draft.trim();
