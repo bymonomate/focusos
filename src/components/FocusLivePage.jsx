@@ -24,7 +24,10 @@ export default function FocusLivePage({
 }) {
   const [draft, setDraft] = useState('');
   const commentsBoxRef = useRef(null);
-  const commentsEndRef = useRef(null);
+  const shouldStickToBottomRef = useRef(true);
+  const forceScrollRef = useRef(false);
+  const previousCommentsCountRef = useRef(comments.length);
+  const hasMountedRef = useRef(false);
   const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
   const mergedSessions = (() => {
     const filtered = sessions.filter((session) => getRemainingSeconds(session) > 0);
@@ -38,15 +41,36 @@ export default function FocusLivePage({
   useEffect(() => {
     const box = commentsBoxRef.current;
     if (!box) return;
-    box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
-    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+    const countIncreased = comments.length > previousCommentsCountRef.current;
+
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      previousCommentsCountRef.current = comments.length;
+      return;
+    }
+
+    if (countIncreased && (forceScrollRef.current || shouldStickToBottomRef.current)) {
+      box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+    }
+
+    forceScrollRef.current = false;
+    previousCommentsCountRef.current = comments.length;
   }, [comments]);
 
   const submitComment = async () => {
     const value = draft.trim();
     if (!value) return;
+    forceScrollRef.current = true;
     await onSendComment(value);
     setDraft('');
+  };
+
+  const handleCommentsScroll = () => {
+    const box = commentsBoxRef.current;
+    if (!box) return;
+    const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+    shouldStickToBottomRef.current = distanceFromBottom < 56;
   };
 
   return (
@@ -218,7 +242,7 @@ export default function FocusLivePage({
             </div>
 
             <div className="flex h-[520px] flex-col">
-              <div ref={commentsBoxRef} className="flex-1 overflow-y-auto px-5 py-4">
+              <div ref={commentsBoxRef} onScroll={handleCommentsScroll} className="flex-1 overflow-y-auto px-5 py-4">
                 <div className="space-y-3">
                   {comments.length > 0 ? comments.map((comment) => {
                     const name = comment.anonymous_name || 'Focuser';
@@ -247,9 +271,7 @@ export default function FocusLivePage({
                     <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500">
                       {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
                     </div>
-                  )}
-                  <div ref={commentsEndRef} />
-                </div>
+                  )}                </div>
               </div>
 
               <div className="border-t border-zinc-100 px-5 py-4">
