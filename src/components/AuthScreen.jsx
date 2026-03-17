@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {}, t = (value) => value, onClose = null }) {
+export default function AuthScreen({ supabaseClient, lang = 'ko', setLang = () => {}, t = (value) => value }) {
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,17 +63,15 @@ export default function AuthScreen({ supabaseClient, lang = 'ko', setLang = () =
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f4f0ff_0%,#fffdf8_48%,#ffffff_100%)] px-4 py-8 text-zinc-900">
       <div className="mx-auto max-w-4xl">
         <div className="rounded-[32px] border border-zinc-100 bg-white p-6 shadow-sm sm:p-8 md:p-12">
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <div className="flex gap-2">
-              <button onClick={() => setLang('ko')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
-              <button onClick={() => setLang('en')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
-            </div>
-            {onClose ? (
-              <button onClick={onClose} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
-            ) : null}
+          <div className="mb-6 flex justify-end gap-2">
+            <button onClick={() => setLang('ko')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'ko' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>KO</button>
+            <button onClick={() => setLang('en')} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${lang === 'en' ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600'}`}>EN</button>
           </div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-violet-600">FocusOS</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">{t('지금 바로 시작하기')}</h1>
+          <p className="mt-4 text-base leading-8 text-zinc-500 sm:text-lg">
+            {t('로그인하면 할 일, 집중 기록, 오늘의 흐름이 이 계정에 저장돼요.')}
+          </p>
 
           <div className="mt-8 grid grid-cols-2 gap-2 rounded-[28px] bg-zinc-100 p-2">
             <button
@@ -136,6 +134,13 @@ export default function AuthScreen({ supabaseClient, lang = 'ko', setLang = () =
               {message}
             </div>
           ) : null}
+
+          <div className="mt-8 rounded-[28px] bg-violet-50 p-5">
+            <p className="text-lg font-semibold text-violet-700">{t('')}</p>
+            <p className="mt-3 text-lg leading-9 text-zinc-600">
+              {t('가입 후 바로 앱을 사용할 수 있고, Focus OS 흐름이 나에게 맞는지 먼저 확인할 수 있어요.')}
+            </p>
+          </div>
         </div>
       </div>
     </main>
