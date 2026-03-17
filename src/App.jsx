@@ -1090,7 +1090,7 @@ export default function FocusOS() {
           notifyTimerDone();
           setShowTimerDone(true);
           if (joinedLiveSession) {
-            appendLiveSystemComment(`${nickname || anonymousName || 'Focuser'}님의 1회 집중모드가 종료되었어요.`);
+            appendLiveSystemComment(`${nickname || anonymousName || 'Focuser'}님이 한 사이클을 마쳤어요. 잘 해냈어요.`, session?.user?.id || null);
             setJoinedLiveSession(null);
             writeLocalJoinedSession(null);
             setLiveSessions((prevSessions) => prevSessions.filter((item) => item.id !== joinedLiveSession.id && item.anonymous_name !== joinedLiveSession.anonymous_name));
@@ -1183,7 +1183,7 @@ export default function FocusOS() {
       };
     });
 
-    appendLiveSystemComment(`${nickname || anonymousName || 'Focuser'}님의 1회 집중모드가 종료되었어요.`);
+    appendLiveSystemComment(`${nickname || anonymousName || 'Focuser'}님이 한 사이클을 마쳤어요. 잘 해냈어요.`, session?.user?.id || null);
     setJoinedLiveSession(null);
     writeLocalJoinedSession(null);
     setLiveSessions((prev) =>
@@ -1433,7 +1433,7 @@ export default function FocusOS() {
       }
     }
 
-    await appendLiveSystemComment(`${nextSession.anonymous_name}님이 집중모드에 참여했어요.`, nextSession.user_id);
+    await appendLiveSystemComment(`${nextSession.anonymous_name}님이 라이브에 들어왔어요. 함께 흐름을 만들어봐요.`, nextSession.user_id);
     showToastMessage('라이브 참여가 시작됐어요.');
   };
 
@@ -1454,7 +1454,7 @@ export default function FocusOS() {
     }
 
     if (currentJoined?.anonymous_name) {
-      await appendLiveSystemComment(`${currentJoined.anonymous_name}님이 라이브를 마쳤어요.`, currentJoined.user_id || null);
+      await appendLiveSystemComment(`${currentJoined.anonymous_name}님이 오늘 집중 흐름을 마무리했어요.`, currentJoined.user_id || null);
     }
 
     showToastMessage('라이브에서 나갔어요.');
@@ -1790,7 +1790,7 @@ export default function FocusOS() {
 
     if (liveFocusStartedRef.current) return;
     liveFocusStartedRef.current = true;
-    appendLiveSystemComment(`${joinedLiveSession.anonymous_name || nickname || anonymousName || 'Focuser'}님이 집중모드를 시작했어요.`, joinedLiveSession.user_id || null);
+    appendLiveSystemComment(`${joinedLiveSession.anonymous_name || nickname || anonymousName || 'Focuser'}님이 집중을 시작했어요. 함께 흐름을 이어가봐요.`, joinedLiveSession.user_id || null);
   }, [joinedLiveSession, timerRunning]);
 
   const signOut = async () => {

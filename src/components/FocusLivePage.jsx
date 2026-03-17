@@ -29,6 +29,15 @@ export default function FocusLivePage({
   const previousCommentsCountRef = useRef(comments.length);
   const hasMountedRef = useRef(false);
   const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
+  const isPinnedSystemMessage = (comment) => {
+    if (!comment) return false;
+    const name = comment.anonymous_name || '';
+    const isSystem = comment.type === 'system' || name === 'SYSTEM';
+    if (!isSystem) return false;
+    const message = String(comment.message || '');
+    return ['참여했어요', '마쳤어요', '시작했어요', '한 사이클이 끝났어요', 'joined', 'wrapped up', 'started focusing', 'finished a focus cycle'].some((keyword) => message.includes(keyword));
+  };
+
   const mergedSessions = (() => {
     const filtered = sessions.filter((session) => getRemainingSeconds(session) > 0);
     if (joinedActive && !filtered.some((session) => session.id === joinedSession.id || session.user_id === joinedSession.user_id || session.anonymous_name === joinedSession.anonymous_name)) {
@@ -37,6 +46,7 @@ export default function FocusLivePage({
     return filtered;
   })();
 
+  const pinnedSystemComments = comments.filter(isPinnedSystemMessage).slice(-2).reverse();
 
   useEffect(() => {
     const box = commentsBoxRef.current;
@@ -243,6 +253,17 @@ export default function FocusLivePage({
 
             <div className="flex h-[520px] flex-col">
               <div ref={commentsBoxRef} onScroll={handleCommentsScroll} className="flex-1 overflow-y-auto px-5 py-4">
+                {pinnedSystemComments.length > 0 ? (
+                  <div className="sticky top-0 z-10 mb-4 flex flex-col gap-2 rounded-2xl border border-violet-100 bg-white/95 p-3 shadow-sm backdrop-blur">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600">{lang === 'en' ? 'Live updates' : '라이브 알림'}</p>
+                    {pinnedSystemComments.map((comment) => (
+                      <div key={`pinned-${comment.id || `${comment.anonymous_name}-${comment.created_at}`}`} className="rounded-2xl bg-violet-50 px-3 py-2 text-xs font-medium leading-5 text-violet-700">
+                        {comment.message}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
                 <div className="space-y-3">
                   {comments.length > 0 ? comments.map((comment) => {
                     const name = comment.anonymous_name || 'Focuser';
@@ -252,7 +273,7 @@ export default function FocusLivePage({
                     if (isSystem) {
                       return (
                         <div key={comment.id || `${comment.anonymous_name}-${comment.created_at}`} className="py-1 text-center">
-                          <span className="inline-flex rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-600">
+                          <span className="inline-flex max-w-full rounded-full border border-violet-100 bg-violet-50 px-3 py-1.5 text-xs font-medium leading-5 text-violet-700">
                             {comment.message}
                           </span>
                         </div>
