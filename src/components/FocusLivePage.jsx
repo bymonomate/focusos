@@ -23,6 +23,7 @@ export default function FocusLivePage({
   formatRemainingLabel = (seconds) => `${seconds}`,
 }) {
   const [draft, setDraft] = useState('');
+  const commentsBoxRef = useRef(null);
   const commentsEndRef = useRef(null);
   const joinedActive = joinedSession && getRemainingSeconds(joinedSession) > 0;
   const mergedSessions = (() => {
@@ -35,6 +36,9 @@ export default function FocusLivePage({
 
 
   useEffect(() => {
+    const box = commentsBoxRef.current;
+    if (!box) return;
+    box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
     commentsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [comments]);
 
@@ -214,7 +218,7 @@ export default function FocusLivePage({
             </div>
 
             <div className="flex h-[520px] flex-col">
-              <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div ref={commentsBoxRef} className="flex-1 overflow-y-auto px-5 py-4">
                 <div className="space-y-3">
                   {comments.length > 0 ? comments.map((comment) => {
                     const name = comment.anonymous_name || 'Focuser';
@@ -244,6 +248,7 @@ export default function FocusLivePage({
                       {t('댓글이 아직 없어요. 먼저 남겨보세요.')}
                     </div>
                   )}
+                  <div ref={commentsEndRef} />
                 </div>
               </div>
 

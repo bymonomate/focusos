@@ -1163,13 +1163,13 @@ export default function FocusOS() {
     const completionComment = {
       id: `comment-complete-${Date.now()}`,
       anonymous_name: 'SYSTEM',
-      message: `${nickname || anonymousName || 'Focuser'}님이 집중을 완료했습니다 (+10P)`,
+      message: `${nickname || anonymousName || 'Focuser'}님의 1회 집중모드가 종료되었어요.`,
       created_at: new Date().toISOString(),
       type: 'system',
     };
 
     setLiveComments((prev) => {
-      const next = [completionComment, ...prev].slice(0, 40);
+      const next = [...prev, completionComment].slice(-40);
       writeLocalLiveComments(next);
       return next;
     });
@@ -1327,13 +1327,13 @@ export default function FocusOS() {
     const joinedComment = {
       id: `comment-join-${Date.now()}`,
       anonymous_name: 'SYSTEM',
-      message: `${nextSession.anonymous_name}님이 집중을 시작했습니다 🔥`,
+      message: `${nextSession.anonymous_name}님이 집중모드에 참여했어요.`,
       created_at: new Date().toISOString(),
       type: 'system',
     };
 
     setLiveComments((prev) => {
-      const next = [joinedComment, ...prev].slice(0, 40);
+      const next = [...prev, joinedComment].slice(-40);
       writeLocalLiveComments(next);
       return next;
     });
