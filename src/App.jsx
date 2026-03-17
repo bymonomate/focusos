@@ -658,6 +658,7 @@ export default function FocusOS() {
   const hydratingFromDbRef = useRef(false);
   const joinedLiveExpiredRef = useRef(false);
   const wakeLockRef = useRef(null);
+  const liveFocusStartedRef = useRef(false);
 
   const [supabaseClient, setSupabaseClient] = useState(null);
   const [authReady, setAuthReady] = useState(false);
@@ -1088,6 +1089,15 @@ export default function FocusOS() {
           playBeep();
           notifyTimerDone();
           setShowTimerDone(true);
+          if (joinedLiveSession) {
+            appendLiveSystemComment(`${nickname || anonymousName || 'Focuser'}님의 1회 집중모드가 종료되었어요.`);
+            setJoinedLiveSession(null);
+            writeLocalJoinedSession(null);
+            setLiveSessions((prevSessions) => prevSessions.filter((item) => item.id !== joinedLiveSession.id && item.anonymous_name !== joinedLiveSession.anonymous_name));
+            if (supabaseClient && joinedLiveSession.id) {
+              supabaseClient.from('focus_live').delete().eq('id', joinedLiveSession.id).catch((error) => console.error(error));
+            }
+          }
           syncLiveStop();
           setProfile((prevProfile) => {
             const today = getTodayStamp();
@@ -1109,7 +1119,20 @@ export default function FocusOS() {
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [timerRunning, lang]);
+  }, [timerRunning, lang, joinedLiveSession, nickname, anonymousName, supabaseClient]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && timerRunning) {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [timerRunning]);
 
   useEffect(() => {
     if (!toast) return;
@@ -1160,27 +1183,15 @@ export default function FocusOS() {
       };
     });
 
-    const completionComment = {
-      id: `comment-complete-${Date.now()}`,
-      anonymous_name: 'SYSTEM',
-      message: `${nickname || anonymousName || 'Focuser'}님의 1회 집중모드가 종료되었어요.`,
-      created_at: new Date().toISOString(),
-      type: 'system',
-    };
+    appendLiveSystemComment(`${nickname || anonymousName || 'Focuser'}님의 1회 집중모드가 종료되었어요.`);
+    setJoinedLiveSession(null);
+    writeLocalJoinedSession(null);
+    setLiveSessions((prev) =>
+      prev.filter((item) => item.id !== joinedLiveSession?.id && item.anonymous_name !== joinedLiveSession?.anonymous_name)
+    );
 
-    setLiveComments((prev) => {
-      const next = [...prev, completionComment].slice(-40);
-      writeLocalLiveComments(next);
-      return next;
-    });
-
-    if (supabaseClient) {
-      supabaseClient.from('focus_live_comments').insert({
-        anonymous_name: 'SYSTEM',
-        message: completionComment.message,
-        user_id: session?.user?.id || null,
-        type: 'system',
-      }).catch((error) => {
+    if (supabaseClient && joinedLiveSession?.id) {
+      supabaseClient.from('focus_live').delete().eq('id', joinedLiveSession.id).catch((error) => {
         console.error(error);
       });
     }
@@ -1204,9 +1215,88 @@ export default function FocusOS() {
 
   const showToastMessage = (message) => setToast(tr(lang, message));
 
-  const syncLiveStart = async () => {};
+  const appendLiveSystemComment = async (message, userId = session?.user?.id || null) => {
+    const nextSystemComment = {
+      id: `comment-system-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      anonymous_name: 'SYSTEM',
+      message,
+      created_at: new Date().toISOString(),
+      type: 'system',
+    };
 
-  const syncLiveStop = async () => {};
+    setLiveComments((prev) => {
+      const next = [...prev, nextSystemComment].slice(-40);
+      writeLocalLiveComments(next);
+      return next;
+    });
+
+    if (supabaseClient) {
+      try {
+        await supabaseClient.from('focus_live_comments').insert({
+          anonymous_name: 'SYSTEM',
+          message,
+          user_id: userId,
+          type: 'system',
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const syncLiveStart = async (taskId, durationSeconds = timerSeconds || focusMinutes * 60) => {
+    if (!joinedLiveSession) return;
+
+    const task = tasks.find((item) => item.id === taskId);
+    const taskTitle =
+      (task && (lang === 'en' ? tr('en', task.title) : task.title)) ||
+      joinedLiveSession.task_title ||
+      (lang === 'en' ? 'Live focus session' : '라이브 집중 세션');
+
+    const refreshedSession = {
+      ...joinedLiveSession,
+      task_title: taskTitle,
+      duration_seconds: durationSeconds > 0 ? durationSeconds : focusMinutes * 60,
+      started_at: new Date().toISOString(),
+      status: 'focusing',
+    };
+
+    setJoinedLiveSession(refreshedSession);
+    writeLocalJoinedSession(refreshedSession);
+    setLiveSessions((prev) => [
+      refreshedSession,
+      ...prev.filter((item) => item.id !== refreshedSession.id),
+    ]);
+
+    if (supabaseClient) {
+      try {
+        await supabaseClient.from('focus_live').upsert({
+          id: refreshedSession.id,
+          user_id: refreshedSession.user_id,
+          anonymous_name: refreshedSession.anonymous_name,
+          task_title: refreshedSession.task_title,
+          duration_seconds: refreshedSession.duration_seconds,
+          started_at: refreshedSession.started_at,
+          status: refreshedSession.status,
+        }, { onConflict: 'id' });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
+  const syncLiveStop = async () => {
+    if (!joinedLiveSession?.id || !supabaseClient) return;
+
+    try {
+      await supabaseClient
+        .from('focus_live')
+        .update({ status: 'paused' })
+        .eq('id', joinedLiveSession.id);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const scrollToPlanner = () => {
     if (typeof window === 'undefined') return;
@@ -1252,7 +1342,7 @@ export default function FocusOS() {
     }
   };
 
-  const notifyTimerDone = () => {
+  const notifyFocusEvent = (eventType = 'done') => {
     try {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate([220, 120, 220]);
@@ -1260,13 +1350,13 @@ export default function FocusOS() {
       if (typeof window !== 'undefined' && 'Notification' in window) {
         if (Notification.permission === 'granted') {
           new Notification('FocusOS', {
-            body: lang === 'en' ? 'Your focus session is complete.' : '집중 시간이 끝났어요.'
+            body: eventType === 'start' ? (lang === 'en' ? 'Your focus session has started.' : '집중모드가 시작됐어요.') : (lang === 'en' ? 'Your focus session is complete.' : '집중 시간이 끝났어요.')
           });
         } else if (Notification.permission !== 'denied') {
           Notification.requestPermission().then((permission) => {
             if (permission === 'granted') {
               new Notification('FocusOS', {
-                body: lang === 'en' ? 'Your focus session is complete.' : '집중 시간이 끝났어요.'
+                body: eventType === 'start' ? (lang === 'en' ? 'Your focus session has started.' : '집중모드가 시작됐어요.') : (lang === 'en' ? 'Your focus session is complete.' : '집중 시간이 끝났어요.')
               });
             }
           }).catch(() => {});
@@ -1276,6 +1366,9 @@ export default function FocusOS() {
       console.error(error);
     }
   };
+
+  const notifyTimerDone = () => notifyFocusEvent('done');
+  const notifyTimerStart = () => notifyFocusEvent('start');
 
   const goToHome = () => {
     if (typeof window === 'undefined') return;
@@ -1324,55 +1417,23 @@ export default function FocusOS() {
       return [nextSession, ...filtered];
     });
 
-    const joinedComment = {
-      id: `comment-join-${Date.now()}`,
-      anonymous_name: 'SYSTEM',
-      message: `${nextSession.anonymous_name}님이 집중모드에 참여했어요.`,
-      created_at: new Date().toISOString(),
-      type: 'system',
-    };
-
-    setLiveComments((prev) => {
-      const next = [...prev, joinedComment].slice(-40);
-      writeLocalLiveComments(next);
-      return next;
-    });
-
     if (supabaseClient) {
       try {
-        const { data, error } = await supabaseClient
-          .from('focus_live')
-          .insert({
-            id: nextSession.id,
-            user_id: nextSession.user_id,
-            anonymous_name: nextSession.anonymous_name,
-            task_title: nextSession.task_title,
-            duration_seconds: nextSession.duration_seconds,
-            started_at: nextSession.started_at,
-            status: nextSession.status,
-          })
-          .select('id')
-          .single();
-
-        if (error) {
-          console.error(error);
-        } else if (data?.id && data.id !== nextSession.id) {
-          const synced = { ...nextSession, id: data.id };
-          setJoinedLiveSession(synced);
-          writeLocalJoinedSession(synced);
-        }
-
-        await supabaseClient.from('focus_live_comments').insert({
-          anonymous_name: 'SYSTEM',
-          message: joinedComment.message,
+        await supabaseClient.from('focus_live').upsert({
+          id: nextSession.id,
           user_id: nextSession.user_id,
-          type: 'system',
-        });
+          anonymous_name: nextSession.anonymous_name,
+          task_title: nextSession.task_title,
+          duration_seconds: nextSession.duration_seconds,
+          started_at: nextSession.started_at,
+          status: nextSession.status,
+        }, { onConflict: 'id' });
       } catch (error) {
         console.error(error);
       }
     }
 
+    await appendLiveSystemComment(`${nextSession.anonymous_name}님이 집중모드에 참여했어요.`, nextSession.user_id);
     showToastMessage('라이브 참여가 시작됐어요.');
   };
 
@@ -1390,6 +1451,10 @@ export default function FocusOS() {
       } catch (error) {
         console.error(error);
       }
+    }
+
+    if (currentJoined?.anonymous_name) {
+      await appendLiveSystemComment(`${currentJoined.anonymous_name}님이 라이브를 마쳤어요.`, currentJoined.user_id || null);
     }
 
     showToastMessage('라이브에서 나갔어요.');
@@ -1474,6 +1539,7 @@ export default function FocusOS() {
     );
     setTimerSeconds(durationSeconds);
     setTimerRunning(true);
+    notifyTimerStart();
     syncLiveStart(taskId, durationSeconds);
     showToastMessage('집중 시작. 한 가지 일만 보면 돼요.');
   };
@@ -1654,6 +1720,7 @@ export default function FocusOS() {
     setFocusMinutes(5);
     setTimerSeconds(5 * 60);
     setTimerRunning(true);
+    notifyTimerStart();
 
     if (focusMode && focusTask) {
       recordStart(focusTask.id, 5 * 60);
@@ -1671,6 +1738,7 @@ export default function FocusOS() {
     } else if (target) {
       if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
       setTimerRunning(true);
+      notifyTimerStart();
     }
   };
 
@@ -1686,6 +1754,7 @@ export default function FocusOS() {
         playBeep();
         if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
         setTimerRunning(true);
+        notifyTimerStart();
       } else {
         setTimerRunning(false);
       }
@@ -1699,6 +1768,7 @@ export default function FocusOS() {
         playBeep();
         if (timerSeconds === 0) setTimerSeconds(focusMinutes * 60);
         setTimerRunning(true);
+        notifyTimerStart();
         syncLiveStart(focusTask.id, timerSeconds || focusMinutes * 60);
       }
       return;
@@ -1711,6 +1781,17 @@ export default function FocusOS() {
     setTimerRunning(false);
     setTimerSeconds(focusMinutes * 60);
   };
+
+  useEffect(() => {
+    if (!joinedLiveSession || !timerRunning) {
+      liveFocusStartedRef.current = false
+      return;
+    }
+
+    if (liveFocusStartedRef.current) return;
+    liveFocusStartedRef.current = true;
+    appendLiveSystemComment(`${joinedLiveSession.anonymous_name || nickname || anonymousName || 'Focuser'}님이 집중모드를 시작했어요.`, joinedLiveSession.user_id || null);
+  }, [joinedLiveSession, timerRunning]);
 
   const signOut = async () => {
     if (!supabaseClient) return;
