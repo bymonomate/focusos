@@ -1095,7 +1095,13 @@ export default function FocusOS() {
             writeLocalJoinedSession(null);
             setLiveSessions((prevSessions) => prevSessions.filter((item) => item.id !== joinedLiveSession.id && item.anonymous_name !== joinedLiveSession.anonymous_name));
             if (supabaseClient && joinedLiveSession.id) {
-              supabaseClient.from('focus_live').delete().eq('id', joinedLiveSession.id).catch((error) => console.error(error));
+              void (async () => {
+                const { error } = await supabaseClient
+                  .from('focus_live')
+                  .delete()
+                  .eq('id', joinedLiveSession.id);
+                if (error) console.error(error);
+              })();
             }
           }
           syncLiveStop();
@@ -1191,9 +1197,15 @@ export default function FocusOS() {
     );
 
     if (supabaseClient && joinedLiveSession?.id) {
-      supabaseClient.from('focus_live').delete().eq('id', joinedLiveSession.id).catch((error) => {
-        console.error(error);
-      });
+      void (async () => {
+        const { error } = await supabaseClient
+          .from('focus_live')
+          .delete()
+          .eq('id', joinedLiveSession.id);
+        if (error) {
+          console.error(error);
+        }
+      })();
     }
 
     setToast('집중 완료 🎉 +10P');
@@ -1447,7 +1459,13 @@ export default function FocusOS() {
 
     if (supabaseClient && currentJoined?.id) {
       try {
-        await supabaseClient.from('focus_live').delete().eq('id', currentJoined.id);
+        const { error } = await supabaseClient
+          .from('focus_live')
+          .delete()
+          .eq('id', currentJoined.id);
+        if (error) {
+          console.error(error);
+        }
       } catch (error) {
         console.error(error);
       }
