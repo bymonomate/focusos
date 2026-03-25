@@ -18,6 +18,9 @@ export default function FocusLivePage({
   onOpenSettings = () => {},
   onSignOut = () => {},
   onSetLang = () => {},
+  rooms = [],
+  onOpenCreateRoom = () => {},
+  onOpenRoom = () => {},
   t = (value) => value,
   getRemainingSeconds = (session) => 0,
   formatRemainingLabel = (seconds) => `${seconds}`,
@@ -149,6 +152,54 @@ export default function FocusLivePage({
                   {t('라이브 나가기')}
                 </button>
               )}
+              <button
+                onClick={onOpenCreateRoom}
+                className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                🔥 집중방 만들기
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 space-y-4">
+          <button
+            onClick={onOpenCreateRoom}
+            className="group w-full rounded-[32px] border border-zinc-900 bg-[linear-gradient(135deg,rgba(24,24,27,0.98)_0%,rgba(39,39,42,0.95)_100%)] px-6 py-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between gap-6">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white ring-1 ring-white/10">🔥 집중방</div>
+                <h3 className="mt-5 text-2xl font-semibold tracking-tight text-white">집중방 만들기</h3>
+                <p className="mt-3 text-sm leading-6 text-white/70">같이 접속해 각자 집중하고, 필요할 때만 채팅하는 집중모드방을 열어보세요.</p>
+              </div>
+              <div className="shrink-0 rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 shadow-[0_12px_30px_rgba(255,255,255,0.1)] transition group-hover:bg-zinc-100">바로 만들기</div>
+            </div>
+          </button>
+
+          <div className="rounded-[32px] border border-zinc-200 bg-white px-6 py-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">FOCUS ROOMS</p>
+                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">지금 열려 있는 집중방</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-500">공개방은 바로 들어갈 수 있고, 비밀번호가 있는 방은 입장할 때만 비밀번호를 입력하면 돼요.</p>
+              </div>
+              <button onClick={onOpenCreateRoom} className="hidden rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white shadow-sm md:block">집중방 만들기</button>
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              {rooms.length === 0 ? (
+                <div className="rounded-[24px] border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-sm text-zinc-500">아직 열린 집중방이 없어요. 첫 번째 집중방을 열어 흐름을 만들어보세요.</div>
+              ) : rooms.map((room) => (
+                <button key={room.id} onClick={() => onOpenRoom(room.id)} className="rounded-[24px] border border-zinc-200 bg-zinc-50 px-4 py-4 text-left transition hover:bg-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-zinc-900">{room.title}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${room.password ? 'bg-zinc-900 text-white' : 'bg-emerald-50 text-emerald-700'}`}>{room.password ? '비밀번호' : '공개'}</span>
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-zinc-500">{new Set((room.participants || []).map((item) => item.nickname)).size}명 참여 중</p>
+                  <p className="mt-3 text-[11px] text-zinc-400">입장해서 같이 집중하기</p>
+                </button>
+              ))}
             </div>
           </div>
         </section>
@@ -161,8 +212,8 @@ export default function FocusLivePage({
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-700">Planner</p>
-                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Not sure what to do first?' : '무엇부터 해야 할지 막막한가요?'}</h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Sort your top priorities first, then come back to live focus.' : '우선순위를 먼저 정리한 뒤 라이브 집중으로 돌아오세요.'}</p>
+                <h3 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-950">{lang === 'en' ? 'Start by sorting your tasks' : '해야 할 일부터 정리해보세요'}</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">{lang === 'en' ? 'Sort your priorities first, then come back and start focusing right away.' : '먼저 정리하고, 바로 집중을 시작해보세요.'}</p>
               </div>
               <div className="shrink-0 rounded-full bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 ring-1 ring-violet-100">
                 {lang === 'en' ? 'Open planner' : '우선순위 정리하기'}

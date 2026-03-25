@@ -1,6 +1,8 @@
+import React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import AuthScreen from './components/AuthScreen';
 import FocusLivePage from './components/FocusLivePage';
+import RoomsPage, { getStoredFocusRooms } from './components/RoomsPage';
 import TaskCard from './components/TaskCard';
 import { InlineIcon } from './components/icons';
 
@@ -16,6 +18,70 @@ const STORAGE_KEYS = {
   seededTasksPrefix: 'focus-os-seeded-tasks-',
   taskRolloverPrefix: 'focus-os-task-rollover-',
 };
+
+const ROOMS_KEY = 'focus-os-focus-rooms';
+const ACTIVE_ROOM_KEY = 'focus-os-focus-room-active';
+const ROOM_EVENT = 'focusos-rooms-updated';
+
+
+const isRoomOpen = (room) => {
+  if (!room || typeof room !== 'object') return false;
+  const status = String(room.status || '').toLowerCase();
+  if (room.isClosed || room.closedAt || room.endedAt || room.deletedAt || room.archivedAt || room.removedAt) return false;
+  if (status && ['closed', 'ended', 'archived', 'deleted', 'removed', 'inactive'].includes(status)) return false;
+  return Boolean(room.id && room.title);
+};
+
+const readRoomsFromLocalStorage = () => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(ROOMS_KEY);
+    return raw ? JSON.parse(raw) || [] : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
+const pickRoomVersion = (currentRoom, nextRoom) => {
+  if (!currentRoom) return nextRoom;
+  if (!nextRoom) return currentRoom;
+
+  const currentOpen = isRoomOpen(currentRoom);
+  const nextOpen = isRoomOpen(nextRoom);
+  if (currentOpen && !nextOpen) return nextRoom;
+  if (!currentOpen && nextOpen) return currentRoom;
+
+  const currentTime = new Date(currentRoom.updatedAt || currentRoom.closedAt || currentRoom.endedAt || currentRoom.createdAt || 0).getTime();
+  const nextTime = new Date(nextRoom.updatedAt || nextRoom.closedAt || nextRoom.endedAt || nextRoom.createdAt || 0).getTime();
+  return nextTime >= currentTime ? nextRoom : currentRoom;
+};
+
+const readOpenFocusRooms = () => {
+  const sourceRooms = Array.isArray(getStoredFocusRooms()) ? getStoredFocusRooms() : [];
+  const localRooms = Array.isArray(readRoomsFromLocalStorage()) ? readRoomsFromLocalStorage() : [];
+  const merged = new Map();
+
+  [...sourceRooms, ...localRooms].forEach((room) => {
+    if (!room || !room.id) return;
+    merged.set(room.id, pickRoomVersion(merged.get(room.id), room));
+  });
+
+  return Array.from(merged.values()).filter(isRoomOpen);
+};
+
+const syncOpenRoomsToStorage = () => {
+  if (typeof window === 'undefined') return [];
+  const nextRooms = readOpenFocusRooms();
+  try {
+    window.localStorage.setItem(ROOMS_KEY, JSON.stringify(nextRooms));
+    window.dispatchEvent(new CustomEvent(ROOM_EVENT));
+  } catch (error) {
+    console.error(error);
+  }
+  return nextRooms;
+};
+
 
 const TODAY_LIMIT = 5;
 const FOCUS_PRESETS = [5, 15, 25, 45];
@@ -215,6 +281,66 @@ const EN_TEXT = {
   '보내기': 'Send',
   '참여 중': 'In LIVE',
   '구경 중': 'Viewing',
+  '집중방': 'Focus Rooms',
+  '집중방 만들기': 'Create Focus Room',
+  '같이 집중하는 방을 열고, 필요할 때만 대화하세요. 비밀번호는 선택으로 설정할 수 있어요.': 'Open a room to focus together and chat only when needed. Passwords are optional.',
+  '방 이름': 'Room name',
+  '아젠다': 'Agenda',
+  '간단한 설명': 'Short description',
+  '비밀번호 (선택)': 'Password (optional)',
+  '취소': 'Cancel',
+  '집중방 생성하기': 'Create room',
+  '라이브 참여, 채팅, 완료 메시지에 이 닉네임이 표시돼요.': 'This nickname appears in LIVE, chat, and completion messages.',
+  '같이 집중하고, 필요할 때만 채팅하는 방을 열어보세요.': 'Open a room to focus together and chat only when needed.',
+  '바로 열기': 'Open now',
+  '현재 열려 있는 집중방': 'Rooms open now',
+  '현재 참여 인원': 'Participants now',
+  '집중방 보러가기': 'Join Live',
+  '로그인하면 할 일과 집중 기록이 저장돼요.': 'Your tasks and focus records are saved when you sign in.',
+  '프로필': 'Profile',
+  '닉네임, 포인트, 집중 기록을 여기서 확인해요.': 'Check your nickname, points, and focus history here.',
+  '오늘 집중': 'Focus today',
+  '총 집중': 'Total focus',
+  '포인트': 'Points',
+  '닉네임': 'Nickname',
+  '닉네임을 입력해 주세요': 'Enter a nickname',
+  '개인용 뽀모도로 타이머예요. 할 일과 별개로 바로 집중할 때 사용해요.': 'A personal pomodoro timer for instant focus outside your task list.',
+  'LIVE 홈으로': 'Back to Live',
+  '방 나가기': 'Leave room',
+  '집중방 종료하기': 'Close room',
+  '오늘의 집중 아젠다': "Today's focus agenda",
+  '핵심만 정리': 'Key points',
+  '참여 중인 사람': 'People in the room',
+  '실시간 표시': 'Live',
+  '이 집중방의 채팅은 24시간 후 자동으로 삭제됩니다. 필요한 내용은 개인적으로 저장해 주세요.': 'Messages in this room are deleted after 24 hours. Save anything important for yourself.',
+  '아직 대화가 없어요. 필요한 말만 짧게 남겨보세요.': 'No messages yet. Leave only what is needed.',
+  '필요한 말만 짧게 남겨보세요': 'Leave only what is needed',
+  'Enter로 바로 보내고, Shift+Enter로 줄바꿈할 수 있어요.': 'Press Enter to send, Shift+Enter for a line break.',
+  '이 집중방을 종료할까요? 종료하면 홈 리스트에서도 사라집니다.': 'Close this room? It will also disappear from the home list.',
+  '집중방이 종료되었습니다.': 'The focus room has been closed.',
+  '집중방에서 나갔습니다.': 'You left the focus room.',
+  '닉네임을 먼저 입력해 주세요.': 'Please enter a nickname first.',
+  '비밀번호가 맞지 않아요.': 'The password is incorrect.',
+  '이 집중방에서 나갈까요?': 'Do you want to leave this room?',
+  '안내': 'Notice',
+  '선택한 집중방을 찾을 수 없어요. 홈으로 돌아가 다시 입장해 주세요.': "We couldn't find that room. Please go back home and enter again.",
+  '같이 들어와서 각자 집중하고, 필요할 때만 대화하는 집중방입니다.': 'A room where you can focus together and chat only when needed.',
+  '🔒 비밀번호 방': '🔒 Private room',
+  '🌐 공개방': '🌐 Public room',
+  '기록 저장': 'Save record',
+  '이 집중방에 참여하기': 'Join this focus room',
+  '같이 들어와서 각자 집중하고, 필요할 때만 대화하세요.': 'Join together, focus individually, and talk only when needed.',
+  '비밀번호 입력': 'Enter password',
+  '비밀번호로 입장': 'Join with password',
+  '바로 입장': 'Enter now',
+  '아직 참여자가 없어요.': 'No participants yet.',
+  '24시간 후 자동 삭제': 'Auto delete after 24h',
+  '같이 집중하는 집중방': 'A room to focus together',
+  '홈에서 만든 집중방을 여기서 관리할 수 있어요. 필요할 때만 채팅하고, 각자 집중 흐름은 가볍게 이어가세요.': 'Manage your focus rooms here. Chat only when needed and keep your own flow light.',
+  '홈으로': 'Home',
+  '비밀번호는 선택사항이에요. 비밀방으로 쓰고 싶을 때만 설정해 주세요.': 'Passwords are optional. Set one only if you want a private room.',
+  '내 닉네임': 'My nickname',
+  '아직 저장된 기록이 없어요.': 'No saved records yet.',
 };
 
 function tr(lang, value) {
@@ -348,7 +474,17 @@ function getStorage() {
 function getPageMode() {
   if (typeof window === 'undefined') return 'live';
   const params = new URLSearchParams(window.location.search || '');
-  return params.get('page') === 'home' ? 'home' : 'live';
+  const page = params.get('page');
+  if (page === 'home') return 'home';
+  if (page === 'room') return 'room';
+  if (page === 'rooms') return 'room';
+  return 'live';
+}
+
+function getRoomPageId() {
+  if (typeof window === 'undefined') return '';
+  const params = new URLSearchParams(window.location.search || '');
+  return params.get('room') || '';
 }
 
 function getAnonymousName() {
@@ -693,6 +829,13 @@ export default function FocusOS() {
   const [focusMode, setFocusMode] = useState(false);
   const [focusedTaskId, setFocusedTaskId] = useState(null);
   const [pageMode, setPageMode] = useState(getPageMode());
+  const [selectedRoomId, setSelectedRoomId] = useState(getRoomPageId());
+  const [homeRooms, setHomeRooms] = useState(() => readOpenFocusRooms());
+  const [createRoomModalOpen, setCreateRoomModalOpen] = useState(false);
+  const [newRoomTitle, setNewRoomTitle] = useState('');
+  const [newRoomAgenda, setNewRoomAgenda] = useState('');
+  const [newRoomDesc, setNewRoomDesc] = useState('');
+  const [newRoomPassword, setNewRoomPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [anonymousName, setAnonymousName] = useState('');
@@ -750,7 +893,10 @@ export default function FocusOS() {
     setJoinedLiveSession(readLocalJoinedSession());
     setLiveComments(readLocalLiveComments());
 
-    const syncPage = () => setPageMode(getPageMode());
+    const syncPage = () => {
+      setPageMode(getPageMode());
+      setSelectedRoomId(getRoomPageId());
+    };
     window.addEventListener('popstate', syncPage);
     return () => window.removeEventListener('popstate', syncPage);
   }, []);
@@ -813,6 +959,26 @@ export default function FocusOS() {
     document.head.appendChild(script);
   }, []);
 
+
+  useEffect(() => {
+    const syncRooms = () => setHomeRooms(syncOpenRoomsToStorage());
+    syncRooms();
+    if (typeof window === 'undefined') return;
+    window.addEventListener('focusos-rooms-updated', syncRooms);
+    window.addEventListener('storage', syncRooms);
+    return () => {
+      window.removeEventListener('focusos-rooms-updated', syncRooms);
+      window.removeEventListener('storage', syncRooms);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pageMode === 'live' || pageMode === 'home') {
+      setHomeRooms(syncOpenRoomsToStorage());
+    }
+  }, [pageMode, selectedRoomId]);
+
+  const visibleHomeRooms = useMemo(() => homeRooms.slice(0, 4), [homeRooms]);
 
   const isLivePage = pageMode === 'live';
 
@@ -1328,9 +1494,11 @@ export default function FocusOS() {
       window.requestAnimationFrame(() => {
         window.setTimeout(scrollToPlanner, 80);
       });
+      setHomeRooms(syncOpenRoomsToStorage());
       return;
     }
 
+    setHomeRooms(syncOpenRoomsToStorage());
     scrollToPlanner();
   };
 
@@ -1387,6 +1555,7 @@ export default function FocusOS() {
     const url = new URL(window.location.href);
     url.searchParams.set('page', 'home');
     window.history.pushState({}, '', url.toString());
+    setHomeRooms(syncOpenRoomsToStorage());
     setPageMode('home');
   };
 
@@ -1394,10 +1563,75 @@ export default function FocusOS() {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     url.searchParams.delete('page');
+    url.searchParams.delete('room');
     window.history.pushState({}, '', url.toString());
+    setSelectedRoomId('');
+    setHomeRooms(syncOpenRoomsToStorage());
     setPageMode('live');
   };
 
+  const goToRoom = (roomId) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', 'room');
+    url.searchParams.set('room', roomId);
+    window.history.pushState({}, '', url.toString());
+    setSelectedRoomId(roomId);
+    setPageMode('room');
+  };
+
+  const goToRooms = () => {
+    openCreateRoomModal();
+  };
+
+  const openCreateRoomModal = () => {
+    setNewRoomTitle('');
+    setNewRoomAgenda('');
+    setNewRoomDesc('');
+    setNewRoomPassword('');
+    setCreateRoomModalOpen(true);
+  };
+
+  const createFocusRoom = () => {
+    const title = newRoomTitle.trim();
+    if (!title || typeof window === 'undefined') return;
+    const room = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? `room-${crypto.randomUUID()}` : `room-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      title,
+      agenda: newRoomAgenda.trim(),
+      description: newRoomDesc.trim(),
+      password: newRoomPassword.trim(),
+      createdAt: new Date().toISOString(),
+      createdBy: session?.user?.id || nickname || anonymousName || 'guest',
+      messages: [],
+      participants: (nickname || anonymousName) ? [{
+        userKey: session?.user?.id || nickname || anonymousName,
+        nickname: nickname || anonymousName,
+        joinedAt: new Date().toISOString(),
+      }] : [],
+    };
+    const nextRooms = [room, ...readOpenFocusRooms()];
+    window.localStorage.setItem(ROOMS_KEY, JSON.stringify(nextRooms));
+    window.localStorage.setItem(ACTIVE_ROOM_KEY, JSON.stringify(room.id));
+    window.dispatchEvent(new CustomEvent(ROOM_EVENT));
+    setHomeRooms(syncOpenRoomsToStorage());
+    setCreateRoomModalOpen(false);
+    goToRoom(room.id);
+  };
+
+  const openFocusRoom = (roomId) => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(ACTIVE_ROOM_KEY, JSON.stringify(roomId));
+    goToRoom(roomId);
+  };
+
+  const focusRoomSummary = useMemo(() => {
+    const total = homeRooms.length;
+    const privateCount = homeRooms.filter((room) => room.password).length;
+    const publicCount = total - privateCount;
+    const participantCount = homeRooms.reduce((sum, room) => sum + new Set((room.participants || []).map((item) => item.nickname)).size, 0);
+    return { total, privateCount, publicCount, participantCount };
+  }, [homeRooms]);
 
   const joinLiveFocus = async () => {
     const selectedLiveTaskTitle =
@@ -1916,6 +2150,90 @@ export default function FocusOS() {
 
   const t = (value) => tr(lang, value);
 
+  const renderCreateRoomModal = () => (
+    createRoomModalOpen ? (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 px-4 py-8">
+        <div className="w-full max-w-xl rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(24,24,27,0.2)]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-violet-600">Focus Room</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950">{t('집중방 만들기')}</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">{t('같이 집중하는 방을 열고, 필요할 때만 대화하세요. 비밀번호는 선택으로 설정할 수 있어요.')}</p>
+            </div>
+            <button onClick={() => setCreateRoomModalOpen(false)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600">{t('닫기')}</button>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <input value={newRoomTitle} onChange={(e) => setNewRoomTitle(e.target.value)} placeholder={t('방 이름')} className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none" />
+            <input value={newRoomAgenda} onChange={(e) => setNewRoomAgenda(e.target.value)} placeholder={t('아젠다')} className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none" />
+            <textarea value={newRoomDesc} onChange={(e) => setNewRoomDesc(e.target.value)} placeholder={t('간단한 설명')} rows={4} className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none" />
+            <input value={newRoomPassword} onChange={(e) => setNewRoomPassword(e.target.value)} placeholder={t('비밀번호 (선택)')} className="w-full rounded-2xl border border-zinc-200 px-4 py-3 text-sm outline-none" />
+          </div>
+
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button onClick={() => setCreateRoomModalOpen(false)} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-700">{t('취소')}</button>
+            <button onClick={createFocusRoom} className="rounded-2xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white">{t('집중방 생성하기')}</button>
+          </div>
+        </div>
+      </div>
+    ) : null
+  );
+
+  if (pageMode === 'room') {
+    return (
+      <>
+        <RoomsPage
+          session={session}
+          nickname={nickname || anonymousName}
+          detailOnly
+          initialRoomId={selectedRoomId}
+          setNickname={(value) => {
+            setNickname(value);
+            setAnonymousName(value);
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem(STORAGE_KEYS.nickname, value);
+              window.localStorage.setItem(STORAGE_KEYS.anonymousName, value);
+            }
+          }}
+          onOpenAuth={() => setAuthModalOpen(true)}
+          lang={lang}
+          t={t}
+          onRoomsChange={(nextRooms) => {
+            const nextOpenRooms = (Array.isArray(nextRooms) ? nextRooms : []).filter(isRoomOpen);
+            setHomeRooms(nextOpenRooms);
+            if (typeof window !== 'undefined') {
+              try {
+                window.localStorage.setItem(ROOMS_KEY, JSON.stringify(nextOpenRooms));
+              } catch (error) {
+                console.error(error);
+              }
+            }
+          }}
+          onBackHome={() => {
+            const nextOpenRooms = syncOpenRoomsToStorage();
+            setHomeRooms(nextOpenRooms);
+            goToLive();
+          }}
+        />
+
+        {authModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 px-4 py-8">
+            <div className="relative max-h-[90vh] w-full max-w-4xl overflow-auto rounded-[32px] shadow-[0_30px_100px_rgba(24,24,27,0.24)]">
+              <button
+                onClick={() => setAuthModalOpen(false)}
+                className="absolute right-4 top-4 z-10 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50"
+              >
+                {t('닫기')}
+              </button>
+              <AuthScreen supabaseClient={supabaseClient} lang={lang} setLang={setLang} t={t} />
+            </div>
+          </div>
+        )}
+        {renderCreateRoomModal()}
+      </>
+    );
+  }
+
   if (isLivePage) {
     return (
       <>
@@ -1937,6 +2255,9 @@ export default function FocusOS() {
           onOpenSettings={() => setSettingsOpen(true)}
           onSignOut={signOut}
           onSetLang={setLang}
+          rooms={visibleHomeRooms}
+          onOpenCreateRoom={openCreateRoomModal}
+          onOpenRoom={openFocusRoom}
           t={t}
           getRemainingSeconds={getRemainingSeconds}
           formatRemainingLabel={formatRemainingLabel}
@@ -1955,6 +2276,7 @@ export default function FocusOS() {
             </div>
           </div>
         )}
+        {renderCreateRoomModal()}
       </>
     );
   }
@@ -1989,7 +2311,7 @@ export default function FocusOS() {
             <button onClick={goToLive} className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"><span className="inline-block h-2.5 w-2.5 rounded-full bg-white/90"></span>LIVE</button>
             <button onClick={goToPlanner} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{lang === 'en' ? 'Planner' : '우선순위 정리'}</button>
             {session ? (<>
-              <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">프로필</button>
+              <button onClick={() => setProfileOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('프로필')}</button>
               <button onClick={() => setSettingsOpen(true)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('설정')}</button>
               <button onClick={signOut} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">{t('로그아웃')}</button>
             </>) : (
@@ -2012,7 +2334,7 @@ export default function FocusOS() {
                 <button onClick={() => { goToLive(); setMenuOpen(false); }} className="rounded-2xl bg-violet-600 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-violet-500">● LIVE</button>
                 {session ? (
                   <>
-                    <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">프로필</button>
+                    <button onClick={() => { setProfileOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('프로필')}</button>
                     <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('설정')}</button>
                     <button onClick={signOut} className="rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-left text-sm font-medium text-zinc-700 transition hover:bg-zinc-50">{t('로그아웃')}</button>
                   </>
@@ -2045,28 +2367,28 @@ export default function FocusOS() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium text-violet-700">My Profile</p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">프로필</h2>
-                <p className="mt-2 text-sm leading-6 text-zinc-500">닉네임, 포인트, 집중 기록을 여기서 확인해요.</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">{t('프로필')}</h2>
+                <p className="mt-2 text-sm leading-6 text-zinc-500">{t('닉네임, 포인트, 집중 기록을 여기서 확인해요.')}</p>
               </div>
               <button onClick={() => setProfileOpen(false)} className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 transition hover:bg-zinc-50">{t('닫기')}</button>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <SummaryTile label="오늘 집중" value={String(profile.todayFocusSessions || 0)} />
-              <SummaryTile label="총 집중" value={String(profile.totalFocusSessions || 0)} />
-              <SummaryTile label="포인트" value={`${profile.points || 0}P`} />
+              <SummaryTile label={t("오늘 집중")} value={String(profile.todayFocusSessions || 0)} />
+              <SummaryTile label={t("총 집중")} value={String(profile.totalFocusSessions || 0)} />
+              <SummaryTile label={t("포인트")} value={`${profile.points || 0}P`} />
             </div>
 
             <div className="mt-5 rounded-[24px] border border-zinc-200 bg-zinc-50 p-4">
-              <label className="text-sm font-medium text-zinc-900">닉네임</label>
+              <label className="text-sm font-medium text-zinc-900">{t("닉네임")}</label>
               <input
                 value={nickname}
                 maxLength={24}
                 onChange={(e) => setNickname(e.target.value.replace(/\s+/g, ' ').trimStart())}
-                placeholder="닉네임을 입력해 주세요"
+                placeholder={t("닉네임을 입력해 주세요")}
                 className="mt-3 w-full rounded-[20px] border border-zinc-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-violet-300"
               />
-              <p className="mt-2 text-xs text-zinc-500">라이브 참여, 채팅, 완료 메시지에 이 닉네임이 표시돼요.</p>
+              <p className="mt-2 text-xs text-zinc-500">{t('라이브 참여, 채팅, 완료 메시지에 이 닉네임이 표시돼요.')}</p>
             </div>
           </div>
         </div>
@@ -2159,52 +2481,88 @@ export default function FocusOS() {
 
       <section className="mx-auto max-w-6xl px-4 pt-4 md:hidden">
         {!focusMode && !isLivePage && (
-          <button
-            onClick={goToLive}
-            className="w-full rounded-[28px] border border-violet-300 bg-[linear-gradient(135deg,#f5f1ff_0%,#ede9fe_100%)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
-                  LIVE
+          <div className="grid gap-3">
+            <button
+              onClick={goToLive}
+              className="w-full rounded-[28px] border border-violet-300 bg-[linear-gradient(135deg,#f5f1ff_0%,#ede9fe_100%)] p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
+                    LIVE
+                  </div>
+                  <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
+                  <p className="mt-1 text-sm text-zinc-600">🟢 {activeLiveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
                 </div>
-                <p className="mt-3 text-base font-semibold text-zinc-900">{t('지금 함께 집중 중입니다')}</p>
-                <p className="mt-1 text-sm text-zinc-600">🟢 {activeLiveSessions.length} {lang === 'en' ? 'focusing now' : '명 집중 중'}</p>
-              </div>
-              <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
-                {t('라이브 참여하기')}
-              </div>
-            </div>
-          </button>
-        )}
-      </section>
-
-      <section className="mx-auto hidden max-w-6xl px-6 pt-6 md:block">
-        {!focusMode && !isLivePage && (
-          <button
-            onClick={goToLive}
-            className="group w-full rounded-[36px] border border-violet-200 bg-[linear-gradient(135deg,rgba(245,241,255,0.96)_0%,rgba(237,233,254,0.92)_100%)] px-8 py-8 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div className="flex items-center justify-between gap-8 xl:px-2">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-violet-700 ring-1 ring-violet-100">
-                  <span className="inline-block h-3 w-3 rounded-full bg-violet-600"></span>
-                  LIVE
-                </div>
-                <h2 className="mt-6 text-2xl font-semibold tracking-tight text-zinc-950 xl:text-[30px]">{t('지금 함께 집중 중입니다')}</h2>
-                <p className="mt-3 text-sm font-medium text-zinc-600 xl:text-base">🟢 {activeLiveSessions.length} {lang === 'en' ? 'people focusing now' : '명 집중 중'}</p>
-              </div>
-
-              <div className="shrink-0">
-                <div className="rounded-full bg-violet-600 px-8 py-4 text-lg font-semibold text-white shadow-[0_16px_40px_rgba(124,58,237,0.22)] transition group-hover:bg-violet-500 xl:px-10 xl:py-4 xl:text-xl">
+                <div className="shrink-0 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
                   {t('라이브 참여하기')}
                 </div>
               </div>
-            </div>
-          </button>
+            </button>
+            <button
+              onClick={goToRooms}
+              className="w-full rounded-[28px] border border-zinc-900 bg-zinc-950 p-4 text-left shadow-sm transition hover:translate-y-[-1px] hover:shadow-md"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90 ring-1 ring-white/10">
+                    🔥 {t('집중방')}
+                  </div>
+                  <p className="mt-3 text-base font-semibold text-white">{t('집중방 만들기')}</p>
+                  <p className="mt-1 text-sm text-white/70">{t('같이 집중하고, 필요할 때만 채팅하는 방을 열어보세요.')}</p>
+                </div>
+                <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zinc-900 shadow-sm">
+                  {t('바로 열기')}
+                </div>
+              </div>
+            </button>
+          </div>
         )}
       </section>
+
+      {!focusMode && !isLivePage && (
+        <section className="mx-auto max-w-6xl px-4 pt-4 md:px-6">
+          <div className="overflow-hidden rounded-[32px] border border-violet-200/70 bg-[linear-gradient(135deg,#f7f4ff_0%,#f1edff_100%)] p-5 shadow-[0_12px_32px_rgba(109,40,217,0.06)] md:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-700 ring-1 ring-violet-100">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
+                  FOCUS ROOMS
+                </div>
+                <p className="mt-3 text-[28px] font-bold tracking-tight text-zinc-950 md:text-[32px]">{t('지금 함께 집중 중입니다')}</p>
+                <p className="mt-3 text-base text-zinc-600 md:text-lg">{t('라이브 집중모드 현황을 보고, 흐름이 맞을 때 바로 참여해보세요.')}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-zinc-700 md:text-base">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-600"></span>
+                    {t('현재 열려 있는 집중방')} <strong className="font-semibold text-zinc-950">{focusRoomSummary.total}{lang === 'en' ? '' : '개'}</strong>
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                    {t('현재 참여 인원')} <strong className="font-semibold text-zinc-950">{focusRoomSummary.participantCount}{lang === 'en' ? '' : '명'}</strong>
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  goToLive();
+                  if (typeof window !== 'undefined') {
+                    window.requestAnimationFrame(() => {
+                      window.setTimeout(() => {
+                        const target = document.querySelector('[data-focus-rooms-home]');
+                        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 80);
+                    });
+                  }
+                }}
+                className="shrink-0 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-violet-500"
+              >
+                                {t('라이브 참여하기')}
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
         <header className={`mb-8 overflow-hidden rounded-[36px] border border-zinc-900/5 bg-zinc-950 p-6 text-white shadow-[0_24px_80px_rgba(24,24,27,0.18)] transition md:p-8 ${focusMode ? "hidden" : ""}`}>
@@ -2247,7 +2605,7 @@ export default function FocusOS() {
             <div className="text-center">
               <p className="text-sm font-medium text-violet-700">Focus Timer</p>
               <h2 className="mt-1 text-2xl font-semibold tracking-tight">{t("포커스 타이머")}</h2>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">개인용 뽀모도로 타이머예요. 할 일과 별개로 바로 집중할 때 사용해요.</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">{t("개인용 뽀모도로 타이머예요. 할 일과 별개로 바로 집중할 때 사용해요.")}</p>
             </div>
 
             <div className="mt-6 flex justify-center">
@@ -2281,7 +2639,7 @@ export default function FocusOS() {
           </Panel>
         </section>
 
-        <div data-planner-anchor className={focusMode ? "ring-2 ring-violet-200 rounded-[36px]" : ""}><SectionCard
+      <div data-planner-anchor className={focusMode ? "ring-2 ring-violet-200 rounded-[36px]" : ""}><SectionCard
           eyebrow="Today"
           title={`${t("오늘 할 일")} (${todayTasks.length}/${TODAY_LIMIT})`}
           action={
