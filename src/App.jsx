@@ -319,28 +319,6 @@ const EN_TEXT = {
   '이 집중방을 종료할까요? 종료하면 홈 리스트에서도 사라집니다.': 'Close this room? It will also disappear from the home list.',
   '집중방이 종료되었습니다.': 'The focus room has been closed.',
   '집중방에서 나갔습니다.': 'You left the focus room.',
-  '닉네임을 먼저 입력해 주세요.': 'Please enter a nickname first.',
-  '비밀번호가 맞지 않아요.': 'The password is incorrect.',
-  '이 집중방에서 나갈까요?': 'Do you want to leave this room?',
-  '안내': 'Notice',
-  '선택한 집중방을 찾을 수 없어요. 홈으로 돌아가 다시 입장해 주세요.': "We couldn't find that room. Please go back home and enter again.",
-  '같이 들어와서 각자 집중하고, 필요할 때만 대화하는 집중방입니다.': 'A room where you can focus together and chat only when needed.',
-  '🔒 비밀번호 방': '🔒 Private room',
-  '🌐 공개방': '🌐 Public room',
-  '기록 저장': 'Save record',
-  '이 집중방에 참여하기': 'Join this focus room',
-  '같이 들어와서 각자 집중하고, 필요할 때만 대화하세요.': 'Join together, focus individually, and talk only when needed.',
-  '비밀번호 입력': 'Enter password',
-  '비밀번호로 입장': 'Join with password',
-  '바로 입장': 'Enter now',
-  '아직 참여자가 없어요.': 'No participants yet.',
-  '24시간 후 자동 삭제': 'Auto delete after 24h',
-  '같이 집중하는 집중방': 'A room to focus together',
-  '홈에서 만든 집중방을 여기서 관리할 수 있어요. 필요할 때만 채팅하고, 각자 집중 흐름은 가볍게 이어가세요.': 'Manage your focus rooms here. Chat only when needed and keep your own flow light.',
-  '홈으로': 'Home',
-  '비밀번호는 선택사항이에요. 비밀방으로 쓰고 싶을 때만 설정해 주세요.': 'Passwords are optional. Set one only if you want a private room.',
-  '내 닉네임': 'My nickname',
-  '아직 저장된 기록이 없어요.': 'No saved records yet.',
 };
 
 function tr(lang, value) {
@@ -2890,4 +2868,3 @@ function SummaryTile({ label, value }) {
     </div>
   );
 }
-
